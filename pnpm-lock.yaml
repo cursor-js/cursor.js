@@ -17,7 +17,7 @@ importers:
 
   apps/docs:
     dependencies:
-      '@actor.js/core':
+      '@cursor.js/core':
         specifier: workspace:*
         version: link:../../packages/core
       fumadocs-core:
