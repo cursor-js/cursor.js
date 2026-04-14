@@ -1,6 +1,6 @@
-# Actor.js Copilot Workspace Instructions
+# Cursor.js Copilot Workspace Instructions
 
-Welcome to the **Actor.js** repository. This library provides a realistic, human-like virtual cursor for end-to-end testing, interactive tutorials, frontend automation, and demonstration purposes. It mimics human cursor movements using mathematical Bezier curves (Fitts's Law) and executes synthetic native browser events (like `mousedown`, `click`, `input`, etc.) accurately to provide an experience close to Playwright and Cypress directly inside the DOM.
+Welcome to the **Cursor.js** repository. This library provides a realistic, human-like virtual cursor for end-to-end testing, interactive tutorials, frontend automation, and demonstration purposes. It mimics human cursor movements using mathematical Bezier curves (Fitts's Law) and executes synthetic native browser events (like `mousedown`, `click`, `input`, etc.) accurately to provide an experience close to Playwright and Cypress directly inside the DOM.
 
 ## ��� Architectural Overview
 

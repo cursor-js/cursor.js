@@ -1,5 +1,5 @@
 import "./style.css";
-import { Actor } from "./index";
+import { Cursor } from "./index";
 
 // Demo target DOM elements
 const btn1 = document.getElementById("btn1") as HTMLButtonElement;
@@ -26,7 +26,7 @@ input1?.addEventListener("input", (e) => {
 });
 
 // START ACTOR DEMO...
-const actor = new Actor({ humanize: true, speed: 0.5, showIndicator: true });   
+const actor = new Cursor({ humanize: true, speed: 0.5, showIndicator: true });   
 
 async function runDemo() {
   // Reset demo statuses
@@ -44,7 +44,7 @@ async function runDemo() {
     .wait(600) // Wait briefly on hover
     .click("#btn1") // Trigger click
     .wait(1000) // Wait so we can read it
-    .type("#input1", "Hello World! Actor.js in action...", {
+    .type("#input1", "Hello World! Cursor.js in action...", {
       delay: 50,
     } as any) // Type text into input with human-like typing
     .wait(1500)

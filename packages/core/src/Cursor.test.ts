@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { Actor } from "./Actor";
+import { Cursor } from "./Cursor";
 
-describe("Actor", () => {
+describe("Cursor", () => {
   let btn: HTMLButtonElement;
   let input: HTMLInputElement;
 
@@ -44,12 +44,12 @@ describe("Actor", () => {
   });
 
   it("can be instantiated", () => {
-    const actor = new Actor();
-    expect(actor).toBeInstanceOf(Actor);
+    const actor = new Cursor();
+    expect(actor).toBeInstanceOf(Cursor);
   });
 
   it("chains and resolves hover promise successfully", async () => {
-    const actor = new Actor({ humanize: false, speed: 1.0 }); // Fast for tests
+    const actor = new Cursor({ humanize: false, speed: 1.0 }); // Fast for tests
     let hovered = false;
     btn.addEventListener("mouseenter", () => (hovered = true));
 
@@ -60,7 +60,7 @@ describe("Actor", () => {
   });
 
   it("chains and resolves click promise successfully", async () => {
-    const actor = new Actor({ humanize: false, speed: 1.0 });
+    const actor = new Cursor({ humanize: false, speed: 1.0 });
     let clicked = false;
     btn.addEventListener("click", () => (clicked = true));
 
@@ -70,7 +70,7 @@ describe("Actor", () => {
   });
 
   it("types recursively using simulated events", async () => {
-    const actor = new Actor({ humanize: false, speed: 1.0 });
+    const actor = new Cursor({ humanize: false, speed: 1.0 });
     const delaySpy = vi.spyOn(window, "setTimeout");
 
     await actor.type("#test-input", "Hello", { delay: 10 }); // Fast typing parameter
@@ -80,7 +80,7 @@ describe("Actor", () => {
   });
 
   it("supports chaining API through Promise resolve sequence", async () => {
-    const actor = new Actor({ humanize: false, speed: 1.0 });
+    const actor = new Cursor({ humanize: false, speed: 1.0 });
     let clickCount = 0;
 
     btn.addEventListener("click", () => clickCount++);
@@ -96,7 +96,7 @@ describe("Actor", () => {
   });
 
   it("throws when target element is not found", async () => {
-    const actor = new Actor();
+    const actor = new Cursor();
 
     await expect(actor.hover("#non-existing")).rejects.toThrow(
       "Element not found",

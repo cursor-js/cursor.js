@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { Cursor } from './Cursor';
+import { GhostCursor } from './GhostCursor';
 
-describe('Cursor', () => {
+describe('GhostCursor', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
   });
 
   it('creates DOM elements and SVGs on init', () => {
-    const cursor = new Cursor();
+    const cursor = new GhostCursor();
     expect(cursor.el).toBeTruthy();
     expect(cursor.el.tagName).toBe('DIV');
     expect(cursor.indicator.tagName).toBe('DIV');
@@ -16,7 +16,7 @@ describe('Cursor', () => {
   });
 
   it('moves cursor to relative absolute coordinates', () => {
-    const cursor = new Cursor();
+    const cursor = new GhostCursor();
     cursor.moveTo(100, 200);
 
     expect(cursor.x).toBe(100);
@@ -37,7 +37,7 @@ describe('Cursor', () => {
     });
     Object.defineProperty(window, 'scrollY', { value: 0, writable: true });
 
-    const cursor = new Cursor({ showIndicator: true });
+    const cursor = new GhostCursor({ showIndicator: true });
 
     // In viewport
     cursor.moveTo(100, 200);
@@ -59,7 +59,7 @@ describe('Cursor', () => {
   });
 
   it('removes elements and unmounts event listeners on destroy', () => {
-    const cursor = new Cursor();
+    const cursor = new GhostCursor();
     const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
 
     cursor.destroy();

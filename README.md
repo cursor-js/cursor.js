@@ -1,6 +1,6 @@
-# Actor.js
+# Cursor.js
 
-A realistic, human-like virtual cursor for end-to-end testing, interactive tutorials, frontend automation, and demonstration purposes. Actor.js mimics human cursor movements using mathematical Bezier curves (inspired by Fitts's Law) and executes synthetic native browser events (like `mousedown`, `click`, `input`, etc.) accurately to provide an experience close to Playwright and Cypress directly inside the DOM.
+A realistic, human-like virtual cursor for end-to-end testing, interactive tutorials, frontend automation, and demonstration purposes. Cursor.js mimics human cursor movements using mathematical Bezier curves (inspired by Fitts's Law) and executes synthetic native browser events (like `mousedown`, `click`, `input`, etc.) accurately to provide an experience close to Playwright and Cypress directly inside the DOM.
 
 ## Features
 
@@ -12,10 +12,10 @@ A realistic, human-like virtual cursor for end-to-end testing, interactive tutor
 
 ## Installation
 
-Install `actor.js` via npm, yarn, or pnpm.
+Install `cursor.js` via npm, yarn, or pnpm.
 
 ```bash
-npm install actor.js
+npm install cursor.js
 ```
 
 ## Importing and Initialization
@@ -23,7 +23,7 @@ npm install actor.js
 Import the `Actor` class and initialize it with your desired options:
 
 ```typescript
-import { Actor } from 'actor.js';
+import { Actor } from 'cursor.js';
 
 const actor = new Actor({
   humanize: true,
@@ -34,7 +34,7 @@ const actor = new Actor({
 
 ## Usage Example
 
-Actor.js provides a robust, chainable, and async-friendly promise-based API. You can easily sequence actions like hovering, clicking, and typing.
+Cursor.js provides a robust, chainable, and async-friendly promise-based API. You can easily sequence actions like hovering, clicking, and typing.
 
 ```typescript
 // Chaining and async/await style support
@@ -47,7 +47,7 @@ await actor
 
 ## Contributing
 
-We welcome contributions to `actor.js`! Since this project is a Turborepo monorepo and uses **Changesets** for version management, please follow these steps when proposing changes:
+We welcome contributions to `cursor.js`! Since this project is a Turborepo monorepo and uses **Changesets** for version management, please follow these steps when proposing changes:
 
 1. Fork the repo and create a new branch from `main` (e.g., `feat/my-new-feature` or `fix/button-click`).
 2. Make your code changes and add your tests.

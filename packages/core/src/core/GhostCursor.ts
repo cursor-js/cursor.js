@@ -1,15 +1,15 @@
-export interface CursorOptions {
+export interface GhostCursorOptions {
   showIndicator?: boolean;
 }
 
-export class Cursor {
+export class GhostCursor {
   public el: HTMLDivElement;
   public indicator: HTMLDivElement;
   public x: number = 0;
   public y: number = 0;
   private showIndicator: boolean;
 
-  constructor(options: CursorOptions = {}) {
+  constructor(options: GhostCursorOptions = {}) {
     this.showIndicator = options.showIndicator || false;
 
     this.el = document.createElement("div");
@@ -26,7 +26,7 @@ export class Cursor {
       box-shadow: 0 0 10px rgba(0,0,0,0.5);
     `;
 
-    // Default SVG Cursor design can go here
+    // Default SVG GhostCursor design can go here
     this.el.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M5.5 3L18.5 16H10.5L7 21L5.5 3Z" fill="white" stroke="black" stroke-width="1.5" stroke-linejoin="round"/>
     </svg>`;
@@ -70,13 +70,13 @@ export class Cursor {
     let isVisible = false;
 
     if (clientY < 0) {
-      // Cursor is above the viewport
+      // GhostCursor is above the viewport
       this.indicator.style.top = "6px";
       this.indicator.style.bottom = "auto";
       this.indicator.style.left = `${Math.max(20, Math.min(vWidth - 20, clientX))}px`;
       isVisible = true;
     } else if (clientY > vHeight) {
-      // Cursor is below the viewport
+      // GhostCursor is below the viewport
       this.indicator.style.top = "auto";
       this.indicator.style.bottom = "6px";
       this.indicator.style.left = `${Math.max(20, Math.min(vWidth - 20, clientX))}px`;

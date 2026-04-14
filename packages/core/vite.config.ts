@@ -6,8 +6,8 @@ export default defineConfig({
   build: {
     lib: {
       entry: resolve(process.cwd(), 'src/index.ts'),
-      name: 'Actor',
-      fileName: 'actor',
+      name: 'Cursor',
+      fileName: 'cursor',
       formats: ['es', 'umd'],
     },
     rollupOptions: {

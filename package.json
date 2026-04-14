@@ -1,5 +1,5 @@
 {
-  "name": "actor-js-monorepo",
+  "name": "cursor-js-monorepo",
   "private": true,
   "scripts": {
     "build": "turbo run build",
@@ -8,7 +8,7 @@
     "test": "turbo run test",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "turbo run build --filter=@actor.js/core && changeset publish"
+    "release": "turbo run build --filter=@cursor.js/core && changeset publish"
   },
   "devDependencies": {
     "@changesets/cli": "^2.30.0",

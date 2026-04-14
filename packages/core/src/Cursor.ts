@@ -1,26 +1,26 @@
-import { Cursor } from "./core/Cursor";
+import { GhostCursor } from "./core/GhostCursor";
 import { EventDispatcher } from "./core/EventDispatcher";
 import { generateHumanPath } from "./core/utils";
 
-export interface ActorOptions {
+export interface CursorOptions {
   speed?: number; // 0 to 1
   humanize?: boolean; // Default true
   showIndicator?: boolean; // Out of bounds indicator
 }
 
-export class Actor {
-  private cursor: Cursor;
-  private options: ActorOptions;
+export class Cursor {
+  private cursor: GhostCursor;
+  private options: CursorOptions;
   private promise: Promise<void> = Promise.resolve();
 
-  constructor(options: ActorOptions = {}) {
+  constructor(options: CursorOptions = {}) {
     this.options = {
       speed: 0.5,
       humanize: true,
       showIndicator: false,
       ...options,
     };
-    this.cursor = new Cursor({ showIndicator: this.options.showIndicator });
+    this.cursor = new GhostCursor({ showIndicator: this.options.showIndicator });
   }
 
   private enqueue(task: () => Promise<void>): this {
@@ -68,12 +68,12 @@ export class Actor {
       element.scrollIntoView({ behavior: "smooth", block: "center" });
       await new Promise((r) => setTimeout(r, 500));
       const newRect = element.getBoundingClientRect();
-      await this.moveCursorTo(
+      await this.moveGhostCursorTo(
         newRect.left + window.scrollX + newRect.width / 2,
         newRect.top + window.scrollY + newRect.height / 2,
       );
     } else {
-      await this.moveCursorTo(targetX, targetY);
+      await this.moveGhostCursorTo(targetX, targetY);
     }
 
     EventDispatcher.toggleMimicHover(element, true);
@@ -136,7 +136,7 @@ export class Actor {
     );
   }
 
-  private async moveCursorTo(targetX: number, targetY: number) {
+  private async moveGhostCursorTo(targetX: number, targetY: number) {
     if (this.options.humanize) {
       const points = generateHumanPath(
         this.cursor.x,

@@ -1,16 +1,16 @@
 {
-  "name": "@actor.js/core",
+  "name": "@cursor.js/core",
   "private": false,
   "version": "0.0.0",
   "type": "module",
-  "main": "./dist/actor.umd.cjs",
-  "module": "./dist/actor.js",
+  "main": "./dist/cursor.umd.cjs",
+  "module": "./dist/cursor.js",
   "types": "./dist/src/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",
-      "import": "./dist/actor.js",
-      "require": "./dist/actor.umd.cjs"
+      "import": "./dist/cursor.js",
+      "require": "./dist/cursor.umd.cjs"
     }
   },
   "scripts": {
