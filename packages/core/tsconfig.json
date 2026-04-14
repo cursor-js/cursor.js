@@ -7,9 +7,6 @@
       "DOM",
       "DOM.Iterable"
     ],
-    "types": [
-      "vite/client"
-    ],
     "skipLibCheck": true,
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -21,11 +18,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true,
-    "typeRoots": [
-      "./node_modules/@types",
-      "./src/types"
-    ]
+    "noFallthroughCasesInSwitch": true
   },
   "include": [
     "src"
