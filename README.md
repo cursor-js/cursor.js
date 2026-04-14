@@ -20,12 +20,12 @@ npm install cursor.js
 
 ## Importing and Initialization
 
-Import the `Actor` class and initialize it with your desired options:
+Import the `Cursor` class and initialize it with your desired options:
 
 ```typescript
-import { Actor } from 'cursor.js';
+import { Cursor } from 'cursor.js';
 
-const actor = new Actor({
+const cursor = new Cursor({
   humanize: true,
   showIndicator: true,
   speed: 0.5,
@@ -38,7 +38,7 @@ Cursor.js provides a robust, chainable, and async-friendly promise-based API. Yo
 
 ```typescript
 // Chaining and async/await style support
-await actor
+await cursor
   .hover('#submit-btn')
   .wait(500)
   .click('#submit-btn')
@@ -60,10 +60,10 @@ We welcome contributions to `cursor.js`! Since this project is a Turborepo monor
 
 ## Architectural Overview
 
-- **Visual Layer (`src/core/Cursor.ts`)**: Renders a virtual mouse cursor (`#actor-cursor`) on the DOM using `position: absolute`. It seamlessly adapts to window scrolling and resizing, matching absolute coordinates `(pageX, pageY)`. Includes an "out of bounds" indicator for tracking the cursor when it scrolls outside the viewport.
-- **Engine & Queue (`src/Actor.ts`)**: A robust, chainable, and async-friendly promise-based action queue. Features declarative methods like `.hover()`, `.click()`, and `.type()`. Handles delays and humanized animation frames.
-- **Event Dispatcher (`src/core/EventDispatcher.ts`)**: Directly interfaces with DOM to dispatch real `MouseEvent` and `Event` classes. It triggers synthetic `mouseenter`/`mouseleave` to simulate hover states via CSS classes (`.actor-hover`). Also overrides the React 16+ Native value setter hack to trigger robust input/change simulation.
-- **Math Utilities (`src/core/utils.ts`)**: Contains algorithms (like Bezier curve logic) required for humanized sweeping and ease-out approximations.
+- **Visual Layer (`packages/core/src/core/GhostCursor.ts`)**: Renders a virtual mouse cursor (`#virtual-cursor`) on the DOM using `position: absolute`. It seamlessly adapts to window scrolling and resizing, matching absolute coordinates `(pageX, pageY)`. Includes an "out of bounds" indicator for tracking the cursor when it scrolls outside the viewport.
+- **Engine & Queue (`packages/core/src/Cursor.ts`)**: A robust, chainable, and async-friendly promise-based action queue. Features declarative methods like `.hover()`, `.click()`, and `.type()`. Handles delays and humanized animation frames.
+- **Event Dispatcher (`packages/core/src/core/EventDispatcher.ts`)**: Directly interfaces with DOM to dispatch real `MouseEvent` and `Event` classes. It triggers synthetic `mouseenter`/`mouseleave` to simulate hover states via CSS classes (`.cursor-hover`). Also overrides the React 16+ Native value setter hack to trigger robust input/change simulation.
+- **Math Utilities (`packages/core/src/core/utils.ts`)**: Contains algorithms (like Bezier curve logic) required for humanized sweeping and ease-out approximations.
 
 ## License
 
