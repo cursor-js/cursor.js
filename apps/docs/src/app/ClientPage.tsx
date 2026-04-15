@@ -115,7 +115,10 @@ export function ClientPage() {
       <main className="flex-1">
         <section className="container mx-auto flex flex-col items-center justify-center space-y-6 pt-24 pb-8 md:pt-7 text-center px-6">
           <div className="flex flex-col items-center space-y-8">
-            <div id="cursor-zero" className="size-36"></div>
+            {/* The cursor graphic at scale 5 is ~65x90. We offset the actual target to make the graphic visually centered in the 144x144 area. */}
+            <div className="relative w-20 h-26">
+              <div id="cursor-zero" className="absolute left-0 top-0" />
+            </div>
             <h1 className="text-6xl font-extrabold tracking-tight sm:text-7xl md:text-8xl lg:text-9xl">
               cursor.js
             </h1>
