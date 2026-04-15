@@ -1,5 +1,17 @@
 # docs
 
+## 0.2.0
+
+### Minor Changes
+
+- 1be3725: Added flow control functionality with `pause()`, `stop()`, `next()`, and `waitForEvent()` methods to Cursor.js for seamlessly pausing and resuming action queues.
+
+### Patch Changes
+
+- Updated dependencies [1be3725]
+- Updated dependencies [159d697]
+  - @cursor.js/core@0.2.0
+
 ## 0.1.1
 
 ### Patch Changes

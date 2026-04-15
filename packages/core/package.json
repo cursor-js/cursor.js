@@ -1,7 +1,7 @@
 {
   "name": "@cursor.js/core",
   "private": false,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "main": "./dist/cursor.umd.cjs",
   "module": "./dist/cursor.js",

@@ -1,5 +1,12 @@
 # @cursor.js/core
 
+## 0.2.0
+
+### Minor Changes
+
+- 1be3725: Added flow control functionality with `pause()`, `stop()`, `next()`, and `waitForEvent()` methods to Cursor.js for seamlessly pausing and resuming action queues.
+- 159d697: Added `.if()`, `.do()`, and `.until()` methods for robust sub-queue flow control. This prevents deadlocks and enables automated UI synchronization inside chains (like waiting for carousels or checking input values before typing).
+
 ## 0.1.0
 
 ### Minor Changes
