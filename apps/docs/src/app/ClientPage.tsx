@@ -56,17 +56,44 @@ export function ClientPage() {
     try {
       await actorRef.current.wait(500);
 
+      // Make sure carousel is at slide 1 using our new .until()
+      await actorRef.current.until(
+        () => {
+          // It's the first slide if the prev button is disabled
+          const prevBtn = document.querySelector('.carousel-prev');
+          return prevBtn?.hasAttribute('disabled') || false;
+        },
+        (c) => c.click('.carousel-prev').wait(500),
+      );
+
       // Slide 1: Fill out the form
       await actorRef.current
         .setSize(1)
-        .hover('#demo-email')
-        .wait(300)
-        .type('#demo-email', 'hello@cursor.js', { delay: 60 } as any)
-        .wait(500)
-        .hover('#demo-password')
-        .wait(300)
-        .type('#demo-password', 'secret', { delay: 60 } as any)
-        .wait(600)
+        .if(
+          () =>
+            document.querySelector<HTMLInputElement>('#demo-email')?.value !== 'hello@cursor.js',
+          (c) =>
+            c
+              .hover('#demo-email')
+              .wait(300)
+              .do(() => {
+                setEmail('');
+              }) // Reset input natively first just in case
+              .type('#demo-email', 'hello@cursor.js', { delay: 60 } as any)
+              .wait(500),
+        )
+        .if(
+          () => document.querySelector<HTMLInputElement>('#demo-password')?.value !== 'secret',
+          (c) =>
+            c
+              .hover('#demo-password')
+              .wait(300)
+              .do(() => {
+                setPassword('');
+              })
+              .type('#demo-password', 'secret', { delay: 60 } as any)
+              .wait(600),
+        )
         .hover('#demo-submit')
         .wait(300)
         .click('#demo-submit')

@@ -112,4 +112,62 @@ describe('Cursor', () => {
 
     await expect(actor.hover('#non-existing')).rejects.toThrow('Element not found');
   });
+
+  describe('Flow Control', () => {
+    it('.do() executes custom async function in queue', async () => {
+      const actor = new Cursor({ humanize: false });
+      let counter = 0;
+
+      await actor
+        .wait(10)
+        .do(async (c) => {
+          expect(c).toBe(actor);
+          counter++;
+          await new Promise((r) => setTimeout(r, 10));
+        })
+        .wait(10);
+
+      expect(counter).toBe(1);
+    });
+
+    it('.if() executes actions only if condition is true', async () => {
+      const actor = new Cursor({ humanize: false });
+      let clicked = 0;
+      btn.addEventListener('click', () => clicked++);
+
+      await actor
+        .if(
+          () => false,
+          (c) => c.click('#test-btn'),
+        )
+        .if(
+          () => true,
+          (c) => c.click('#test-btn'),
+        )
+        .wait(10);
+
+      expect(clicked).toBe(1);
+    });
+
+    it('.until() loops condition and applies action when false', async () => {
+      const actor = new Cursor({ humanize: false });
+      let state = 0;
+      let clicked = 0;
+
+      btn.addEventListener('click', () => {
+        clicked++;
+        state++;
+      });
+
+      await actor
+        .until(
+          () => state >= 3,
+          (c) => c.click('#test-btn').wait(5),
+        )
+        .wait(10);
+
+      expect(state).toBe(3);
+      expect(clicked).toBe(3);
+    });
+  });
 });

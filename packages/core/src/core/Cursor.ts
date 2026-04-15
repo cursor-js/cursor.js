@@ -126,6 +126,81 @@ export class Cursor {
     return this.enqueue(() => new Promise((resolve) => setTimeout(resolve, ms)));
   }
 
+  // Flow Control Methods
+  do(actionFn: (cursor: this) => void): this {
+    return this.enqueue(async () => {
+      const subQueue: (() => Promise<void>)[] = [];
+      const originalEnqueue = this.enqueue;
+
+      // Override enqueue temporarily to push to subQueue
+      this.enqueue = (task: () => Promise<void>): this => {
+        subQueue.push(task);
+        return this;
+      };
+
+      try {
+        actionFn(this);
+        for (const task of subQueue) {
+          await task();
+        }
+      } finally {
+        this.enqueue = originalEnqueue; // Restore
+      }
+    });
+  }
+
+  if(conditionFn: () => boolean, actionFn: (cursor: this) => void): this {
+    return this.enqueue(async () => {
+      if (conditionFn()) {
+        const subQueue: (() => Promise<void>)[] = [];
+        const originalEnqueue = this.enqueue;
+
+        this.enqueue = (task: () => Promise<void>): this => {
+          subQueue.push(task);
+          return this;
+        };
+
+        try {
+          actionFn(this);
+          for (const task of subQueue) {
+            await task();
+          }
+        } finally {
+          this.enqueue = originalEnqueue;
+        }
+      }
+    });
+  }
+
+  until(conditionFn: () => boolean, actionFn: (cursor: this) => void): this {
+    return this.enqueue(async () => {
+      const checkAndRun = async (): Promise<void> => {
+        if (!conditionFn()) {
+          const subQueue: (() => Promise<void>)[] = [];
+          const originalEnqueue = this.enqueue;
+
+          this.enqueue = (task: () => Promise<void>): this => {
+            subQueue.push(task);
+            return this;
+          };
+
+          try {
+            actionFn(this);
+            for (const task of subQueue) {
+              await task();
+            }
+          } finally {
+            this.enqueue = originalEnqueue;
+          }
+
+          await new Promise((r) => setTimeout(r, 0));
+          await checkAndRun();
+        }
+      };
+      await checkAndRun();
+    });
+  }
+
   setSize(scale: number): this {
     return this.enqueue(async () => {
       this.cursor.setSize(scale);
