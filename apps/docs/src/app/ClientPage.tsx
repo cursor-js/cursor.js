@@ -32,80 +32,52 @@ export function ClientPage() {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    const cursor = new Cursor({ humanize: true, speed: 0.5 }).use(new IndicatorPlugin());
-    actorRef.current = cursor;
+    const c = new Cursor({ humanize: true, speed: 0.5 }).use(new IndicatorPlugin());
+    actorRef.current = c;
 
-    // Set initial position immediately over the title
-    setTimeout(() => {
-      cursor.setSize(5).move('#cursor-zero');
-    }, 100);
-
-    return () => {
-      cursor.destroy();
-    };
-  }, []);
-
-  const runDemo = async () => {
-    if (!actorRef.current || demoState === 'running') return;
-
-    setDemoState('running');
-    setSubmitted(false);
-    setEmail('');
-    setPassword('');
-
-    try {
-      await actorRef.current.wait(500);
-
-      // Make sure carousel is at slide 1 using our new .until()
-      await actorRef.current.until(
-        () => {
-          // It's the first slide if the prev button is disabled
-          const prevBtn = document.querySelector('.carousel-prev');
-          return prevBtn?.hasAttribute('disabled') || false;
-        },
-        (c) => c.click('.carousel-prev').wait(500),
-      );
-
-      // Slide 1: Fill out the form
-      await actorRef.current
+    // Wrap the repeatable scenario in a function and link recursively
+    const buildDemoSequence = () => {
+      c.stop()
+        .do(() => setDemoState('running'))
+        .wait(500)
+        .until(
+          () => {
+            const prevBtn = document.querySelector('.carousel-prev');
+            return prevBtn?.hasAttribute('disabled') || false;
+          },
+          (ctx) => ctx.click('.carousel-prev').wait(500),
+        )
         .setSize(1)
         .if(
           () =>
             document.querySelector<HTMLInputElement>('#demo-email')?.value !== 'hello@cursor.js',
-          (c) =>
-            c
+          (ctx) =>
+            ctx
               .hover('#demo-email')
               .wait(300)
-              .do(() => {
-                setEmail('');
-              }) // Reset input natively first just in case
+              .do(() => setEmail(''))
               .type('#demo-email', 'hello@cursor.js', { delay: 60 } as any)
               .wait(500),
         )
         .if(
           () => document.querySelector<HTMLInputElement>('#demo-password')?.value !== 'secret',
-          (c) =>
-            c
+          (ctx) =>
+            ctx
               .hover('#demo-password')
               .wait(300)
-              .do(() => {
-                setPassword('');
-              })
+              .do(() => setPassword(''))
               .type('#demo-password', 'secret', { delay: 60 } as any)
               .wait(600),
         )
         .hover('#demo-submit')
         .wait(300)
         .click('#demo-submit')
-        .wait(1000);
-
-      setSubmitted(true);
-
-      // Navigate to Slide 2 using Carousel Next button
-      await actorRef.current.hover('.carousel-next').wait(400).click('.carousel-next').wait(1000);
-
-      // Slide 2: Click Accordion
-      await actorRef.current
+        .wait(1000)
+        .do(() => setSubmitted(true))
+        .hover('.carousel-next')
+        .wait(400)
+        .click('.carousel-next')
+        .wait(1000)
         .hover('#demo-accordion-1')
         .wait(400)
         .click('#demo-accordion-1')
@@ -115,14 +87,27 @@ export function ClientPage() {
         .click('#demo-accordion-2')
         .wait(1000)
         .hover('#cursor-zero')
-        .setSize(5);
+        .setSize(5)
+        .do(() => {
+          setDemoState('done');
+          setTimeout(() => setDemoState('idle'), 3000);
+        })
+        .do(buildDemoSequence); // Re-queue the scenario at the end
+    };
 
-      setDemoState('done');
-      setTimeout(() => setDemoState('idle'), 3000);
-    } catch (err) {
-      console.error('Demo interrupted', err);
-      setDemoState('idle');
-    }
+    c.wait(100).setSize(5).move('#cursor-zero').do(buildDemoSequence);
+
+    return () => {
+      c.destroy();
+    };
+  }, []);
+
+  const runDemo = () => {
+    if (!actorRef.current || demoState === 'running') return;
+    setSubmitted(false);
+    setEmail('');
+    setPassword('');
+    actorRef.current.next();
   };
 
   return (

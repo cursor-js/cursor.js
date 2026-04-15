@@ -169,5 +169,49 @@ describe('Cursor', () => {
       expect(state).toBe(3);
       expect(clicked).toBe(3);
     });
+
+    it('.pause() stops the queue until .next() is called, .stop() is an alias', async () => {
+      const actor = new Cursor({ humanize: false });
+      let counter = 0;
+
+      actor
+        .wait(10)
+        .pause()
+        .do(() => counter++)
+        .wait(10)
+        .stop()
+        .do(() => counter++);
+
+      // After a short delay, counter should still be 0 because it's paused
+      await new Promise((r) => setTimeout(r, 50));
+      expect(counter).toBe(0);
+
+      actor.next(); // Resume from pause
+      await new Promise((r) => setTimeout(r, 50));
+      expect(counter).toBe(1);
+
+      actor.next(); // Resume from stop
+      await new Promise((r) => setTimeout(r, 50));
+      expect(counter).toBe(2);
+    });
+
+    it('.waitForEvent() pauses the queue until the specified event is dispatched', async () => {
+      const actor = new Cursor({ humanize: false });
+      let counter = 0;
+
+      actor.waitForEvent('#test-btn', 'custom-event').do(() => counter++);
+
+      // Should not increment until event fires
+      await new Promise((r) => setTimeout(r, 50));
+      expect(counter).toBe(0);
+
+      // Dispatch event
+      const btn = document.getElementById('test-btn');
+      btn?.dispatchEvent(new Event('custom-event'));
+
+      // Should now resume and increment
+      await new Promise((r) => setTimeout(r, 50));
+      expect(counter).toBe(1);
+    });
   });
 });

@@ -13,6 +13,8 @@ export class Cursor {
   private options: CursorOptions;
   private promise: Promise<void> = Promise.resolve();
   private plugins: CursorPlugin[] = [];
+  private isPaused = false;
+  private nextResolver: (() => void) | null = null;
 
   constructor(options: CursorOptions = {}) {
     this.options = {
@@ -127,6 +129,48 @@ export class Cursor {
   }
 
   // Flow Control Methods
+  pause(): this {
+    return this.enqueue(() => {
+      this.isPaused = true;
+      return new Promise<void>((resolve) => {
+        this.nextResolver = resolve;
+      });
+    });
+  }
+
+  stop(): this {
+    return this.pause();
+  }
+
+  next(): void {
+    if (this.isPaused && this.nextResolver) {
+      this.isPaused = false;
+      this.nextResolver();
+      this.nextResolver = null;
+    }
+  }
+
+  waitForEvent(selector: string | Element, eventName: string): this {
+    return this.enqueue(() => {
+      return new Promise<void>((resolve) => {
+        const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
+
+        if (!element) {
+          console.warn(`Element not found for waitForEvent: ${selector}`);
+          resolve();
+          return;
+        }
+
+        const handler = () => {
+          element.removeEventListener(eventName, handler);
+          resolve();
+        };
+
+        element.addEventListener(eventName, handler);
+      });
+    });
+  }
+
   do(actionFn: (cursor: this) => void): this {
     return this.enqueue(async () => {
       const subQueue: (() => Promise<void>)[] = [];
