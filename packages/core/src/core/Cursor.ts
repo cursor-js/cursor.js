@@ -128,6 +128,35 @@ export class Cursor {
     return this.enqueue(() => new Promise((resolve) => setTimeout(resolve, ms)));
   }
 
+  setSize(scale: number): this {
+    return this.enqueue(async () => {
+      this.cursor.setSize(scale);
+    });
+  }
+
+  move(selectorOrX: string | Element | number, y?: number): this {
+    return this.enqueue(async () => {
+      let targetX: number;
+      let targetY: number;
+
+      if (typeof selectorOrX === 'number' && typeof y === 'number') {
+        targetX = selectorOrX;
+        targetY = y;
+      } else {
+        const element =
+          typeof selectorOrX === 'string' ? document.querySelector(selectorOrX) : selectorOrX;
+        if (!element || !(element instanceof Element))
+          throw new Error(`Element not found: ${selectorOrX}`);
+
+        const rect = element.getBoundingClientRect();
+        targetX = rect.left + window.scrollX + rect.width / 2;
+        targetY = rect.top + window.scrollY + rect.height / 2;
+      }
+
+      this.cursor.moveTo(targetX, targetY);
+    });
+  }
+
   private async moveGhostCursorTo(targetX: number, targetY: number) {
     this.plugins.forEach((p) => p.onMoveStart?.(targetX, targetY));
 

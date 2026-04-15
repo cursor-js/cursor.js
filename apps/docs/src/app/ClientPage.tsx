@@ -34,6 +34,12 @@ export function ClientPage() {
   useEffect(() => {
     const cursor = new Cursor({ humanize: true, speed: 0.5, showIndicator: true });
     actorRef.current = cursor;
+
+    // Set initial position immediately over the title
+    setTimeout(() => {
+      cursor.setSize(5).move('#cursor-zero');
+    }, 100);
+
     return () => {
       cursor.destroy();
     };
@@ -52,6 +58,7 @@ export function ClientPage() {
 
       // Slide 1: Fill out the form
       await actorRef.current
+        .setSize(1)
         .hover('#demo-email')
         .wait(300)
         .type('#demo-email', 'hello@cursor.js', { delay: 60 } as any)
@@ -79,7 +86,9 @@ export function ClientPage() {
         .hover('#demo-accordion-2')
         .wait(400)
         .click('#demo-accordion-2')
-        .wait(1000);
+        .wait(1000)
+        .hover('#cursor-zero')
+        .setSize(5);
 
       setDemoState('done');
       setTimeout(() => setDemoState('idle'), 3000);
@@ -92,8 +101,9 @@ export function ClientPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <main className="flex-1">
-        <section className="container mx-auto flex flex-col items-center justify-center space-y-6 pt-24 pb-8 md:pt-32 text-center px-6">
+        <section className="container mx-auto flex flex-col items-center justify-center space-y-6 pt-24 pb-8 md:pt-7 text-center px-6">
           <div className="flex flex-col items-center space-y-8">
+            <div id="cursor-zero" className="size-36"></div>
             <h1 className="text-6xl font-extrabold tracking-tight sm:text-7xl md:text-8xl lg:text-9xl">
               cursor.js
             </h1>
@@ -102,7 +112,10 @@ export function ClientPage() {
             <Button size="lg" onClick={runDemo} disabled={demoState === 'running'}>
               {demoState === 'running' ? 'Demo is running...' : 'Run Live Demo'}
             </Button>
-            <Link href="https://github.com/cihad/cursor.js" className={buttonVariants({ size: 'lg', variant: 'outline' })}>
+            <Link
+              href="https://github.com/cihad/cursor.js"
+              className={buttonVariants({ size: 'lg', variant: 'outline' })}
+            >
               GitHub
             </Link>
           </div>
@@ -159,7 +172,11 @@ export function ClientPage() {
                         Shadcn elements.
                       </p>
 
-                      <Accordion type="single" collapsible className="w-full max-w-lg border px-4 rounded-lg bg-background">
+                      <Accordion
+                        type="single"
+                        collapsible
+                        className="w-full max-w-lg border px-4 rounded-lg bg-background"
+                      >
                         <AccordionItem value="item-1">
                           <AccordionTrigger id="demo-accordion-1">
                             Is it accessible?

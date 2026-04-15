@@ -22,7 +22,16 @@ describe('GhostCursor', () => {
     expect(cursor.x).toBe(100);
     expect(cursor.y).toBe(200);
     // Absolute position check
-    expect(cursor.el.style.transform).toBe('translate(100px, 200px)');
+    expect(cursor.el.style.transform).toBe('translate(100px, 200px) scale(1)');
+  });
+
+  it('can scale the cursor size', () => {
+    const cursor = new GhostCursor();
+    cursor.setSize(2.5);
+    cursor.moveTo(100, 200);
+
+    expect(cursor.el.style.transform).toBe('translate(100px, 200px) scale(2.5)');
+    expect(cursor.scale).toBe(2.5);
   });
 
   it('shows out-of-bounds indicator strictly when out of viewport', () => {

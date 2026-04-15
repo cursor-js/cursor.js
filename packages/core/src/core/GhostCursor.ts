@@ -7,12 +7,13 @@ export class GhostCursor {
   public indicator: HTMLDivElement;
   public x: number = 0;
   public y: number = 0;
+  public scale: number = 1;
   private showIndicator: boolean;
 
   constructor(options: GhostCursorOptions = {}) {
     this.showIndicator = options.showIndicator || false;
 
-    this.el = document.createElement("div");
+    this.el = document.createElement('div');
     this.el.style.cssText = `
       position: absolute;
       top: 0; left: 0;
@@ -31,12 +32,12 @@ export class GhostCursor {
       <path d="M5.5 3L18.5 16H10.5L7 21L5.5 3Z" fill="white" stroke="black" stroke-width="1.5" stroke-linejoin="round"/>
     </svg>`;
 
-    this.el.style.background = "none";
-    this.el.style.boxShadow = "none";
+    this.el.style.background = 'none';
+    this.el.style.boxShadow = 'none';
 
     document.body.appendChild(this.el);
 
-    this.indicator = document.createElement("div");
+    this.indicator = document.createElement('div');
     this.indicator.style.cssText = `
       position: fixed;
       width: 40px; height: 6px;
@@ -51,8 +52,8 @@ export class GhostCursor {
     `;
     document.body.appendChild(this.indicator);
 
-    window.addEventListener("scroll", this.updateIndicator);
-    window.addEventListener("resize", this.updateIndicator);
+    window.addEventListener('scroll', this.updateIndicator);
+    window.addEventListener('resize', this.updateIndicator);
   }
 
   private updateIndicator = () => {
@@ -71,26 +72,31 @@ export class GhostCursor {
 
     if (clientY < 0) {
       // GhostCursor is above the viewport
-      this.indicator.style.top = "6px";
-      this.indicator.style.bottom = "auto";
+      this.indicator.style.top = '6px';
+      this.indicator.style.bottom = 'auto';
       this.indicator.style.left = `${Math.max(20, Math.min(vWidth - 20, clientX))}px`;
       isVisible = true;
     } else if (clientY > vHeight) {
       // GhostCursor is below the viewport
-      this.indicator.style.top = "auto";
-      this.indicator.style.bottom = "6px";
+      this.indicator.style.top = 'auto';
+      this.indicator.style.bottom = '6px';
       this.indicator.style.left = `${Math.max(20, Math.min(vWidth - 20, clientX))}px`;
       isVisible = true;
     }
 
-    this.indicator.style.opacity = isVisible ? "1" : "0";
+    this.indicator.style.opacity = isVisible ? '1' : '0';
   };
+
+  setSize(scale: number) {
+    this.scale = scale;
+    this.el.style.transform = `translate(${this.x}px, ${this.y}px) scale(${this.scale})`;
+  }
 
   moveTo(pageX: number, pageY: number) {
     this.x = pageX;
     this.y = pageY;
     // position relative to document page
-    this.el.style.transform = `translate(${pageX}px, ${pageY}px)`;
+    this.el.style.transform = `translate(${pageX}px, ${pageY}px) scale(${this.scale})`;
     this.updateIndicator();
   }
 
@@ -101,7 +107,7 @@ export class GhostCursor {
     if (this.indicator && this.indicator.parentNode) {
       this.indicator.parentNode.removeChild(this.indicator);
     }
-    window.removeEventListener("scroll", this.updateIndicator);
-    window.removeEventListener("resize", this.updateIndicator);
+    window.removeEventListener('scroll', this.updateIndicator);
+    window.removeEventListener('resize', this.updateIndicator);
   }
 }
