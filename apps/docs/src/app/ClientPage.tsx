@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { Cursor } from '@cursor.js/core';
+import { Cursor, IndicatorPlugin } from '@cursor.js/core';
 import Link from 'next/link';
 
 import {
@@ -32,7 +32,7 @@ export function ClientPage() {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    const cursor = new Cursor({ humanize: true, speed: 0.5, showIndicator: true });
+    const cursor = new Cursor({ humanize: true, speed: 0.5 }).use(new IndicatorPlugin());
     actorRef.current = cursor;
 
     // Set initial position immediately over the title
