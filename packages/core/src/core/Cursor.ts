@@ -6,7 +6,6 @@ import type { CursorPlugin } from '../plugins/CursorPlugin';
 export interface CursorOptions {
   speed?: number; // 0 to 1
   humanize?: boolean; // Default true
-  showIndicator?: boolean; // Out of bounds indicator
 }
 
 export class Cursor {
@@ -19,10 +18,9 @@ export class Cursor {
     this.options = {
       speed: 0.5,
       humanize: true,
-      showIndicator: false,
       ...options,
     };
-    this.cursor = new GhostCursor({ showIndicator: this.options.showIndicator });
+    this.cursor = new GhostCursor();
   }
 
   use(plugin: CursorPlugin): this {
@@ -154,6 +152,7 @@ export class Cursor {
       }
 
       this.cursor.moveTo(targetX, targetY);
+      this.plugins.forEach((p) => p.onMove?.(targetX, targetY));
     });
   }
 
@@ -164,10 +163,12 @@ export class Cursor {
       const points = generateHumanPath(this.cursor.x, this.cursor.y, targetX, targetY);
       for (const point of points) {
         this.cursor.moveTo(point.x, point.y);
+        this.plugins.forEach((p) => p.onMove?.(point.x, point.y));
         await new Promise((r) => setTimeout(r, 16)); // Approx 60fps delay internally
       }
     } else {
       this.cursor.moveTo(targetX, targetY);
+      this.plugins.forEach((p) => p.onMove?.(targetX, targetY));
     }
   }
 
