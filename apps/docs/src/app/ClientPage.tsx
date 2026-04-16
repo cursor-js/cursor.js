@@ -86,7 +86,7 @@ export function ClientPage() {
         .wait(400)
         .click('#demo-accordion-2')
         .wait(1000)
-        .hover('#cursor-zero')
+        .hover('#cursor-beginning')
         .setSize(5)
         .do(() => {
           setDemoState('done');
@@ -95,7 +95,7 @@ export function ClientPage() {
         .do(buildDemoSequence); // Re-queue the scenario at the end
     };
 
-    c.wait(100).setSize(5).move('#cursor-zero').do(buildDemoSequence);
+    c.wait(100).setSize(5).move('#cursor-beginning').do(buildDemoSequence);
 
     return () => {
       c.destroy();
@@ -117,7 +117,7 @@ export function ClientPage() {
           <div className="flex flex-col items-center space-y-8">
             {/* The cursor graphic at scale 5 is ~65x90. We offset the actual target to make the graphic visually centered in the 144x144 area. */}
             <div className="relative w-20 h-26">
-              <div id="cursor-zero" className="absolute left-0 top-0" />
+              <div id="cursor-beginning" className="absolute left-0 top-0 size-px" />
             </div>
             <h1 className="text-6xl font-extrabold tracking-tight sm:text-7xl md:text-8xl lg:text-9xl">
               cursor.js

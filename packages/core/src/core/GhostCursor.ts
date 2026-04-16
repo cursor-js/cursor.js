@@ -19,7 +19,7 @@ export class GhostCursor {
     `;
 
     // Default SVG GhostCursor design
-    this.el.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    this.el.innerHTML = `<svg width="24" height="24" viewBox="-1 -1 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M0 0 L 13 13 H 5 L 1.5 18 L 0 0 Z" fill="white" stroke="black" stroke-width="1.5" stroke-linejoin="round"/>
     </svg>`;
 
