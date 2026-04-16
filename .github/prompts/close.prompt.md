@@ -1,22 +1,36 @@
 ---
-description: 'Clean up local branches after a feature or refactor PR is merged'
-argument-hint: 'Optional: specify branch name to delete, or leave empty to delete current'
-tools: [execute]
+description: 'Check deployment, merge PR, and clean up local branches (Git Flow)'
+argument-hint: 'Optional: specify branch name to delete, or leave empty for current'
+tools: [execute, github/*, vscode/askQuestions]
 ---
 
-You are an expert Git assistant. Your goal is to clean up the local repository after a feature or refactor pull request has been merged.
+You are an expert Git Flow assistant. Your goal is to verify PR deployment, optionally merge the PR, and clean up the repository.
 
 Follow these exact steps sequentially:
 
-1. **Verify State**:
-   - Use the execute tool to run `git status` to determine the current branch.
-   - If the user provided a specific branch in "{{prompt}}", ensure we target that branch for deletion. If not, assume the current branch (if it's not `main`) is the one to be cleaned up.
+1. **Verify State & Deployment**:
+   - Use the `execute` tool (`git status`) to determine the current branch.
+   - Use `github` tools (like `github_get_pull_request` or checks API) to find the open Pull Request associated with this branch.
+   - Check the deployment statuses/checks on the PR (e.g., Vercel). Since deployment takes time, poll the status periodically using sleep (e.g., `sleep 10` in `execute` between checks) until it reports `success` or `failure`.
+   - Wait until a final state is reached.
 
-2. **Checkout Main, Pull and Cleanup**:
-   - Run the following combination command to switch to `main`, pull the latest changes from origin, safely delete the local feature branch, and clean up remote tracking references:
-     `git checkout main && git pull origin main && git branch -d <branch-name> && git remote prune origin`
-   - Note on Pruning: We use `git remote prune origin` here to simply remove deleted remote branch references from your local system without downloading new objects. In contrast, `git fetch --prune` would download new updates *and* clean up references.
-   - If Git complains about the branch not being fully merged (e.g. because of a squash merge on GitHub), ask the user for permission to force delete (`git branch -D <branch-name>`).
+2. **User Approval (vscode/askQuestions)**:
+   - Present the deployment status to the user.
+   - If the status is `success`, explicitly provide the Deployment Preview URL.
+   - Use the `vscode/askQuestions` tool to ask if they approve the deployment and wish to proceed.
+   - Question: "Deployment Status: [Status]. URL: [URL]. Do you approve merging this PR and deleting the branch locally and remotely?"
+   - Options: "Yes" and "No".
+   - **STOP HERE** and wait for the user's explicit decision. Do NOT proceed to step 3 without it.
 
-3. **Confirmation**:
-   - Confirm to the user that the branch has been successfully deleted locally and the repository is clean and up to date with `main`.
+3. **Merge Pull Request**:
+   - If the user selects "Yes", use the `github` tool to merge the associated Pull Request into the target base branch (e.g., `main` or `develop`).
+   - _Note_: If the user selects "No", stop the task completely so they can make changes.
+
+4. **Checkout Base, Pull and Cleanup**:
+   - Run the following command to switch to the base branch, pull the latest changes from origin, safely delete the local feature branch, and clean up remote tracking references:
+     `git checkout <base-branch> && git pull origin <base-branch> && git branch -d <branch-name> && git remote prune origin`
+   - _Note on Pruning_: We use `git remote prune origin` here to simply remove deleted remote branch references from your local system without downloading new objects.
+   - If Git complains about the branch not being fully merged locally, ask the user for permission to force delete (`git branch -D <branch-name>`).
+
+5. **Confirmation**:
+   - Confirm to the user that the PR has been merged, the branch has been successfully deleted locally, and the repository is clean.
