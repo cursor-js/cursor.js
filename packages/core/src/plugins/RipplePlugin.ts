@@ -29,6 +29,12 @@ export class RipplePlugin implements CursorPlugin {
     if (newState.rippleColor !== undefined) {
       this.options.color = newState.rippleColor;
     }
+    if (newState.rippleDuration !== undefined) {
+      this.options.duration = newState.rippleDuration;
+    }
+    if (newState.rippleSize !== undefined) {
+      this.options.size = newState.rippleSize;
+    }
   }
 
   onClickStart(_target: Element) {

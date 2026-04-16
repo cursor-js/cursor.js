@@ -26,9 +26,23 @@ export class Cursor {
     this.cursor = new GhostCursor();
   }
 
+  setConfig(newOptions: Partial<CursorOptions>): this {
+    this.options = { ...this.options, ...newOptions };
+    return this;
+  }
+
   use(plugin: CursorPlugin): this {
     this.plugins.push(plugin);
     plugin.install(this);
+    return this;
+  }
+
+  removePlugin(name: string): this {
+    const index = this.plugins.findIndex((p) => p.name === name);
+    if (index !== -1) {
+      this.plugins[index].onDestroy?.();
+      this.plugins.splice(index, 1);
+    }
     return this;
   }
 
@@ -279,12 +293,14 @@ export class Cursor {
   private async moveGhostCursorTo(targetX: number, targetY: number) {
     this.plugins.forEach((p) => p.onMoveStart?.(targetX, targetY));
 
+    const speedMultiplier = this.options.speed ?? 0.5;
+
     if (this.options.humanize) {
       const points = generateHumanPath(this.cursor.x, this.cursor.y, targetX, targetY);
       for (const point of points) {
         this.cursor.moveTo(point.x, point.y);
         this.plugins.forEach((p) => p.onMove?.(point.x, point.y));
-        await new Promise((r) => setTimeout(r, 16)); // Approx 60fps delay internally
+        await new Promise((r) => setTimeout(r, 16 / speedMultiplier)); // Speed-adjusted delay internally
       }
     } else {
       this.cursor.moveTo(targetX, targetY);
