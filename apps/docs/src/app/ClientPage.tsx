@@ -20,6 +20,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { Info } from 'lucide-react';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import {
   Accordion,
   AccordionContent,
@@ -398,7 +400,24 @@ export function ClientPage() {
                     dispatch({ type: 'TOGGLE_PLUGIN', plugin: 'ripple', enabled: checked })
                   }
                 >
-                  Ripple
+                  <div className="flex items-center gap-1.5">
+                    Ripple
+                    <HoverCard>
+                      <HoverCardTrigger asChild>
+                        <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                      </HoverCardTrigger>
+                      <HoverCardContent
+                        side="left"
+                        className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
+                      >
+                        <iframe
+                          src="/demos/ripple"
+                          className="w-full h-full border-0 overflow-hidden"
+                          scrolling="no"
+                        />
+                      </HoverCardContent>
+                    </HoverCard>
+                  </div>
                 </SettingsSectionHeader>
                 <SettingsSectionBody open={settings.plugins.ripple}>
                   <div className="flex flex-row items-center justify-between gap-2">
@@ -484,7 +503,24 @@ export function ClientPage() {
                     dispatch({ type: 'TOGGLE_PLUGIN', plugin: 'indicator', enabled: checked })
                   }
                 >
-                  Indicator
+                  <div className="flex items-center gap-1.5">
+                    Indicator
+                    <HoverCard>
+                      <HoverCardTrigger asChild>
+                        <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                      </HoverCardTrigger>
+                      <HoverCardContent
+                        side="left"
+                        className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
+                      >
+                        <iframe
+                          src="/demos/indicator"
+                          className="w-full h-full border-0 overflow-hidden"
+                          scrolling="no"
+                        />
+                      </HoverCardContent>
+                    </HoverCard>
+                  </div>
                 </SettingsSectionHeader>
               </SettingsSection>
 
@@ -497,7 +533,24 @@ export function ClientPage() {
                     dispatch({ type: 'TOGGLE_PLUGIN', plugin: 'clickSound', enabled: checked })
                   }
                 >
-                  ClickSound
+                  <div className="flex items-center gap-1.5">
+                    ClickSound
+                    <HoverCard>
+                      <HoverCardTrigger asChild>
+                        <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                      </HoverCardTrigger>
+                      <HoverCardContent
+                        side="left"
+                        className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
+                      >
+                        <iframe
+                          src="/demos/clicksound"
+                          className="w-full h-full border-0 overflow-hidden"
+                          scrolling="no"
+                        />
+                      </HoverCardContent>
+                    </HoverCard>
+                  </div>
                 </SettingsSectionHeader>
               </SettingsSection>
 
@@ -510,7 +563,24 @@ export function ClientPage() {
                     dispatch({ type: 'TOGGLE_PLUGIN', plugin: 'logging', enabled: checked })
                   }
                 >
-                  Logging
+                  <div className="flex items-center gap-1.5">
+                    Logging
+                    <HoverCard>
+                      <HoverCardTrigger asChild>
+                        <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                      </HoverCardTrigger>
+                      <HoverCardContent
+                        side="left"
+                        className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
+                      >
+                        <iframe
+                          src="/demos/logging"
+                          className="w-full h-full border-0 overflow-hidden"
+                          scrolling="no"
+                        />
+                      </HoverCardContent>
+                    </HoverCard>
+                  </div>
                 </SettingsSectionHeader>
               </SettingsSection>
             </CardContent>
