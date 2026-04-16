@@ -3,4 +3,4 @@
 'docs': minor
 ---
 
-asdas
+feat(plugin): add configurable RipplePlugin to create a ripple visual effect on click
