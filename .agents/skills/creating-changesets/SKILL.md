@@ -1,11 +1,11 @@
 ---
 name: creating-changesets
-description: "Creates changesets for semantic versioning. Use when adding changesets, preparing releases, determining version bumps (patch/minor/major), generating changelog entries, or documenting breaking changes."
-allowed-tools: "Read, Grep, Glob, Write, Edit, Bash(git:*), Bash(npx changeset:*)"
+description: 'Creates changesets for semantic versioning. Use when adding changesets, preparing releases, determining version bumps (patch/minor/major), generating changelog entries, or documenting breaking changes.'
+allowed-tools: 'Read, Grep, Glob, Write, Edit, Bash(git:*), Bash(npx changeset:*)'
 metadata:
   author: Ollie Shop
   version: 1.0.0
-compatibility: "Claude Code with Node.js >=20, pnpm, TypeScript 5.5+"
+compatibility: 'Claude Code with Node.js >=20, pnpm, TypeScript 5.5+'
 ---
 
 # Changeset & Release Manager
@@ -24,21 +24,23 @@ Automate the creation of changesets following project conventions, ensuring prop
 ## What is a Changeset?
 
 A changeset is a markdown file in the `.changeset/` directory that describes:
+
 1. Which packages are affected
 2. What type of version bump (patch/minor/major)
 3. A description of the change
 
 ## Changeset Types
 
-| Type | When to Use | Version Change |
-|------|-------------|----------------|
-| `patch` | Bug fixes, documentation, refactoring, dependency updates | 1.0.0 → 1.0.1 |
-| `minor` | New features, non-breaking enhancements | 1.0.0 → 1.1.0 |
-| `major` | Breaking changes, API modifications | 1.0.0 → 2.0.0 |
+| Type    | When to Use                                               | Version Change |
+| ------- | --------------------------------------------------------- | -------------- |
+| `patch` | Bug fixes, documentation, refactoring, dependency updates | 1.0.0 → 1.0.1  |
+| `minor` | New features, non-breaking enhancements                   | 1.0.0 → 1.1.0  |
+| `major` | Breaking changes, API modifications                       | 1.0.0 → 2.0.0  |
 
 ## Decision Guide
 
 ### Use `patch` for:
+
 - Bug fixes that don't change behavior
 - Documentation updates
 - Internal refactoring (no API changes)
@@ -47,6 +49,7 @@ A changeset is a markdown file in the `.changeset/` directory that describes:
 - Code style/linting fixes
 
 ### Use `minor` for:
+
 - New features
 - New CLI commands
 - New configuration options
@@ -55,6 +58,7 @@ A changeset is a markdown file in the `.changeset/` directory that describes:
 - Non-breaking API additions
 
 ### Use `major` for:
+
 - Breaking configuration changes
 - Removed features or commands
 - Changed CLI interface
@@ -70,6 +74,7 @@ pnpm changeset
 ```
 
 Follow the prompts:
+
 1. Select affected packages (space to select)
 2. Choose bump type for each package
 3. Write a summary of changes
@@ -80,7 +85,7 @@ Create a file in `.changeset/` with a random name:
 
 ```markdown
 ---
-"@saleor/configurator": minor
+'@saleor/configurator': minor
 ---
 
 Add support for reference attributes with entityType field
@@ -94,12 +99,13 @@ Add support for reference attributes with entityType field
 
 ```markdown
 ---
-"package-name": patch|minor|major
+'package-name': patch|minor|major
 ---
 
 Short description of the change (shown in CHANGELOG)
 
 Optional longer description with:
+
 - Bullet points for details
 - Code examples if needed
 - Migration instructions for breaking changes
@@ -142,17 +148,18 @@ npx changeset version --dry-run
 
 ## Common Mistakes
 
-| Mistake | Issue | Fix |
-|---------|-------|-----|
-| Wrong bump type | Unexpected version | Review decision guide above |
-| Vague description | Poor CHANGELOG | Be specific about changes |
-| Missing changeset | No release notes | Always add before PR |
-| Multiple changesets | Fragmented notes | Combine related changes |
-| Not including context | Hard to understand | Explain *why* not just *what* |
+| Mistake               | Issue              | Fix                           |
+| --------------------- | ------------------ | ----------------------------- |
+| Wrong bump type       | Unexpected version | Review decision guide above   |
+| Vague description     | Poor CHANGELOG     | Be specific about changes     |
+| Missing changeset     | No release notes   | Always add before PR          |
+| Multiple changesets   | Fragmented notes   | Combine related changes       |
+| Not including context | Hard to understand | Explain _why_ not just _what_ |
 
 ## Common Scenarios
 
 For detailed examples of common scenarios including:
+
 - Bug fixes, new features, breaking changes
 - Multiple related changes
 - Consolidated changesets

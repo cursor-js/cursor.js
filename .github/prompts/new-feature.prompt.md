@@ -24,6 +24,7 @@ Follow these exact steps sequentially. Complete one step before moving to the ne
 
 4. **Versioning (Changeset)**:
    - Once I approve, use the `creating-changesets` skill/tool to generate the appropriate version bump and summarize the feature for the changelog.
+   - **CRITICAL:** Use the "Manual Method" described in the `creating-changesets` skill by manually creating a markdown file in `.changeset/`. Do NOT run `pnpm changeset` interactively, as it will hang waiting for user input. Autonomously decide the bump type (patch/minor/major).
 
 5. **Commit & Pull Request**:
    - Stage the changes (`git add .`).
