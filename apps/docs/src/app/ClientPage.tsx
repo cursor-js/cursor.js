@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useReducer } from 'react';
+import { useEffect, useRef, useState, useReducer, ReactNode } from 'react';
 import {
   Cursor,
   IndicatorPlugin,
@@ -27,6 +27,12 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import {
+  SettingsSection,
+  SettingsSectionHeader,
+  SettingsSectionBody,
+} from '@/components/app/settings-section';
 
 type SettingsState = {
   coreConfig: {
@@ -341,188 +347,179 @@ export function ClientPage() {
           </div>
 
           {/* Right Side: Settings */}
-          <aside className="w-full md:w-80 shrink-0 rounded-xl border bg-card text-card-foreground shadow p-5 space-y-5">
-            <h2 className="font-semibold text-lg">Cursor Settings</h2>
-
-            {/* Core Settings Section */}
-            <div className="space-y-3 pt-1 pb-3 border-b">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="enable-humanize" className="text-sm font-medium cursor-pointer">
-                  humanize
-                </Label>
-                <Switch
-                  id="enable-humanize"
-                  checked={settings.coreConfig.humanize}
-                  onCheckedChange={(checked) =>
-                    dispatch({ type: 'UPDATE_CORE_CONFIG', key: 'humanize', value: checked })
-                  }
-                />
-              </div>
-              <div className="flex items-center justify-between gap-2 mt-2">
-                <Label htmlFor="core-speed" className="text-sm font-medium">
-                  speed
-                </Label>
-                <div className="flex items-center gap-1">
-                  <Input
-                    id="core-speed"
-                    type="number"
-                    min={0.1}
-                    max={5}
-                    step={0.1}
-                    value={settings.coreConfig.speed}
-                    onChange={(e) =>
-                      dispatch({
-                        type: 'UPDATE_CORE_CONFIG',
-                        key: 'speed',
-                        value: Number(e.target.value),
-                      })
+          <Card className="min-w-xs">
+            <CardHeader>Cursor Settings</CardHeader>
+            <CardContent>
+              {/* Core Settings Section */}
+              <div className="space-y-3 pb-3 border-b">
+                <SettingsSection>
+                  <SettingsSectionHeader
+                    id="enable-humanize"
+                    title="humanize"
+                    checked={settings.coreConfig.humanize}
+                    onCheckedChange={(checked) =>
+                      dispatch({ type: 'UPDATE_CORE_CONFIG', key: 'humanize', value: checked })
                     }
-                    className="h-7 w-16 text-right px-2 text-xs"
                   />
-                  <span className="text-xs text-muted-foreground">x</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Ripple Plugin Section */}
-            <div className="space-y-3 pt-1">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="enable-ripple" className="text-sm font-medium cursor-pointer">
-                  Ripple
-                </Label>
-                <Switch
-                  id="enable-ripple"
-                  checked={settings.plugins.ripple}
-                  onCheckedChange={(checked) =>
-                    dispatch({ type: 'TOGGLE_PLUGIN', plugin: 'ripple', enabled: checked })
-                  }
-                />
-              </div>
-              {settings.plugins.ripple && (
-                <div className="space-y-3 pl-3 border-l-2 ml-1 border-muted">
-                  <div className="flex flex-row items-center justify-between gap-2">
-                    <Label htmlFor="ripple-color" className="text-xs font-normal">
-                      color
-                    </Label>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono text-muted-foreground">
-                        {settings.rippleConfig.color}
-                      </span>
-                      <Input
-                        id="ripple-color"
-                        type="color"
-                        value={settings.rippleConfig.color}
-                        onChange={(e) =>
-                          dispatch({
-                            type: 'UPDATE_RIPPLE_CONFIG',
-                            key: 'color',
-                            value: e.target.value,
-                          })
-                        }
-                        className="w-6 h-6 p-0 border-0 cursor-pointer rounded-full overflow-hidden"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex flex-row items-center justify-between gap-2">
-                    <Label htmlFor="ripple-duration" className="text-xs font-normal">
-                      duration
+                  <div className="flex items-center justify-between gap-2 mt-2">
+                    <Label htmlFor="core-speed" className="text-sm font-medium">
+                      speed
                     </Label>
                     <div className="flex items-center gap-1">
                       <Input
-                        id="ripple-duration"
+                        id="core-speed"
                         type="number"
-                        min={100}
-                        max={3000}
-                        step={100}
-                        value={settings.rippleConfig.duration}
+                        min={0.1}
+                        max={5}
+                        step={0.1}
+                        value={settings.coreConfig.speed}
                         onChange={(e) =>
                           dispatch({
-                            type: 'UPDATE_RIPPLE_CONFIG',
-                            key: 'duration',
+                            type: 'UPDATE_CORE_CONFIG',
+                            key: 'speed',
                             value: Number(e.target.value),
                           })
                         }
                         className="h-7 w-16 text-right px-2 text-xs"
                       />
-                      <span className="text-xs text-muted-foreground">ms</span>
+                      <span className="text-xs text-muted-foreground">x</span>
                     </div>
                   </div>
-                  <div className="flex flex-row items-center justify-between gap-2">
-                    <Label htmlFor="ripple-size" className="text-xs font-normal">
-                      size
-                    </Label>
-                    <div className="flex items-center gap-1">
-                      <Input
-                        id="ripple-size"
-                        type="number"
-                        min={10}
-                        max={200}
-                        step={10}
-                        value={settings.rippleConfig.size}
-                        onChange={(e) =>
-                          dispatch({
-                            type: 'UPDATE_RIPPLE_CONFIG',
-                            key: 'size',
-                            value: Number(e.target.value),
-                          })
-                        }
-                        className="h-7 w-16 text-right px-2 text-xs"
-                      />
-                      <span className="text-xs text-muted-foreground">px</span>
+                </SettingsSection>
+              </div>
+
+              {/* Ripple Plugin Section */}
+              <div className="pt-1">
+                <SettingsSection>
+                  <SettingsSectionHeader
+                    id="enable-ripple"
+                    title="Ripple"
+                    checked={settings.plugins.ripple}
+                    onCheckedChange={(checked) =>
+                      dispatch({ type: 'TOGGLE_PLUGIN', plugin: 'ripple', enabled: checked })
+                    }
+                  />
+                  <SettingsSectionBody open={settings.plugins.ripple}>
+                    <div className="space-y-3 pl-3 mt-3 border-l-2 ml-1 border-muted">
+                      <div className="flex flex-row items-center justify-between gap-2">
+                      <Label htmlFor="ripple-color" className="text-xs font-normal">
+                        color
+                      </Label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono text-muted-foreground">
+                          {settings.rippleConfig.color}
+                        </span>
+                        <Input
+                          id="ripple-color"
+                          type="color"
+                          value={settings.rippleConfig.color}
+                          onChange={(e) =>
+                            dispatch({
+                              type: 'UPDATE_RIPPLE_CONFIG',
+                              key: 'color',
+                              value: e.target.value,
+                            })
+                          }
+                          className="w-6 h-6 p-0 border-0 cursor-pointer rounded-full overflow-hidden"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-row items-center justify-between gap-2">
+                      <Label htmlFor="ripple-duration" className="text-xs font-normal">
+                        duration
+                      </Label>
+                      <div className="flex items-center gap-1">
+                        <Input
+                          id="ripple-duration"
+                          type="number"
+                          min={100}
+                          max={3000}
+                          step={100}
+                          value={settings.rippleConfig.duration}
+                          onChange={(e) =>
+                            dispatch({
+                              type: 'UPDATE_RIPPLE_CONFIG',
+                              key: 'duration',
+                              value: Number(e.target.value),
+                            })
+                          }
+                          className="h-7 w-16 text-right px-2 text-xs"
+                        />
+                        <span className="text-xs text-muted-foreground">ms</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-row items-center justify-between gap-2">
+                      <Label htmlFor="ripple-size" className="text-xs font-normal">
+                        size
+                      </Label>
+                      <div className="flex items-center gap-1">
+                        <Input
+                          id="ripple-size"
+                          type="number"
+                          min={10}
+                          max={200}
+                          step={10}
+                          value={settings.rippleConfig.size}
+                          onChange={(e) =>
+                            dispatch({
+                              type: 'UPDATE_RIPPLE_CONFIG',
+                              key: 'size',
+                              value: Number(e.target.value),
+                            })
+                          }
+                          className="h-7 w-16 text-right px-2 text-xs"
+                        />
+                        <span className="text-xs text-muted-foreground">px</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-
-            {/* Indicator Plugin Section */}
-            <div className="pt-3 border-t">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="enable-indicator" className="text-sm font-medium cursor-pointer">
-                  Indicator
-                </Label>
-                <Switch
-                  id="enable-indicator"
-                  checked={settings.plugins.indicator}
-                  onCheckedChange={(checked) =>
-                    dispatch({ type: 'TOGGLE_PLUGIN', plugin: 'indicator', enabled: checked })
-                  }
-                />
+                  </SettingsSectionBody>
+                </SettingsSection>
               </div>
-            </div>
 
-            {/* ClickSound Plugin Section */}
-            <div className="pt-3 border-t">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="enable-clicksound" className="text-sm font-medium cursor-pointer">
-                  ClickSound
-                </Label>
-                <Switch
-                  id="enable-clicksound"
-                  checked={settings.plugins.clickSound}
-                  onCheckedChange={(checked) =>
-                    dispatch({ type: 'TOGGLE_PLUGIN', plugin: 'clickSound', enabled: checked })
-                  }
-                />
+              {/* Indicator Plugin Section */}
+              <div className="pt-3 border-t">
+                <SettingsSection>
+                  <SettingsSectionHeader
+                    id="enable-indicator"
+                    title="Indicator"
+                    checked={settings.plugins.indicator}
+                    onCheckedChange={(checked) =>
+                      dispatch({ type: 'TOGGLE_PLUGIN', plugin: 'indicator', enabled: checked })
+                    }
+                  />
+                </SettingsSection>
               </div>
-            </div>
 
-            {/* Logging Plugin Section */}
-            <div className="pt-3 border-t">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="enable-logging" className="text-sm font-medium cursor-pointer">
-                  Logging
-                </Label>
-                <Switch
-                  id="enable-logging"
-                  checked={settings.plugins.logging}
-                  onCheckedChange={(checked) =>
-                    dispatch({ type: 'TOGGLE_PLUGIN', plugin: 'logging', enabled: checked })
-                  }
-                />
+              {/* ClickSound Plugin Section */}
+              <div className="pt-3 border-t">
+                <SettingsSection>
+                  <SettingsSectionHeader
+                    id="enable-clicksound"
+                    title="ClickSound"
+                    checked={settings.plugins.clickSound}
+                    onCheckedChange={(checked) =>
+                      dispatch({ type: 'TOGGLE_PLUGIN', plugin: 'clickSound', enabled: checked })
+                    }
+                  />
+                </SettingsSection>
               </div>
-            </div>
-          </aside>
+
+              {/* Logging Plugin Section */}
+              <div className="pt-3 border-t">
+                <SettingsSection>
+                  <SettingsSectionHeader
+                    id="enable-logging"
+                    title="Logging"
+                    checked={settings.plugins.logging}
+                    onCheckedChange={(checked) =>
+                      dispatch({ type: 'TOGGLE_PLUGIN', plugin: 'logging', enabled: checked })
+                    }
+                  />
+                </SettingsSection>
+              </div>
+            </CardContent>
+          </Card>
         </section>
       </main>
     </div>
