@@ -27,8 +27,8 @@ Follow these exact steps sequentially:
    - _Note_: If the user selects "No", stop the task completely so they can make changes.
 
 4. **Checkout Base, Pull and Cleanup**:
-   - Run the following command to switch to the base branch, pull the latest changes from origin, safely delete the local feature branch, and clean up remote tracking references:
-     `git checkout <base-branch> && git pull origin <base-branch> && git branch -d <branch-name> && git remote prune origin`
+   - Run the following command to switch to the base branch, pull the latest changes from origin, safely delete the remote and local feature branches, and clean up remote tracking references:
+     `git checkout <base-branch> && git pull origin <base-branch> && (git push origin --delete <branch-name> || true) && git branch -d <branch-name> && git remote prune origin`
    - _Note on Pruning_: We use `git remote prune origin` here to simply remove deleted remote branch references from your local system without downloading new objects.
    - If Git complains about the branch not being fully merged locally, ask the user for permission to force delete (`git branch -D <branch-name>`).
 
