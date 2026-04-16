@@ -1,5 +1,11 @@
 # @cursor.js/core
 
+## 0.3.0
+
+### Minor Changes
+
+- 8c72e97: feat(plugin): add configurable RipplePlugin to create a ripple visual effect on click
+
 ## 0.2.0
 
 ### Minor Changes
