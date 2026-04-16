@@ -29,6 +29,10 @@ import {
 import { Switch } from '@/components/ui/switch';
 
 type SettingsState = {
+  coreConfig: {
+    humanize: boolean;
+    speed: number;
+  };
   plugins: {
     ripple: boolean;
     indicator: boolean;
@@ -45,12 +49,21 @@ type SettingsState = {
 type SettingsAction =
   | { type: 'TOGGLE_PLUGIN'; plugin: keyof SettingsState['plugins']; enabled: boolean }
   | {
+      type: 'UPDATE_CORE_CONFIG';
+      key: keyof SettingsState['coreConfig'];
+      value: string | number | boolean;
+    }
+  | {
       type: 'UPDATE_RIPPLE_CONFIG';
       key: keyof SettingsState['rippleConfig'];
       value: string | number;
     };
 
 const initialSettings: SettingsState = {
+  coreConfig: {
+    humanize: true,
+    speed: 0.5,
+  },
   plugins: {
     ripple: true,
     indicator: true,
@@ -68,6 +81,8 @@ function settingsReducer(state: SettingsState, action: SettingsAction): Settings
   switch (action.type) {
     case 'TOGGLE_PLUGIN':
       return { ...state, plugins: { ...state.plugins, [action.plugin]: action.enabled } };
+    case 'UPDATE_CORE_CONFIG':
+      return { ...state, coreConfig: { ...state.coreConfig, [action.key]: action.value } };
     case 'UPDATE_RIPPLE_CONFIG':
       return { ...state, rippleConfig: { ...state.rippleConfig, [action.key]: action.value } };
     default:
@@ -88,7 +103,10 @@ export function ClientPage() {
   const [settings, dispatch] = useReducer(settingsReducer, initialSettings);
 
   useEffect(() => {
-    const c = new Cursor({ humanize: true, speed: 0.5 });
+    const c = new Cursor({
+      humanize: settings.coreConfig.humanize,
+      speed: settings.coreConfig.speed,
+    });
     actorRef.current = c;
     let isActive = true;
 
@@ -170,7 +188,9 @@ export function ClientPage() {
     const c = actorRef.current;
     if (!c) return;
 
-    const { plugins, rippleConfig } = settings;
+    const { coreConfig, plugins, rippleConfig } = settings;
+
+    c.setConfig({ humanize: coreConfig.humanize, speed: coreConfig.speed });
 
     if (plugins.indicator) {
       c.use(new IndicatorPlugin());
@@ -324,6 +344,46 @@ export function ClientPage() {
           <aside className="w-full md:w-80 shrink-0 rounded-xl border bg-card text-card-foreground shadow p-5 space-y-5">
             <h2 className="font-semibold text-lg">Cursor Settings</h2>
 
+            {/* Core Settings Section */}
+            <div className="space-y-3 pt-1 pb-3 border-b">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="enable-humanize" className="text-sm font-medium cursor-pointer">
+                  humanize
+                </Label>
+                <Switch
+                  id="enable-humanize"
+                  checked={settings.coreConfig.humanize}
+                  onCheckedChange={(checked) =>
+                    dispatch({ type: 'UPDATE_CORE_CONFIG', key: 'humanize', value: checked })
+                  }
+                />
+              </div>
+              <div className="flex items-center justify-between gap-2 mt-2">
+                <Label htmlFor="core-speed" className="text-sm font-medium">
+                  speed
+                </Label>
+                <div className="flex items-center gap-1">
+                  <Input
+                    id="core-speed"
+                    type="number"
+                    min={0.1}
+                    max={5}
+                    step={0.1}
+                    value={settings.coreConfig.speed}
+                    onChange={(e) =>
+                      dispatch({
+                        type: 'UPDATE_CORE_CONFIG',
+                        key: 'speed',
+                        value: Number(e.target.value),
+                      })
+                    }
+                    className="h-7 w-16 text-right px-2 text-xs"
+                  />
+                  <span className="text-xs text-muted-foreground">x</span>
+                </div>
+              </div>
+            </div>
+
             {/* Ripple Plugin Section */}
             <div className="space-y-3 pt-1">
               <div className="flex items-center justify-between">
@@ -342,7 +402,7 @@ export function ClientPage() {
                 <div className="space-y-3 pl-3 border-l-2 ml-1 border-muted">
                   <div className="flex flex-row items-center justify-between gap-2">
                     <Label htmlFor="ripple-color" className="text-xs font-normal">
-                      Color
+                      color
                     </Label>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-mono text-muted-foreground">
@@ -365,7 +425,7 @@ export function ClientPage() {
                   </div>
                   <div className="flex flex-row items-center justify-between gap-2">
                     <Label htmlFor="ripple-duration" className="text-xs font-normal">
-                      Duration
+                      duration
                     </Label>
                     <div className="flex items-center gap-1">
                       <Input
@@ -389,7 +449,7 @@ export function ClientPage() {
                   </div>
                   <div className="flex flex-row items-center justify-between gap-2">
                     <Label htmlFor="ripple-size" className="text-xs font-normal">
-                      Size
+                      size
                     </Label>
                     <div className="flex items-center gap-1">
                       <Input
