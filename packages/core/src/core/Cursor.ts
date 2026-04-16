@@ -46,24 +46,6 @@ export class Cursor {
     return this;
   }
 
-  removePlugin(name: string): this {
-    const index = this.plugins.findIndex((p) => p.name === name);
-    if (index !== -1) {
-      this.plugins[index].onDestroy?.();
-      this.plugins.splice(index, 1);
-    }
-    return this;
-  }
-
-  removePlugin(name: string): this {
-    const index = this.plugins.findIndex((p) => p.name === name);
-    if (index !== -1) {
-      this.plugins[index].onDestroy?.();
-      this.plugins.splice(index, 1);
-    }
-    return this;
-  }
-
   public addStep(task: () => Promise<void>): this {
     return this.enqueue(task);
   }
