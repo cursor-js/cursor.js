@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { Cursor, IndicatorPlugin } from '@cursor.js/core';
+import { Cursor, IndicatorPlugin, RipplePlugin } from '@cursor.js/core';
 import Link from 'next/link';
 
 import {
@@ -32,7 +32,13 @@ export function ClientPage() {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    const c = new Cursor({ humanize: true, speed: 0.5 }).use(new IndicatorPlugin());
+    const c = new Cursor({ humanize: true, speed: 0.5 }).use(new IndicatorPlugin()).use(
+      new RipplePlugin({
+        color: 'rgba(59, 130, 246, 0.5)',
+        duration: 200,
+        size: 70,
+      }),
+    );
     actorRef.current = c;
 
     // Wrap the repeatable scenario in a function and link recursively
