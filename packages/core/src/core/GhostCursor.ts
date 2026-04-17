@@ -11,17 +11,16 @@ export class GhostCursor {
     this.el.style.cssText = `
       position: absolute;
       top: 0; left: 0;
-      width: 24px; height: 24px;
+      margin-top: -8px;
+      margin-left: -8px;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.5);
       pointer-events: none;
       z-index: 999999;
-      transform-origin: top left;
+      transform-origin: center center;
       transition: transform 0.05s linear;
     `;
-
-    // Default SVG GhostCursor design
-    this.el.innerHTML = `<svg width="24" height="24" viewBox="-1 -1 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0 0 L 13 13 H 5 L 1.5 18 L 0 0 Z" fill="white" stroke="black" stroke-width="1.5" stroke-linejoin="round"/>
-    </svg>`;
 
     document.body.appendChild(this.el);
   }

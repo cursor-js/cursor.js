@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useReducer, ReactNode } from 'react';
 import {
   Cursor,
+  ThemePlugin,
   IndicatorPlugin,
   RipplePlugin,
   ClickSoundPlugin,
@@ -29,6 +30,14 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Switch } from '@/components/ui/switch';
+import {
+  RippleDemo,
+  ThemeDemo,
+  IndicatorDemo,
+  ClickSoundDemo,
+  LoggingDemo,
+} from '@/components/app/PluginDemos';
+
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
@@ -43,6 +52,7 @@ type SettingsState = {
     speed: number;
   };
   plugins: {
+    theme: boolean;
     ripple: boolean;
     indicator: boolean;
     clickSound: boolean;
@@ -74,6 +84,7 @@ const initialSettings: SettingsState = {
     speed: 0.5,
   },
   plugins: {
+    theme: true,
     ripple: true,
     indicator: true,
     clickSound: false,
@@ -200,6 +211,12 @@ export function ClientPage() {
     const { coreConfig, plugins, rippleConfig } = settings;
 
     c.setConfig({ humanize: coreConfig.humanize, speed: coreConfig.speed });
+
+    if (plugins.theme) {
+      c.use(new ThemePlugin());
+    } else {
+      c.removePlugin('ThemePlugin');
+    }
 
     if (plugins.indicator) {
       c.use(new IndicatorPlugin());
@@ -391,6 +408,36 @@ export function ClientPage() {
                   </InputGroup>
                 </div>
               </div>
+
+              {/* Theme Plugin Section */}
+              <SettingsSection>
+                <SettingsSectionHeader
+                  id="enable-theme"
+                  checked={settings.plugins.theme}
+                  onCheckedChange={(checked) =>
+                    dispatch({ type: 'TOGGLE_PLUGIN', plugin: 'theme', enabled: checked })
+                  }
+                >
+                  <div className="flex items-center gap-1.5">
+                    Default Theme
+                    <HoverCard>
+                      <HoverCardTrigger asChild>
+                        <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                      </HoverCardTrigger>
+                      <HoverCardContent
+                        side="left"
+                        className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
+                      >
+                        <iframe
+                          src="/demos/theme"
+                          className="w-full h-full border-0 overflow-hidden"
+                          scrolling="no"
+                        />
+                      </HoverCardContent>
+                    </HoverCard>
+                  </div>
+                </SettingsSectionHeader>
+              </SettingsSection>
 
               {/* Ripple Plugin Section */}
               <SettingsSection>

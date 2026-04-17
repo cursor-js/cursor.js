@@ -44,7 +44,7 @@ describe('RipplePlugin', () => {
 
     plugin.onClickStart(target);
 
-    const ripple = document.body.querySelector('div[style*="border-radius: 50%"]');
+    const ripple = document.body.querySelector('div[style*="width: 100px"]');
     expect(ripple).toBeTruthy();
     if (ripple instanceof HTMLElement) {
       expect(ripple.style.backgroundColor).toBe('rgba(255, 0, 0, 0.5)');
@@ -65,12 +65,12 @@ describe('RipplePlugin', () => {
 
     plugin.onClickStart(target);
 
-    let ripple = document.body.querySelector('div[style*="border-radius: 50%"]');
+    let ripple = document.body.querySelector('div[style*="width: 100px"]');
     expect(ripple).toBeTruthy();
 
     vi.advanceTimersByTime(550);
 
-    ripple = document.body.querySelector('div[style*="border-radius: 50%"]');
+    ripple = document.body.querySelector('div[style*="width: 100px"]');
     expect(ripple).toBeNull();
 
     vi.useRealTimers();
