@@ -185,5 +185,15 @@ export class ThemePlugin implements CursorPlugin {
     if (this.wrapper && this.wrapper.parentNode) {
       this.wrapper.parentNode.removeChild(this.wrapper);
     }
+    if (this.cursorRef && this.cursorRef.cursor.el) {
+      const el = this.cursorRef.cursor.el;
+      el.style.width = '16px';
+      el.style.height = '16px';
+      el.style.margin = '0';
+      el.style.marginTop = '-8px';
+      el.style.marginLeft = '-8px';
+      el.style.background = 'rgba(0, 0, 0, 0.5)';
+      el.style.borderRadius = '50%';
+    }
   }
 }
