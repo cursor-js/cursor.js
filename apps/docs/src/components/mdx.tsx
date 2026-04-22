@@ -1,9 +1,21 @@
 import defaultMdxComponents from 'fumadocs-ui/mdx';
 import type { MDXComponents } from 'mdx/types';
+import {
+  ThemeDemo,
+  RippleDemo,
+  IndicatorDemo,
+  ClickSoundDemo,
+  LoggingDemo,
+} from '@/components/app/PluginDemos';
 
 export function getMDXComponents(components?: MDXComponents) {
   return {
     ...defaultMdxComponents,
+    ThemeDemo,
+    RippleDemo,
+    IndicatorDemo,
+    ClickSoundDemo,
+    LoggingDemo,
     ...components,
   } satisfies MDXComponents;
 }

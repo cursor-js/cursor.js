@@ -1,0 +1,34 @@
+---
+title: Indicator
+description: Displays tooltips, hints or any status indicators near the cursor.
+---
+
+## IndicatorPlugin
+
+The `IndicatorPlugin` allows you to show contextual information by placing a floating element alongside the cursor.
+
+### Demo
+
+<div className="w-full h-80 rounded-xl border mt-6 overflow-hidden relative">
+  <IndicatorDemo />
+</div>
+
+### Usage
+
+```ts
+import { Cursor, IndicatorPlugin } from 'cursor.js';
+
+const cursor = new Cursor();
+const indicator = new IndicatorPlugin();
+
+cursor.use(indicator);
+
+// Update indicator state whenever needed
+indicator.update({
+  text: 'Waiting for network...',
+  color: 'blue'
+});
+
+// Remove or hide the indicator
+indicator.hide();
+```

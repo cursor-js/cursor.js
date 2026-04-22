@@ -1,0 +1,31 @@
+---
+title: Logging
+description: A helpful development plugin that logs all interactions.
+---
+
+## LoggingPlugin
+
+The `LoggingPlugin` simplifies debugging your cursor flows by outputting an informative log for each cursor action (hover, click, type, etc) directly to the browser console.
+
+### Demo
+
+<div className="w-full h-80 rounded-xl border mt-6 overflow-hidden relative">
+  <LoggingDemo />
+</div>
+
+### Usage
+
+```ts
+import { Cursor, LoggingPlugin } from 'cursor.js';
+
+const cursor = new Cursor();
+
+if (process.env.NODE_ENV === 'development') {
+  cursor.use(new LoggingPlugin({ level: 'debug' }));
+}
+
+// All actions are now logged.
+cursor
+  .hover('.btn')
+  .click();
+```

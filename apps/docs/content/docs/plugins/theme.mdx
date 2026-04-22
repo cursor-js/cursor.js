@@ -1,0 +1,29 @@
+---
+title: Theme
+description: Applies custom visual styles and animations to the cursor pointer itself.
+---
+
+## ThemePlugin
+
+The `ThemePlugin` is a highly customizable way to adjust the colors, shapes, shadows, or even SVG source of the `GhostCursor`. This allows for creating branding-specific cursors that fit smoothly in any UI environment.
+
+### Demo
+
+<div className="w-full h-80 rounded-xl border mt-6 overflow-hidden relative">
+  <ThemeDemo />
+</div>
+
+### Usage
+
+```ts
+import { Cursor, ThemePlugin } from 'cursor.js';
+
+const cursor = new Cursor();
+cursor.use(new ThemePlugin({
+  cursorColor: '#ff0000',
+  pointerEvents: 'none',
+  shadow: true,
+  scale: 1.5,
+  transitionDuration: '300ms'
+}));
+```

@@ -1,0 +1,28 @@
+---
+title: Ripple
+description: Adds material-design style ripple effects for cursor clicks.
+---
+
+## RipplePlugin
+
+The `RipplePlugin` animates a ripple effect overlay at the location of every `click()` action, giving beautiful feedback.
+
+### Demo
+
+<div className="w-full h-80 rounded-xl border mt-6 overflow-hidden relative">
+  <RippleDemo />
+</div>
+
+### Usage
+
+```ts
+import { Cursor, RipplePlugin } from 'cursor.js';
+
+const cursor = new Cursor();
+cursor.use(new RipplePlugin({
+  color: 'rgba(0, 0, 0, 0.2)', // Ripple color
+  duration: 600                // Duration in ms
+}));
+
+cursor.click('.button');
+```

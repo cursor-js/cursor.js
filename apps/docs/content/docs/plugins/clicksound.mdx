@@ -1,0 +1,37 @@
+---
+title: Click Sound
+description: Adds realistic mouse click sounds to the cursor interactions.
+---
+
+## ClickSoundPlugin
+
+The `ClickSoundPlugin` plays sound completely synchronized with the cursor's `click()` actions, giving user the audible feedback.
+
+### Demo
+
+<div className="w-full h-80 rounded-xl border mt-6 overflow-hidden relative">
+  <ClickSoundDemo />
+</div>
+
+### Usage
+
+```ts
+import { Cursor, ClickSoundPlugin } from 'cursor.js';
+
+const cursor = new Cursor();
+
+// Install the plugin
+cursor.use(new ClickSoundPlugin());
+
+// The click action will now trigger a sound
+cursor.click('.submit-button');
+```
+
+You can optionally pass an `audioUrl` option to customize the click sound:
+
+```ts
+cursor.use(new ClickSoundPlugin({
+  audioUrl: '/my-custom-click-sound.mp3',
+  volume: 0.8
+}));
+```

@@ -1,0 +1,60 @@
+---
+title: Custom Plugins
+description: Learn how to build your own cursor.js plugins using the CursorPlugin interface.
+---
+
+## Building Custom Plugins
+
+`cursor.js` allows unlimited extensibility via a very simple and robust `CursorPlugin` interface.
+
+By implementing specific lifecycle methods from the `CursorPlugin` interface, your code is executed automatically at each important phase of the `Cursor`'s workflow.
+
+### The `CursorPlugin` Interface
+
+```ts
+export interface CursorPlugin {
+  name: string;
+  install: (cursor: Cursor) => void;
+  // Lifecycle hooks
+  onMoveStart?: (x: number, y: number) => void;
+  onMove?: (x: number, y: number) => void;
+  onClickStart?: (target: Element) => void;
+  onHoverStart?: (target: Element) => void;
+  onTypeStart?: (text: string) => void;
+  onStateChange?: (newState: Record<string, any>, oldState: Record<string, any>) => void;
+  onDestroy?: () => void;
+}
+```
+
+### Example: Log Clicks Plugin
+
+Here's an example of how you can build a very basic custom plugin that listens for the `onClickStart` hook:
+
+```ts
+import { CursorPlugin, Cursor } from 'cursor.js';
+
+class MyClickLoggerPlugin implements CursorPlugin {
+  name = 'MyClickLogger';
+
+  install(cursor: Cursor) {
+    console.log('Plugin has been initialized and bound to the cursor');
+  }
+
+  onClickStart(target: Element) {
+    console.info('Custom Plugin caught a click on:', target);
+  }
+}
+```
+
+### Usage
+
+```ts
+const cursor = new Cursor();
+cursor.use(new MyClickLoggerPlugin());
+cursor.click('.any-element'); // Output: Custom Plugin caught a click on: [Element]
+```
+
+### Asynchronous Limitations
+
+When writing standard custom plugins, remember:
+Ensure all event handling within the plugin acts purely **side-effect** based, updating internal visual states without relying on blocking the main cursor queue with recursive `wait()` calls. Delay visual effects correctly by utilizing traditional `SetTimeout`, custom promises or CSS Transitions.
