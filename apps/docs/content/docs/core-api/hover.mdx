@@ -1,0 +1,19 @@
+---
+title: hover()
+description: Move cursor to the target element.
+---
+
+## `hover()`
+
+Moves the virtual cursor to the specified target.
+
+### Example
+
+```ts
+const cursor = new Cursor();
+
+cursor.hover('#button-1').wait(500);
+
+// Use bounding coordinates
+cursor.hover({ x: 200, y: 300 });
+```

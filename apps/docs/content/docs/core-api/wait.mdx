@@ -1,0 +1,19 @@
+---
+title: wait()
+description: Pause execution for a specified duration.
+---
+
+## `wait()`
+
+Pause the queue for a specified duration in milliseconds.
+
+### Example
+
+```ts
+const cursor = new Cursor();
+
+cursor
+  .hover('#item-1')
+  .wait(1500) // Pause for 1.5 seconds
+  .click('#item-1');
+```

@@ -11,6 +11,21 @@
       "sourceType": "github",
       "computedHash": "9e1c8b3103f92fa8092568a44fe64858de7c5c9dc65ce4bea8f168080e889cfd"
     },
+    "fumadocs-component-docs": {
+      "source": "theorcdev/8bitcn-ui",
+      "sourceType": "github",
+      "computedHash": "a138321af90f7f6806996dea4ca59e4e613f8de588dbdda5aa259db2513d0ff2"
+    },
+    "fumadocs-mdx-structure": {
+      "source": "theorcdev/8bitcn-ui",
+      "sourceType": "github",
+      "computedHash": "f1b810c9074c3d9b7fae58fa1dde5eb21a5a60d37cff5089156fc750f8a91d77"
+    },
+    "fumadocs-registry-integration": {
+      "source": "theorcdev/8bitcn-ui",
+      "sourceType": "github",
+      "computedHash": "c0699c15fb59bc98eb3e975534d0494acdf02136f062dfd468290aaa12a9cdca"
+    },
     "git-commit": {
       "source": "github/awesome-copilot",
       "sourceType": "github",

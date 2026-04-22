@@ -1,0 +1,22 @@
+---
+title: do()
+description: Execute a custom function within the queue.
+---
+
+## `do()`
+
+Execute any custom logic natively within the chain, pausing the execution while it runs and then safely resuming. 
+
+### Example
+
+```ts
+const cursor = new Cursor();
+
+cursor
+  .hover('#btn-start')
+  .do(() => {
+    // Custom logic here
+    console.log("Custom code executing in the middle of a cursor sequence.");
+  })
+  .click('#btn-start');
+```

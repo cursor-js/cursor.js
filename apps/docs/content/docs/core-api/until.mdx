@@ -1,0 +1,34 @@
+---
+title: until()
+description: Pause execution until a specific condition or element existence.
+---
+
+## `until()`
+
+Stop the execution until the target condition or element becomes available in the document.
+
+### Example
+
+```ts
+const cursor = new Cursor();
+
+cursor
+  .click('#fetch-data')
+  // Wait until `.result-item` is added to the DOM dynamically
+  .until('.result-item', (ctx) => {
+      // Callback executed only once `.result-item` is visible 
+      ctx.hover('.result-item').click('.result-item');
+  });
+```
+
+You can also pass a custom function as the condition:
+
+```ts
+const cursor = new Cursor();
+
+cursor
+  .until(
+    () => window.isDataLoaded === true,
+    (ctx) => ctx.click('.submit-btn')
+  );
+```

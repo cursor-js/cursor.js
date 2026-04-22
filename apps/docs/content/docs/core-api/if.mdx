@@ -1,0 +1,25 @@
+---
+title: if()
+description: Conditional logic hook.
+---
+
+## `if()`
+
+Perform an action inside the queue based on a dynamically evaluated condition. The `if` block executes immediately if evaluated directly.
+
+### Example
+
+```ts
+const cursor = new Cursor();
+
+cursor
+  .hover('#dynamic-btn')
+  .if(
+    () => document.querySelector('#dynamic-btn')?.classList.contains('active'),
+    (ctx) => {
+      // Runs only if the button has the "active" class
+      ctx.click('#dynamic-btn');
+    }
+  )
+  .wait(1000);
+```

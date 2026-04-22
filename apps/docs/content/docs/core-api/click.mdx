@@ -1,0 +1,21 @@
+---
+title: click()
+description: Simulate a click on the target element.
+---
+
+## `click()`
+
+Clicks on the target element using an HTML Event dispatcher. 
+
+### Example
+
+```ts
+const cursor = new Cursor();
+
+cursor
+  .hover('.submit-btn')
+  .click('.submit-btn');
+
+// Bypasses the specified input element to bypass typical React validations
+cursor.click('.checkbox-field');
+```

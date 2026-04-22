@@ -1,0 +1,20 @@
+---
+title: stop()
+description: Stop the current execution queue.
+---
+
+## `stop()`
+
+The `stop()` method halts the current execution sequence. It cancels any pending actions in the queue and stops the cursor from performing further movements or interactions.
+
+### Example
+
+```ts
+const cursor = new Cursor();
+
+cursor
+  .move('#item-1')
+  .wait(1000)
+  .stop() // The execution stops here. The next line will not run.
+  .click('#item-2');
+```

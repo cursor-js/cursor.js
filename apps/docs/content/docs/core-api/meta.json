@@ -1,0 +1,4 @@
+{
+  "title": "Core API",
+  "pages": ["hover", "click", "do", "if", "until", "wait", "stop"]
+}

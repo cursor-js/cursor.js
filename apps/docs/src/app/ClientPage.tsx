@@ -275,6 +275,12 @@ export function ClientPage() {
               {demoState === 'running' ? 'Demo is running...' : 'Run Live Demo'}
             </Button>
             <Link
+              href="/docs"
+              className={buttonVariants({ size: 'lg', variant: 'outline' })}
+            >
+              Docs
+            </Link>
+            <Link
               href="https://github.com/cihad/cursor.js"
               className={buttonVariants({ size: 'lg', variant: 'outline' })}
             >
