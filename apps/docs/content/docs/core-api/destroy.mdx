@@ -1,0 +1,31 @@
+---
+title: destroy()
+description: Permanently garbage collects the engine and DOM nodes.
+---
+
+## `destroy()`
+
+Safely cleans up DOM traces and notifies all plugins. Should be explicitly invoked during framework dismount phases (React `useEffect` cleanup) to ensure you avoid memory leaks.
+
+Any tasks queued in `.then()` chains halt permanently.
+
+### Example
+
+```tsx
+import { useEffect } from 'react';
+import { Cursor } from '@cursor.js/core';
+
+export default function App() {
+  useEffect(() => {
+    const cursor = new Cursor()
+      .hover('#link')
+      .click('#link');
+
+    return () => {
+      cursor.destroy(); // Safely clean up
+    };
+  }, []);
+
+  return <nav id="link">Home</nav>;
+}
+```

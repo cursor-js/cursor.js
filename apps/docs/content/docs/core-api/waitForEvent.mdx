@@ -1,0 +1,19 @@
+---
+title: waitForEvent()
+description: Suspends the queue until a native DOM event natively drops.
+---
+
+## `waitForEvent(selector: string | Element, eventName: string)`
+
+Temporarily blocks the `Cursor` automated action queue asynchronously awaiting an explicitly named vanilla JavaScript event firing against a target element.
+
+### Example
+
+```ts
+const cursor = new Cursor();
+
+cursor
+  .click('.form-submit')
+  .waitForEvent('.loading-modal', 'transitionend') // Blocks
+  .hover('.next'); // Executes once modal closes cleanly
+```

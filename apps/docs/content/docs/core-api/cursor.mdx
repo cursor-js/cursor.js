@@ -1,0 +1,32 @@
+---
+title: Cursor()
+description: Creates a new Cursor instance to orchestrate automated interactions.
+---
+
+## `Cursor()`
+
+The main entry point for creating an automated cursor sequence. It initializes the engine, the visual ghost cursor, and the action queue.
+
+### Options
+
+When instantiating a new `Cursor`, you can provide an options object to configure its behavior:
+
+| Property   | Type      | Default | Description                                                                 |
+| :--------- | :-------- | :------ | :-------------------------------------------------------------------------- |
+| `speed`    | `number`  | `0.5`   | Sets the default movement speed. A value between `0.1` and `5.0`.           |
+| `humanize` | `boolean` | `true`  | Enables simulated human-like curved movements instead of linear direct paths. |
+
+### Example
+
+```ts
+import { Cursor } from '@cursor.js/core';
+
+const cursor = new Cursor({
+  speed: 1.2,
+  humanize: true
+});
+
+cursor
+  .hover('.login-button')
+  .click('.login-button');
+```

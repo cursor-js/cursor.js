@@ -1,4 +1,22 @@
 {
   "title": "Core API",
-  "pages": ["hover", "click", "do", "if", "until", "wait", "stop"]
+  "pages": [
+    "cursor",
+    "move",
+    "hover",
+    "click",
+    "type",
+    "do",
+    "if",
+    "until",
+    "wait",
+    "waitForEvent",
+    "stop",
+    "pause",
+    "next",
+    "setState",
+    "setConfig",
+    "use",
+    "destroy"
+  ]
 }

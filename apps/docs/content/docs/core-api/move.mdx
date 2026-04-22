@@ -1,0 +1,20 @@
+---
+title: move()
+description: Moves the cursor to a specific coordinate or element.
+---
+
+## `move()`
+
+Glides the Ghost Cursor directly towards explicit page coordinates (`x, y`) or towards a DOM element (`selector`), triggering `.onMove()` events without invoking hover states automatically.
+
+### Example
+
+```ts
+const cursor = new Cursor();
+
+// Coordinate-based
+cursor.move(350, 420);
+
+// Element-based
+cursor.move('.target-element');
+```

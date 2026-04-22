@@ -1,0 +1,22 @@
+---
+title: setState()
+description: Merges new state into the cursor's internal record and alerts plugins.
+---
+
+## `setState(newState: Record<string, any>)`
+
+The cursor engine maintains an internal untyped dictionary (accessible via `.state`). Invoking `setState` merges keys incrementally while optionally alerting registered plugins of changes.
+
+If `newState` provides `size`, it will directly alter the Ghost Cursor size property synchronously. 
+
+### Example
+
+```ts
+const cursor = new Cursor();
+
+cursor
+  .hover('.submit-btn')
+  .setState({ ripple: { color: 'rebeccapurple' }, size: 2 })
+  .click('.submit-btn')
+  .setState({ size: 1 });
+```

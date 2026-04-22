@@ -1,0 +1,19 @@
+---
+title: setConfig()
+description: Patches runtime cursor options post-initialization.
+---
+
+## `setConfig(newOptions: Partial<CursorOptions>)`
+
+Updates top-level behavior like `speed` and `x/y` path randomization (`humanize`) instantaneously without rebuilding the cursor session. 
+
+### Example
+
+```ts
+const cursor = new Cursor({ speed: 0.5 }); // Slow movement
+
+cursor
+  .hover('.btn')
+  .setConfig({ speed: 2.0 }) // Burst fast movement
+  .click('.burst-btn');
+```

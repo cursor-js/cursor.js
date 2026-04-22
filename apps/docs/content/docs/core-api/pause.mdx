@@ -1,0 +1,25 @@
+---
+title: pause()
+description: Halts the cursor action queue until explicitly resumed.
+---
+
+## `pause()`
+
+Pauses the continuous execution of the action sequence immediately. The cursor will hold its current position and internal state. The sequence remains paused indefinitely until you call `next()`.
+
+*`stop()` acts as an alias to `pause()`.*
+
+### Example
+
+```ts
+const cursor = new Cursor();
+
+cursor
+  .move(100, 100)
+  .pause() // Queue halts here
+  .move(200, 200);
+
+document.querySelector('.resume-btn').addEventListener('click', () => {
+  cursor.next(); // Resumes the queue
+});
+```

@@ -1,0 +1,26 @@
+---
+title: type()
+description: Simulates human-like typing in input fields.
+---
+
+## `type(selector: string | Element, text: string, options?: { delay?: number })`
+
+Automates keyboard typing sequentially with randomized human-like delays into HTML `<input>` and `<textarea>` elements.
+
+It first clicks to focus the element, pushes text into `.value`, and fires `input` events automatically tracking each character to behave like a realistic interaction timeline.
+
+### Options
+
+| Property      | Type      | Default | Description                                              |
+|:------------- |:--------- |:------- |:-------------------------------------------------------- |
+| `delay`       | `number`  | `100`   | Base millisecond delay injected between character strokes.|
+
+### Example
+
+```ts
+const cursor = new Cursor();
+
+cursor
+  .hover('#username-field')
+  .type('#username-field', 'hello@cursor.js', { delay: 60 });
+```

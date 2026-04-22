@@ -1,0 +1,26 @@
+---
+title: next()
+description: Resumes a paused action sequence.
+---
+
+## `next()`
+
+Resumes the sequence explicitly if it was previously halted by `pause()` or `stop()`.
+
+Unlike most `Cursor` APIs natively used during chaining, `next()` is synchronously fired to awaken the engine logic instead of being pushed sequentially to the queue. As such, it cannot be chained in the builder syntax and returns `void`.
+
+### Example
+
+```ts
+const cursor = new Cursor();
+
+cursor
+  .hover('.step-1') // Executes freely
+  .pause()          // Execution halts
+  .hover('.step-2');
+
+// Sometime later from an external event or user interaction...
+document.querySelector('#continue-btn').addEventListener('click', () => {
+  cursor.next(); // Awakens the queue to continue to .step-2
+});
+```

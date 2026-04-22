@@ -1,0 +1,28 @@
+---
+title: use()
+description: Registers a CursorPlugin into the cursor lifecycle hooks.
+---
+
+## `use(plugin: CursorPlugin)`
+
+Decorate the `Cursor` singleton with extensible interactions. Plugins can hook into cursor hooks like hover styling (`ThemePlugin`), path logging (`LoggingPlugin`), click effects (`RipplePlugin`), and auditory feedback (`ClickSoundPlugin`).
+
+You can mount your own custom classes extending `CursorPlugin` natively.
+
+### Example
+
+```ts
+import { Cursor, RipplePlugin } from '@cursor.js/core';
+
+const cursor = new Cursor()
+  .use(new RipplePlugin({ color: '#ff0000', size: 100 }))
+  .click('.my-div');
+```
+
+## `removePlugin(name: string)`
+
+Removes a registered plugin logically cleaning trailing event handlers it may have set.
+
+```ts
+cursor.removePlugin('RipplePlugin'); // Drops interaction trace cleanup bounds.
+```
