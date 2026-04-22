@@ -42,7 +42,7 @@ export function ThemeDemo() {
         });
     };
 
-    c.setSize(1);
+    c.setState({ size: 1 });
     c.wait(200).do(() => run());
 
     return () => {
@@ -104,7 +104,7 @@ export function RippleDemo() {
         });
     };
 
-    c.setSize(1);
+    c.setState({ size: 1 });
     c.wait(200).do(() => run());
 
     return () => {
@@ -146,7 +146,7 @@ export function IndicatorDemo() {
         });
     };
 
-    c.setSize(1);
+    c.setState({ size: 1 });
     c.wait(200).do(() => run());
 
     return () => {
@@ -211,7 +211,7 @@ export function ClickSoundDemo() {
         });
     };
 
-    c.setSize(1);
+    c.setState({ size: 1 });
     c.wait(200).do(() => run());
 
     return () => {
@@ -280,7 +280,7 @@ export function LoggingDemo() {
         });
     };
 
-    c.setSize(1);
+    c.setState({ size: 1 });
     c.wait(200).do(() => run());
 
     return () => {

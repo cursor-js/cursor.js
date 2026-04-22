@@ -82,14 +82,14 @@ describe('Cursor', () => {
   it('can set cursor size and teleport with move', async () => {
     const actor = new Cursor({ humanize: false });
 
-    await actor.setSize(5).move(300, 400);
+    await actor.setState({ size: 5 }).move(300, 400);
 
     expect(actor.cursor.scale).toBe(5);
     expect(actor.cursor.x).toBe(300);
     expect(actor.cursor.y).toBe(400);
 
     // Can change size over element
-    await actor.move('#test-btn').setSize(1);
+    await actor.move('#test-btn').setState({ size: 1 });
 
     expect(actor.cursor.scale).toBe(1);
     expect(actor.cursor.x).toBe(150); // width:100, x:100 => 100 + 100/2

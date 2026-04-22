@@ -143,7 +143,7 @@ export function ClientPage() {
           },
           (ctx) => ctx.click('.carousel-prev').wait(500),
         )
-        .setSize(1)
+        .setState({ size: 1 })
         .if(
           () =>
             document.querySelector<HTMLInputElement>('#demo-email')?.value !== 'hello@cursor.js',
@@ -185,7 +185,7 @@ export function ClientPage() {
         .click('#demo-accordion-2')
         .wait(1000)
         .hover('#cursor-beginning')
-        .setSize(5)
+        .setState({ size: 5 })
         .do(() => {
           if (!isActive) return;
           setDemoState('done');
@@ -194,7 +194,7 @@ export function ClientPage() {
         .do(buildDemoSequence); // Re-queue the scenario at the end
     };
 
-    c.wait(100).setSize(5).move('#cursor-beginning').do(buildDemoSequence);
+    c.setState({ size: 5 }).move('#cursor-beginning').do(buildDemoSequence);
 
     return () => {
       isActive = false;
@@ -274,10 +274,7 @@ export function ClientPage() {
             <Button size="lg" onClick={runDemo} disabled={demoState === 'running'}>
               {demoState === 'running' ? 'Demo is running...' : 'Run Live Demo'}
             </Button>
-            <Link
-              href="/docs"
-              className={buttonVariants({ size: 'lg', variant: 'outline' })}
-            >
+            <Link href="/docs" className={buttonVariants({ size: 'lg', variant: 'outline' })}>
               Docs
             </Link>
             <Link
