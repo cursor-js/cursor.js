@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import {
   Cursor,
+  ThemePlugin,
   RipplePlugin,
   IndicatorPlugin,
   ClickSoundPlugin,
@@ -13,6 +14,66 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Volume2, VolumeX } from 'lucide-react';
+
+export function ThemeDemo() {
+  useEffect(() => {
+    let isActive = true;
+    const c = new Cursor({ speed: 0.8 });
+    c.use(new ThemePlugin()); // Enable theme rendering
+
+    const run = () => {
+      if (!isActive) return;
+      c.hover('#demo-theme-input')
+        .wait(300)
+        .type('#demo-theme-input', 'Autodetected!', { delay: 30 })
+        .wait(600)
+        .hover('#demo-theme-button')
+        .wait(300)
+        .click('#demo-theme-button')
+        .wait(600)
+        .hover('.carousel') // arbitrary container
+        .do(
+          () =>
+            isActive &&
+            (document.querySelector<HTMLInputElement>('#demo-theme-input')!.value = ''),
+        )
+        .do(() => {
+          if (isActive) setTimeout(run, 0);
+        });
+    };
+
+    c.setSize(1);
+    c.wait(200).do(() => run());
+
+    return () => {
+      isActive = false;
+      c.destroy();
+    };
+  }, []);
+
+  return (
+    <div className="space-y-4 w-full h-full p-4 flex flex-col justify-center max-w-sm mx-auto text-left">
+      <h4 className="text-sm font-semibold mb-2">Theme Plugin</h4>
+      <p className="text-xs text-muted-foreground mb-3">
+        Core plugin for high-quality SVG themes, dynamic "I-beam" text cursors on inputs, and hotspot awareness. Required for standard visually optimal behavior.
+      </p>
+
+      <div className="flex items-center justify-between mb-4">
+        <Label htmlFor="demo-theme-toggle-main" className="cursor-pointer text-xs font-semibold">
+          Enable Theme
+        </Label>
+        <Switch id="demo-theme-toggle-main" checked={true} disabled onCheckedChange={() => {}} />
+      </div>
+
+      <div className="space-y-3 p-4 border rounded-md">
+        <Input id="demo-theme-input" placeholder="Watch the SVG change to I-beam..." />
+        <Button id="demo-theme-button" className="w-full">
+          Pointer Arrow
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export function RippleDemo() {
   useEffect(() => {
