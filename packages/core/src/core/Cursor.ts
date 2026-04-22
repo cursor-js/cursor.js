@@ -278,12 +278,6 @@ export class Cursor {
     });
   }
 
-  setSize(scale: number): this {
-    return this.enqueue(async () => {
-      this.cursor.setSize(scale);
-    });
-  }
-
   move(selectorOrX: string | Element | number, y?: number): this {
     return this.enqueue(async () => {
       let targetX: number;
