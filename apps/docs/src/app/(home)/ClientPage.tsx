@@ -380,7 +380,7 @@ export function ClientPage() {
 
                 <div className="flex items-center justify-between gap-2 mt-2">
                   <Label htmlFor="core-speed">speed</Label>
-                  <InputGroup>
+                  <InputGroup className="h-7 w-24">
                     <InputGroupInput
                       id="core-speed"
                       type="number"
@@ -397,7 +397,7 @@ export function ClientPage() {
                       }
                       className="h-7 text-right"
                     />
-                    <InputGroupAddon>x</InputGroupAddon>
+                    <InputGroupAddon align="inline-end">x</InputGroupAddon>
                   </InputGroup>
                 </div>
               </div>
@@ -465,7 +465,7 @@ export function ClientPage() {
                     <Label htmlFor="ripple-color" className="text-xs font-normal">
                       color
                     </Label>
-                    <InputGroup>
+                    <InputGroup className="h-7 w-28">
                       <InputGroupInput
                         className="w-10"
                         id="ripple-color"
@@ -479,14 +479,14 @@ export function ClientPage() {
                           })
                         }
                       />
-                      <InputGroupAddon>{settings.rippleConfig.color}</InputGroupAddon>
+                      <InputGroupAddon align="inline-end">{settings.rippleConfig.color}</InputGroupAddon>
                     </InputGroup>
                   </div>
                   <div className="flex flex-row items-center justify-between gap-2">
                     <Label htmlFor="ripple-duration" className="text-xs font-normal">
                       duration
                     </Label>
-                    <InputGroup>
+                    <InputGroup className="h-7 w-24">
                       <InputGroupInput
                         id="ripple-duration"
                         type="number"
@@ -502,7 +502,7 @@ export function ClientPage() {
                           })
                         }
                       />
-                      <InputGroupAddon>ms</InputGroupAddon>
+                      <InputGroupAddon align="inline-end">ms</InputGroupAddon>
                     </InputGroup>
                   </div>
                   <div className="flex flex-row items-center justify-between gap-2">
@@ -525,7 +525,7 @@ export function ClientPage() {
                           })
                         }
                       />
-                      <InputGroupAddon>px</InputGroupAddon>
+                      <InputGroupAddon align="inline-end">px</InputGroupAddon>
                     </InputGroup>
                   </div>
                 </SettingsSectionBody>
