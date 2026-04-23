@@ -1,5 +1,13 @@
 # @cursor.js/core
 
+## 0.5.0
+
+### Minor Changes
+
+- 8f8eb9b: - feat: Implemented ThemePlugin for automatic cursor theme switching.
+  - feat(core): Reset hover state and trigger mouseleave when the cursor moves away.
+- a92032b: Added dynamic plugin enable/disable toggle capabilities and options configuration for Cursor demo page, along with dynamically reactive updates in RipplePlugin for settings.
+
 ## 0.4.0
 
 ### Minor Changes

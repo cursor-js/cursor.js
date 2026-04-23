@@ -1,5 +1,22 @@
 # docs
 
+## 0.4.0
+
+### Minor Changes
+
+- e41896a: Add Fumadocs integration and create Core API documentation pages.
+
+### Patch Changes
+
+- 728a09c: Add missing comprehensive core API documentation pages (Cursor options, pause, next, setState, format, use, waitForEvent, type, move).
+- 3ac5ff3: Add Shadcn InputGroup component to handle speed, color, duration, and size settings
+- 7c1e16c: Add comprehensive documentation pages and interactive demos for all core plugins (ClickSound, Indicator, Logging, Ripple, Theme, and Custom Plugins).
+- 3373ac5: Added hover card iframes with distinct visual demos for plugins: Ripple, Indicator, ClickSound, Logging.
+- a92032b: Added dynamic plugin enable/disable toggle capabilities and options configuration for Cursor demo page, along with dynamically reactive updates in RipplePlugin for settings.
+- Updated dependencies [8f8eb9b]
+- Updated dependencies [a92032b]
+  - @cursor.js/core@0.5.0
+
 ## 0.3.1
 
 ### Patch Changes
