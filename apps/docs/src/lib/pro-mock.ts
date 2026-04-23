@@ -11,7 +11,7 @@ const mockProxy = new Proxy(
       if (prop === 'default') return mockProxy;
       return new Proxy(function () {}, {
         get: function (t, p) {
-          return t[p];
+          return (t as any)[p];
         },
       });
     },
