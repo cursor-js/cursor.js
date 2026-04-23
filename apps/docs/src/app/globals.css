@@ -130,3 +130,23 @@
     @apply font-mono;
   }
 }
+
+/* Expand Notebook Layout Top Nav to full screen width */
+#nd-notebook-layout > header#nd-subnav {
+  margin-left: -50vw;
+  margin-right: -50vw;
+}
+
+#nd-notebook-layout > header#nd-subnav > div[data-header-body],
+#nd-notebook-layout > header#nd-subnav > [data-header-tabs] {
+  padding-left: calc(50vw + 1rem);
+  padding-right: calc(50vw + 1rem);
+}
+
+@media (min-width: 768px) {
+  #nd-notebook-layout > header#nd-subnav > div[data-header-body],
+  #nd-notebook-layout > header#nd-subnav > [data-header-tabs] {
+    padding-left: calc(50vw + 1.5rem);
+    padding-right: calc(50vw + 1.5rem);
+  }
+}

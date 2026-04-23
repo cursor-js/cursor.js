@@ -5,5 +5,13 @@ export function baseOptions(): BaseLayoutProps {
     nav: {
       title: 'cursor.js',
     },
+    githubUrl: 'https://github.com/cihad/cursor.js',
+    links: [
+      {
+        text: 'Docs',
+        url: '/docs/core-api/cursor',
+        active: 'nested-url',
+      },
+    ],
   };
 }

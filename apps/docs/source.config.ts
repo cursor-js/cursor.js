@@ -1,13 +1,7 @@
 import { defineDocs, defineConfig } from 'fumadocs-mdx/config';
-import {
-  remarkAutoTypeTable,
-  createGenerator,
-  createFileSystemGeneratorCache,
-} from 'fumadocs-typescript';
+import { remarkAutoTypeTable, createGenerator } from 'fumadocs-typescript';
 
-const generator = createGenerator({
-  cache: createFileSystemGeneratorCache('.next/fumadocs-typescript'),
-});
+const generator = createGenerator();
 
 export const docs = defineDocs({
   dir: 'content/docs',
