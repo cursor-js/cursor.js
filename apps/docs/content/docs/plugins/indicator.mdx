@@ -9,14 +9,17 @@ The `IndicatorPlugin` allows you to show contextual information by placing a flo
 
 ### Demo
 
-<iframe src="/demos/indicator" className="w-full h-80 rounded-xl border mt-6 overflow-hidden relative" />
+<iframe
+  src="/demos/indicator"
+  className="w-full h-80 rounded-xl border mt-6 overflow-hidden relative"
+/>
 
 ### Options
 
-| Option   | Type     | Default   | Description                                          |
-|----------|----------|-----------|------------------------------------------------------|
-| `color`  | `string` | `#ff4757` | The background color of the indicator element.       |
-| `size`   | `number` | `40`      | The width size of the indicator line in pixels.      |
+<auto-type-table
+  path="../../../../../packages/core/src/plugins/IndicatorPlugin.ts"
+  name="IndicatorPluginOptions"
+/>
 
 ### Usage
 
@@ -31,7 +34,7 @@ cursor.use(indicator);
 // Update indicator state whenever needed
 indicator.update({
   text: 'Waiting for network...',
-  color: 'blue'
+  color: 'blue',
 });
 
 // Remove or hide the indicator

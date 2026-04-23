@@ -9,15 +9,17 @@ The `RipplePlugin` animates a ripple effect overlay at the location of every `cl
 
 ### Demo
 
-<iframe src="/demos/ripple" className="w-full h-80 rounded-xl border mt-6 overflow-hidden relative" />
+<iframe
+  src="/demos/ripple"
+  className="w-full h-80 rounded-xl border mt-6 overflow-hidden relative"
+/>
 
 ### Options
 
-| Option     | Type     | Default                 | Description                                    |
-|------------|----------|-------------------------|------------------------------------------------|
-| `color`    | `string` | `'rgba(0, 0, 0, 0.3)'`  | Color of the ripple.                           |
-| `duration` | `number` | `600`                   | The duration of the ripple animation in ms.    |
-| `size`     | `number` | `50`                    | The maximum diameter of the ripple in px.      |
+<auto-type-table
+  path="../../../../../packages/core/src/plugins/RipplePlugin.ts"
+  name="RipplePluginOptions"
+/>
 
 ### Usage
 
@@ -25,10 +27,12 @@ The `RipplePlugin` animates a ripple effect overlay at the location of every `cl
 import { Cursor, RipplePlugin } from 'cursor.js';
 
 const cursor = new Cursor();
-cursor.use(new RipplePlugin({
-  color: 'rgba(0, 0, 0, 0.2)', // Ripple color
-  duration: 600                // Duration in ms
-}));
+cursor.use(
+  new RipplePlugin({
+    color: 'rgba(0, 0, 0, 0.2)', // Ripple color
+    duration: 600, // Duration in ms
+  }),
+);
 
 cursor.click('.button');
 ```

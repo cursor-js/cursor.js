@@ -1,5 +1,6 @@
 import defaultMdxComponents from 'fumadocs-ui/mdx';
 import type { MDXComponents } from 'mdx/types';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
 import {
   ThemeDemo,
   RippleDemo,
@@ -11,6 +12,7 @@ import {
 export function getMDXComponents(components?: MDXComponents) {
   return {
     ...defaultMdxComponents,
+    TypeTable,
     ThemeDemo,
     RippleDemo,
     IndicatorDemo,

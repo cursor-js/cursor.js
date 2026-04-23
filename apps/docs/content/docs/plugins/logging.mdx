@@ -9,11 +9,17 @@ The `LoggingPlugin` simplifies debugging your cursor flows by outputting an info
 
 ### Demo
 
-<iframe src="/demos/logging" className="w-full h-80 rounded-xl border mt-6 overflow-hidden relative" />
+<iframe
+  src="/demos/logging"
+  className="w-full h-80 rounded-xl border mt-6 overflow-hidden relative"
+/>
 
 ### Options
 
-Currently, the LoggingPlugin provides no configurable options via constructor parameters, but it seamlessly binds to Cursor events.
+<auto-type-table
+  path="../../../../../packages/core/src/plugins/LoggingPlugin.ts"
+  name="LoggingPluginOptions"
+/>
 
 ### Usage
 
@@ -27,7 +33,5 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // All actions are now logged.
-cursor
-  .hover('.btn')
-  .click();
+cursor.hover('.btn').click();
 ```

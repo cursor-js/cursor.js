@@ -9,13 +9,17 @@ The `ThemePlugin` is a highly customizable way to adjust the colors, shapes, sha
 
 ### Demo
 
-<iframe src="/demos/theme" className="w-full h-80 rounded-xl border mt-6 overflow-hidden relative" />
+<iframe
+  src="/demos/theme"
+  className="w-full h-80 rounded-xl border mt-6 overflow-hidden relative"
+/>
 
 ### Options
 
-| Option | Type      | Default | Description                                  |
-|--------|-----------|---------|----------------------------------------------|
-| `auto` | `boolean` | `true`  | Automatically infer cursor shape via elements. |
+<auto-type-table
+  path="../../../../../packages/core/src/plugins/ThemePlugin.ts"
+  name="ThemePluginOptions"
+/>
 
 ### Usage
 
@@ -23,11 +27,13 @@ The `ThemePlugin` is a highly customizable way to adjust the colors, shapes, sha
 import { Cursor, ThemePlugin } from 'cursor.js';
 
 const cursor = new Cursor();
-cursor.use(new ThemePlugin({
-  cursorColor: '#ff0000',
-  pointerEvents: 'none',
-  shadow: true,
-  scale: 1.5,
-  transitionDuration: '300ms'
-}));
+cursor.use(
+  new ThemePlugin({
+    cursorColor: '#ff0000',
+    pointerEvents: 'none',
+    shadow: true,
+    scale: 1.5,
+    transitionDuration: '300ms',
+  }),
+);
 ```

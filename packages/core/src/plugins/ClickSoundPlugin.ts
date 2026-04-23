@@ -1,7 +1,7 @@
 import type { Cursor } from '../core/Cursor';
 import type { CursorPlugin } from './CursorPlugin';
 
-export interface ClickSoundOptions {
+export interface ClickSoundPluginOptions {
   volume?: number;
   soundUrl?: string; // Kullanıcı kendi .mp3 / .wav dosyasını verebilir
 }
@@ -10,9 +10,9 @@ export class ClickSoundPlugin implements CursorPlugin {
   name = 'ClickSoundPlugin';
   private audioContext: AudioContext | null = null;
   private audioHtml: HTMLAudioElement | null = null;
-  private options: ClickSoundOptions;
+  private options: ClickSoundPluginOptions;
 
-  constructor(options: ClickSoundOptions = {}) {
+  constructor(options: ClickSoundPluginOptions = {}) {
     this.options = options;
   }
 
