@@ -234,17 +234,17 @@ describe('Cursor', () => {
 
       actor.use(mockPlugin);
 
-      expect(actor.state).toEqual({ speed: 0.5, humanize: false });
+      expect(actor.state).toEqual({ speed: 0.5, humanize: false, size: 1 });
 
       await actor
         .wait(10)
         .setState({ cursorType: 'pointer', color: 'red' })
         .wait(10);
 
-      expect(actor.state).toEqual({ speed: 0.5, humanize: false, cursorType: 'pointer', color: 'red' });
+      expect(actor.state).toEqual({ speed: 0.5, humanize: false, cursorType: 'pointer', color: 'red', size: 1 });
       expect(pluginCalled).toBe(true);
-      expect(hookOldState).toEqual({ speed: 0.5, humanize: false });
-      expect(hookNewState).toEqual({ speed: 0.5, humanize: false, cursorType: 'pointer', color: 'red' });
+      expect(hookOldState).toEqual({ speed: 0.5, humanize: false, size: 1 });
+      expect(hookNewState).toEqual({ speed: 0.5, humanize: false, cursorType: 'pointer', color: 'red', size: 1 });
 
       await actor.setState({ size: 2 });
       expect(actor.state).toEqual({ speed: 0.5, humanize: false, cursorType: 'pointer', color: 'red', size: 2 });

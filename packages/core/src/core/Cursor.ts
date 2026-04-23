@@ -6,6 +6,7 @@ import type { CursorPlugin } from '../plugins/CursorPlugin';
 export interface CursorOptions {
   speed?: number; // 0 to 1
   humanize?: boolean; // Default true
+  size?: number; // Cursor scale size default 1
 }
 
 export class Cursor {
@@ -22,10 +23,15 @@ export class Cursor {
     this.options = {
       speed: 0.5,
       humanize: true,
+      size: 1,
       ...options,
     };
     this.state = { ...this.options }; // Initialize state with options
     this.cursor = new GhostCursor();
+    
+    if (this.options.size !== undefined) {
+      this.cursor.setSize(this.options.size);
+    }
   }
 
   use(plugin: CursorPlugin): this {

@@ -15,6 +15,7 @@ When instantiating a new `Cursor`, you can provide an options object to configur
 | :--------- | :-------- | :------ | :---------------------------------------------------------------------------- |
 | `speed`    | `number`  | `0.5`   | Sets the default movement speed. A value between `0.1` and `5.0`.             |
 | `humanize` | `boolean` | `true`  | Enables simulated human-like curved movements instead of linear direct paths. |
+| `size`     | `number`  | `1`     | Sets the scale size of the cursor.                                            |
 
 ### Example
 
@@ -24,6 +25,7 @@ import { Cursor } from '@cursor.js/core';
 const cursor = new Cursor({
   speed: 1.2,
   humanize: true,
+  size: 1.5,
 });
 
 cursor.hover('.login-button').click('.login-button');
