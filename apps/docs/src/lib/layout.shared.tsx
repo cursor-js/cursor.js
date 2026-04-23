@@ -5,7 +5,7 @@ export function baseOptions(): BaseLayoutProps {
     nav: {
       title: 'cursor.js',
     },
-    githubUrl: 'https://github.com/cihad/cursor.js',
+    githubUrl: 'https://github.com/cursor-js/cursor.js',
     links: [
       {
         text: 'Docs',

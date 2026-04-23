@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cihad/cursor.js.git",
+    "url": "git+https://github.com/cursor-js/cursor.js.git",
     "directory": "packages/core"
   },
   "scripts": {
