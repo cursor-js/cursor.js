@@ -9,7 +9,6 @@ import {
   ClickSoundPlugin,
   LoggingPlugin,
 } from '@cursor.js/core';
-import Link from 'next/link';
 
 import {
   Carousel,
@@ -20,7 +19,7 @@ import {
 } from '@/components/ui/carousel';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Info } from 'lucide-react';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import {
@@ -274,15 +273,6 @@ export function ClientPage() {
             <Button size="lg" onClick={runDemo} disabled={demoState === 'running'}>
               {demoState === 'running' ? 'Demo is running...' : 'Run Live Demo'}
             </Button>
-            <Link href="/docs" className={buttonVariants({ size: 'lg', variant: 'outline' })}>
-              Docs
-            </Link>
-            <Link
-              href="https://github.com/cihad/cursor.js"
-              className={buttonVariants({ size: 'lg', variant: 'outline' })}
-            >
-              GitHub
-            </Link>
           </div>
         </section>
 
