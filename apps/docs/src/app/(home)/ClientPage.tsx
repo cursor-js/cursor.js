@@ -9,6 +9,7 @@ import {
   ClickSoundPlugin,
   LoggingPlugin,
 } from '@cursor.js/core';
+import { TrailPlugin } from '@cursor.js/pro';
 
 import {
   Carousel,
@@ -56,11 +57,18 @@ type SettingsState = {
     indicator: boolean;
     clickSound: boolean;
     logging: boolean;
+    trail: boolean;
   };
   rippleConfig: {
     color: string;
     duration: number;
     size: number;
+  };
+  trailConfig: {
+    length: number;
+    thickness: number;
+    color: string;
+    fadeDuration: number;
   };
 };
 
@@ -75,6 +83,11 @@ type SettingsAction =
       type: 'UPDATE_RIPPLE_CONFIG';
       key: keyof SettingsState['rippleConfig'];
       value: string | number;
+    }
+  | {
+      type: 'UPDATE_TRAIL_CONFIG';
+      key: keyof SettingsState['trailConfig'];
+      value: string | number;
     };
 
 const initialSettings: SettingsState = {
@@ -88,11 +101,18 @@ const initialSettings: SettingsState = {
     indicator: true,
     clickSound: false,
     logging: false,
+    trail: true,
   },
   rippleConfig: {
     color: '#3b82f6',
     duration: 800,
     size: 70,
+  },
+  trailConfig: {
+    length: 135,
+    thickness: 6,
+    color: '#FF000080',
+    fadeDuration: 100,
   },
 };
 
@@ -104,6 +124,8 @@ function settingsReducer(state: SettingsState, action: SettingsAction): Settings
       return { ...state, coreConfig: { ...state.coreConfig, [action.key]: action.value } };
     case 'UPDATE_RIPPLE_CONFIG':
       return { ...state, rippleConfig: { ...state.rippleConfig, [action.key]: action.value } };
+    case 'UPDATE_TRAIL_CONFIG':
+      return { ...state, trailConfig: { ...state.trailConfig, [action.key]: action.value } };
     default:
       return state;
   }
@@ -207,7 +229,7 @@ export function ClientPage() {
     const c = actorRef.current;
     if (!c) return;
 
-    const { coreConfig, plugins, rippleConfig } = settings;
+    const { coreConfig, plugins, rippleConfig, trailConfig } = settings;
 
     c.setState({ humanize: coreConfig.humanize, speed: coreConfig.speed });
 
@@ -246,6 +268,20 @@ export function ClientPage() {
       );
     } else {
       c.removePlugin('RipplePlugin');
+    }
+
+    if (plugins.trail) {
+      c.removePlugin('trail');
+      c.use(
+        new TrailPlugin({
+          color: trailConfig.color,
+          fadeDuration: trailConfig.fadeDuration,
+          thickness: trailConfig.thickness,
+          length: trailConfig.length,
+        }),
+      );
+    } else {
+      c.removePlugin('trail');
     }
   }, [settings]);
 
@@ -432,6 +468,130 @@ export function ClientPage() {
                 </SettingsSectionHeader>
               </SettingsSection>
 
+              {/* Trail Plugin Section */}
+              <SettingsSection>
+                <SettingsSectionHeader
+                  id="enable-trail"
+                  checked={settings.plugins.trail}
+                  onCheckedChange={(checked) =>
+                    dispatch({ type: 'TOGGLE_PLUGIN', plugin: 'trail', enabled: checked })
+                  }
+                >
+                  <div className="flex items-center gap-1.5">
+                    Trail
+                    <HoverCard>
+                      <HoverCardTrigger asChild>
+                        <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                      </HoverCardTrigger>
+                      <HoverCardContent
+                        side="left"
+                        className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
+                      >
+                        <iframe
+                          src="/demos/trail"
+                          className="w-full h-full border-0 overflow-hidden"
+                          scrolling="no"
+                        />
+                      </HoverCardContent>
+                    </HoverCard>
+                  </div>
+                </SettingsSectionHeader>
+                <SettingsSectionBody open={settings.plugins.trail}>
+                  <div className="flex flex-row items-center justify-between gap-2">
+                    <Label htmlFor="trail-length" className="text-xs font-normal">
+                      length
+                    </Label>
+                    <InputGroup className="h-7 w-24">
+                      <InputGroupInput
+                        id="trail-length"
+                        type="number"
+                        min={5}
+                        max={200}
+                        step={5}
+                        value={settings.trailConfig.length}
+                        onChange={(e) =>
+                          dispatch({
+                            type: 'UPDATE_TRAIL_CONFIG',
+                            key: 'length',
+                            value: Number(e.target.value),
+                          })
+                        }
+                      />
+                      <InputGroupAddon align="inline-end">px</InputGroupAddon>
+                    </InputGroup>
+                  </div>
+                  <div className="flex flex-row items-center justify-between gap-2">
+                    <Label htmlFor="trail-color" className="text-xs font-normal">
+                      color
+                    </Label>
+                    <InputGroup className="h-7 w-28">
+                      <InputGroupInput
+                        className="w-10"
+                        id="trail-color"
+                        type="color"
+                        value={settings.trailConfig.color}
+                        onChange={(e) =>
+                          dispatch({
+                            type: 'UPDATE_TRAIL_CONFIG',
+                            key: 'color',
+                            value: e.target.value,
+                          })
+                        }
+                      />
+                      <InputGroupAddon align="inline-end">
+                        {settings.trailConfig.color}
+                      </InputGroupAddon>
+                    </InputGroup>
+                  </div>
+                  <div className="flex flex-row items-center justify-between gap-2">
+                    <Label htmlFor="trail-fade" className="text-xs font-normal">
+                      fadeDuration
+                    </Label>
+                    <InputGroup className="h-7 w-24">
+                      <InputGroupInput
+                        id="trail-fade"
+                        type="number"
+                        min={100}
+                        max={3000}
+                        step={100}
+                        value={settings.trailConfig.fadeDuration}
+                        onChange={(e) =>
+                          dispatch({
+                            type: 'UPDATE_TRAIL_CONFIG',
+                            key: 'fadeDuration',
+                            value: Number(e.target.value),
+                          })
+                        }
+                      />
+                      <InputGroupAddon align="inline-end">ms</InputGroupAddon>
+                    </InputGroup>
+                  </div>
+                  <div className="flex flex-row items-center justify-between gap-2">
+                    <Label htmlFor="trail-thickness" className="text-xs font-normal">
+                      thickness
+                    </Label>
+                    <InputGroup className="h-7 w-24">
+                      <InputGroupInput
+                        id="trail-thickness"
+                        type="number"
+                        min={1}
+                        max={20}
+                        step={1}
+                        value={settings.trailConfig.thickness}
+                        onChange={(e) =>
+                          dispatch({
+                            type: 'UPDATE_TRAIL_CONFIG',
+                            key: 'thickness',
+                            value: Number(e.target.value),
+                          })
+                        }
+                      />
+                      <InputGroupAddon align="inline-end">px</InputGroupAddon>
+                    </InputGroup>
+                  </div>
+                </SettingsSectionBody>
+              </SettingsSection>
+
               {/* Ripple Plugin Section */}
               <SettingsSection>
                 <SettingsSectionHeader
@@ -479,7 +639,9 @@ export function ClientPage() {
                           })
                         }
                       />
-                      <InputGroupAddon align="inline-end">{settings.rippleConfig.color}</InputGroupAddon>
+                      <InputGroupAddon align="inline-end">
+                        {settings.rippleConfig.color}
+                      </InputGroupAddon>
                     </InputGroup>
                   </div>
                   <div className="flex flex-row items-center justify-between gap-2">

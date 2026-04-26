@@ -15,12 +15,17 @@ The main entry point for creating an automated cursor sequence. It initializes t
 
 ```ts
 import { Cursor } from '@cursor.js/core';
+import { RipplePlugin } from '@cursor.js/core/plugins';
+import { TrailPlugin } from '@cursor.js/pro';
 
 const cursor = new Cursor({
   speed: 1.2,
   humanize: true,
   size: 1.5,
 });
+
+cursor.use(new RipplePlugin({ color: 'rgba(0,0,0,0.2)', size: 50, duration: 800 }));
+cursor.use(new TrailPlugin({ color: '#ff0000', thickness: 3, length: 15, fadeDuration: 800 }));
 
 cursor.hover('.login-button').click('.login-button');
 ```

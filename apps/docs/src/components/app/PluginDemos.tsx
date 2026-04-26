@@ -9,6 +9,7 @@ import {
   ClickSoundPlugin,
   LoggingPlugin,
 } from '@cursor.js/core';
+import { TrailPlugin } from '@cursor.js/pro';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -34,8 +35,7 @@ export function ThemeDemo() {
         .hover('.carousel') // arbitrary container
         .do(
           () =>
-            isActive &&
-            (document.querySelector<HTMLInputElement>('#demo-theme-input')!.value = ''),
+            isActive && (document.querySelector<HTMLInputElement>('#demo-theme-input')!.value = ''),
         )
         .do(() => {
           if (isActive) setTimeout(run, 0);
@@ -55,7 +55,8 @@ export function ThemeDemo() {
     <div className="space-y-4 w-full h-full p-4 flex flex-col justify-center max-w-sm mx-auto text-left">
       <h4 className="text-sm font-semibold mb-2">Theme Plugin</h4>
       <p className="text-xs text-muted-foreground mb-3">
-        Core plugin for high-quality SVG themes, dynamic "I-beam" text cursors on inputs, and hotspot awareness. Required for standard visually optimal behavior.
+        Core plugin for high-quality SVG themes, dynamic "I-beam" text cursors on inputs, and
+        hotspot awareness. Required for standard visually optimal behavior.
       </p>
 
       <div className="flex items-center justify-between mb-4">
@@ -308,6 +309,57 @@ export function LoggingDemo() {
         <Input id="demo-log-input1" placeholder="Type here..." />
         <Button id="demo-log-submit" className="w-full">
           Submit
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export function TrailDemo() {
+  useEffect(() => {
+    let isActive = true;
+    const c = new Cursor({ speed: 0.8 });
+    c.use(new TrailPlugin({ color: '#3b82f6', thickness: 3, fadeDuration: 600 }));
+
+    const run = () => {
+      if (!isActive) return;
+      c.hover('#demo-trail-input')
+        .wait(300)
+        .click('#demo-trail-input')
+        .type('#demo-trail-input', 'Smooth trail', { delay: 30 })
+        .wait(500)
+        .hover('#demo-trail-button')
+        .wait(300)
+        .click('#demo-trail-button')
+        .wait(500)
+        .do(
+          () =>
+            isActive && (document.querySelector<HTMLInputElement>('#demo-trail-input')!.value = ''),
+        )
+        .do(() => {
+          if (isActive) setTimeout(run, 0);
+        });
+    };
+
+    c.setState({ size: 1 });
+    c.wait(200).do(() => run());
+
+    return () => {
+      isActive = false;
+      c.destroy();
+    };
+  }, []);
+
+  return (
+    <div className="space-y-4 w-full h-full p-4 flex flex-col justify-center max-w-sm mx-auto text-left">
+      <h4 className="text-sm font-semibold mb-2">Trail Plugin</h4>
+      <p className="text-xs text-muted-foreground mb-4">
+        Leaves a custom trail behind the cursor movement, resembling an airplane contrail.
+      </p>
+      <div className="space-y-3">
+        <Input id="demo-trail-input" placeholder="Watch the trail..." />
+        <Button id="demo-trail-button" className="w-full">
+          Move Here
         </Button>
       </div>
     </div>
