@@ -1,0 +1,50 @@
+---
+title: Trail Plugin
+description: Add a trailing effect that follows the cursor across the screen.
+---
+
+The `TrailPlugin` adds a smooth trailing visual effect behind your cursor, similar to contrails behind airplanes. The trail automatically fades out after a short duration.
+
+### Demo
+
+<iframe
+  src="/demos/trail"
+  className="w-full h-80 rounded-xl border mt-6 overflow-hidden relative"
+/>
+
+## Features
+
+- Smooth movement following your cursor
+- Automatic fade-out rendering
+- Highly customizable colors, lengths, and thickness
+
+## Installation
+
+The `TrailPlugin` is included in the `@cursor.js/pro` package.
+
+```bash
+npm install @cursor.js/pro @cursor.js/core
+```
+
+## Basic Usage
+
+```typescript
+import { Cursor } from '@cursor.js/core';
+import { TrailPlugin } from '@cursor.js/pro';
+
+const cursor = new Cursor();
+cursor.use(new TrailPlugin());
+```
+
+## Configuration
+
+You can customize the effect appearance using the configuration object:
+
+```typescript
+new TrailPlugin({
+  length: 15, // Number of trail particles
+  thickness: 3, // Thickness of the trail in pixels (default: 2)
+  color: '#ff0000', // Color of the trail (default: #000000)
+  fadeDuration: 800, // Trailing persistence duration in milliseconds (default: 500)
+});
+```

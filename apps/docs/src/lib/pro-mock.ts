@@ -21,6 +21,13 @@ const mockProxy = new Proxy(
 // Since Next.js uses strict ES modules occasionally, we export common placeholders.
 // You might need to add specific named exports here if Webpack complains about
 // 'export "SpecificPlugin" was not found in "@cursor.js/pro"'.
-export const ProPlugin = () => {};
+export const ProPlugin = class {};
+export const TrailPlugin = class {
+  name = 'trail-mock';
+  constructor(args: any) {}
+  install() {}
+  onMove() {}
+  onDestroy() {}
+};
 
 export default mockProxy;
