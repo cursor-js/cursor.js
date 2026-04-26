@@ -7,5 +7,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@cursor.js/pro", "docs"]
+  "ignore": ["docs"]
 }
