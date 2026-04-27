@@ -51,6 +51,7 @@ type SettingsState = {
   coreConfig: {
     humanize: boolean;
     speed: number;
+    size: number;
   };
   plugins: {
     theme: boolean;
@@ -94,7 +95,8 @@ type SettingsAction =
 const initialSettings: SettingsState = {
   coreConfig: {
     humanize: true,
-    speed: 0.5,
+    speed: 0.7,
+    size: 1,
   },
   plugins: {
     theme: true,
@@ -160,7 +162,7 @@ export function ClientPage() {
       c.stop()
         .do(() => setDemoState('running'))
         .wait(500)
-        .setState({ size: 1 })
+        .setState({ size: settings.coreConfig.size })
         .until(
           () => {
             const prevBtn = document.querySelector('.carousel-prev');
@@ -199,10 +201,13 @@ export function ClientPage() {
         .click('.carousel-next')
         .wait(1000)
         .hover('#demo-accordion-1')
-        .setState({ ripple: { color: '#10b98180' }, size: 1.5 })
+        .setState({ ripple: { color: '#10b98180' }, size: settings.coreConfig.size * 1.5 })
         .wait(400)
         .click('#demo-accordion-1')
-        .setState({ ripple: { color: settings.rippleConfig.color + '80' }, size: 1 })
+        .setState({
+          ripple: { color: settings.rippleConfig.color + '80' },
+          size: settings.coreConfig.size,
+        })
         .wait(1200)
         .hover('#demo-accordion-2')
         .wait(400)
@@ -234,7 +239,7 @@ export function ClientPage() {
 
     const { coreConfig, plugins, rippleConfig, trailConfig } = settings;
 
-    c.setState({ humanize: coreConfig.humanize, speed: coreConfig.speed });
+    c.setState({ humanize: coreConfig.humanize, speed: coreConfig.speed, size: coreConfig.size });
 
     if (plugins.theme) {
       c.use(
@@ -487,6 +492,29 @@ export function ClientPage() {
                         dispatch({
                           type: 'UPDATE_CORE_CONFIG',
                           key: 'speed',
+                          value: Number(e.target.value),
+                        })
+                      }
+                      className="h-7 text-right"
+                    />
+                    <InputGroupAddon align="inline-end">x</InputGroupAddon>
+                  </InputGroup>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 mt-2">
+                  <Label htmlFor="core-size">size</Label>
+                  <InputGroup className="h-7 w-24">
+                    <InputGroupInput
+                      id="core-size"
+                      type="number"
+                      min={0.1}
+                      max={10}
+                      step={0.1}
+                      value={settings.coreConfig.size}
+                      onChange={(e) =>
+                        dispatch({
+                          type: 'UPDATE_CORE_CONFIG',
+                          key: 'size',
                           value: Number(e.target.value),
                         })
                       }
