@@ -8,6 +8,7 @@ import {
   RipplePlugin,
   ClickSoundPlugin,
   LoggingPlugin,
+  defaultTheme,
 } from '@cursor.js/core';
 import { TrailPlugin } from '@cursor.js/pro';
 
@@ -131,6 +132,8 @@ function settingsReducer(state: SettingsState, action: SettingsAction): Settings
   }
 }
 
+const BEGINNING_CURSOR_SIZE = 3;
+
 export function ClientPage() {
   const [demoState, setDemoState] = useState<'idle' | 'running' | 'done'>('idle');
   const actorRef = useRef<Cursor | null>(null);
@@ -157,6 +160,7 @@ export function ClientPage() {
       c.stop()
         .do(() => setDemoState('running'))
         .wait(500)
+        .setState({ size: 1 })
         .until(
           () => {
             const prevBtn = document.querySelector('.carousel-prev');
@@ -164,7 +168,6 @@ export function ClientPage() {
           },
           (ctx) => ctx.click('.carousel-prev').wait(500),
         )
-        .setState({ size: 1 })
         .if(
           () =>
             document.querySelector<HTMLInputElement>('#demo-email')?.value !== 'hello@cursor.js',
@@ -206,7 +209,7 @@ export function ClientPage() {
         .click('#demo-accordion-2')
         .wait(1000)
         .hover('#cursor-beginning')
-        .setState({ size: 5 })
+        .setState({ size: BEGINNING_CURSOR_SIZE })
         .do(() => {
           if (!isActive) return;
           setDemoState('done');
@@ -215,7 +218,7 @@ export function ClientPage() {
         .do(buildDemoSequence); // Re-queue the scenario at the end
     };
 
-    c.setState({ size: 5 }).move('#cursor-beginning').do(buildDemoSequence);
+    c.setState({ size: BEGINNING_CURSOR_SIZE }).move('#cursor-beginning').do(buildDemoSequence);
 
     return () => {
       isActive = false;
@@ -234,7 +237,63 @@ export function ClientPage() {
     c.setState({ humanize: coreConfig.humanize, speed: coreConfig.speed });
 
     if (plugins.theme) {
-      c.use(new ThemePlugin());
+      c.use(
+        new ThemePlugin({
+          ...defaultTheme,
+
+          default: {
+            html: `
+
+<svg width="26" height="30" viewBox="0 0 26 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#filter0_i_114_46)">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M26 18L0 0L6.62243 30L14.5 22L26 18Z" fill="#00FF26"/>
+</g>
+<path d="M24.9062 17.8506L14.3359 21.5273L14.2256 21.5664L14.1436 21.6494L6.91113 28.9932L0.762695 1.13574L24.9062 17.8506Z" stroke="#272727" stroke-miterlimit="16"/>
+<defs>
+<filter id="filter0_i_114_46" x="0" y="0" width="26" height="30" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="2"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.8 0"/>
+<feBlend mode="normal" in2="shape" result="effect1_innerShadow_114_46"/>
+</filter>
+</defs>
+</svg>
+
+
+
+`,
+            hotspot: 'top-left',
+          },
+          pointer: {
+            html: `
+<svg width="27" height="35" viewBox="0 0 27 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#filter0_d_120_46)">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M7.09097 18.8824L5.683 16.7308C4.72163 15.2617 2.67384 14.7257 1.10747 15.5311L1.47245 15.3435C1.08372 15.5433 0.897322 16.0416 1.05737 16.4558L3.00632 21.4988C3.31528 22.2983 4.10437 23.429 4.75825 23.997C4.75825 23.997 8.679 27.2426 8.679 28.4595V30H15.0311H16.7681H18.2072H19.7952V28.4595C19.7952 27.2426 22.1913 23.4099 22.1913 23.4099C22.6324 22.6649 23 21.3524 23 20.4811V14.0729C22.9713 12.6541 21.7654 11.5043 20.2775 11.5043C19.5332 11.5043 18.9302 12.0792 18.9302 12.7889V13.3022C18.9302 11.8834 17.7244 10.7336 16.2365 10.7336C15.4921 10.7336 14.8892 11.3085 14.8892 12.0183V12.5316C14.8892 11.1128 13.6834 9.96296 12.1954 9.96296C11.4511 9.96296 10.8482 10.5379 10.8482 11.2476V11.7609C10.8482 11.5329 10.8238 11.3516 10.7767 11.208L10.3658 4.59016C10.3102 3.69527 9.55604 3 8.679 3C7.79584 3 7.09097 3.71094 7.09097 4.58793V10.9412V18.8824Z" fill="#00FF26"/>
+<path d="M23.5 20.4814C23.4999 20.977 23.3975 21.5705 23.2432 22.127C23.0887 22.6838 22.871 23.2429 22.6211 23.665L22.6152 23.6748L22.6143 23.6777C22.6133 23.6793 22.6113 23.6814 22.6094 23.6846C22.6051 23.6915 22.5983 23.7022 22.5898 23.7158C22.5727 23.7435 22.5469 23.7851 22.5146 23.8379C22.4501 23.9435 22.3581 24.0963 22.2471 24.2832C22.0247 24.6577 21.7289 25.1686 21.4336 25.7158C21.1375 26.2647 20.8458 26.8427 20.6299 27.3525C20.4035 27.8872 20.2951 28.2683 20.2949 28.459V30.5H8.17871V28.459C8.17854 28.4263 8.16065 28.3279 8.06738 28.1494C7.97887 27.9801 7.84469 27.7795 7.6709 27.5547C7.32359 27.1055 6.85169 26.6042 6.36816 26.1289C5.88683 25.6558 5.40428 25.2179 5.04102 24.8984C4.85963 24.7389 4.70791 24.6091 4.60254 24.5195C4.55018 24.475 4.50927 24.4403 4.48145 24.417C4.4675 24.4053 4.45625 24.3965 4.44922 24.3906C4.44577 24.3878 4.44308 24.3852 4.44141 24.3838L4.43945 24.3828V24.3818L4.43066 24.375L4.75781 23.9971L4.43066 24.374C3.71457 23.752 2.87807 22.5534 2.54004 21.6787L0.59082 16.6357C0.391587 16.1199 0.531448 15.527 0.910156 15.1455L0.878906 15.0869L1.24414 14.8984L1.25391 14.9189C2.98426 14.2534 5.07454 14.8876 6.10156 16.457L6.59082 17.2041V4.58789C6.59084 3.4361 7.51833 2.50015 8.67871 2.5C9.81814 2.5 10.7932 3.39936 10.8652 4.55957L11.1865 9.75293C11.4791 9.56878 11.8271 9.46292 12.1953 9.46289C13.2956 9.46289 14.2794 10.0035 14.8555 10.834C15.1975 10.4634 15.6946 10.2334 16.2363 10.2334C17.3366 10.2334 18.3204 10.7741 18.8965 11.6045C19.2385 11.2339 19.7357 11.004 20.2773 11.0039C22.0211 11.0039 23.4653 12.3557 23.5 14.0625V20.4814Z" stroke="#363B3E"/>
+</g>
+<defs>
+<filter id="filter0_d_120_46" x="-2.99983" y="0" width="29.9998" height="35" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="1"/>
+<feGaussianBlur stdDeviation="1.5"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_120_46"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_120_46" result="shape"/>
+</filter>
+</defs>
+</svg>
+`,
+            hotspot: {
+              x: 10,
+              y: 0,
+            },
+          },
+        }),
+      );
     } else {
       c.removePlugin('ThemePlugin');
     }

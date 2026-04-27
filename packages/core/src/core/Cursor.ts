@@ -131,9 +131,8 @@ export class Cursor {
     const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
     if (!element) throw new Error(`Element not found: ${selector}`);
 
-    this.plugins.forEach((p) => p.onClickStart?.(element));
-
     await this._hover(element);
+    this.plugins.forEach((p) => p.onClickStart?.(element));
     EventDispatcher.click(element as HTMLElement);
   }
 
