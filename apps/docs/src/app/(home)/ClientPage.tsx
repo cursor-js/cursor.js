@@ -107,15 +107,15 @@ const initialSettings: SettingsState = {
     trail: true,
   },
   rippleConfig: {
-    color: '#3b82f6',
-    duration: 800,
-    size: 70,
+    color: 'rgba(0, 0, 0, 0.3)',
+    duration: 600,
+    size: 50,
   },
   trailConfig: {
-    length: 135,
-    thickness: 6,
-    color: '#FF000080',
-    fadeDuration: 100,
+    length: 40,
+    thickness: 20,
+    color: '#0099ff',
+    fadeDuration: 500,
   },
 };
 
