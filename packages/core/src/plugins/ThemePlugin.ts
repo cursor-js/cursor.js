@@ -50,7 +50,7 @@ export class ThemePlugin implements CursorPlugin {
 
   install(cursor: Cursor): void {
     this.cursorRef = cursor;
-    
+
     // Clear GhostCursor default inner HTML if it has the default SVG
     if (this.cursorRef.cursor.el) {
       const el = this.cursorRef.cursor.el;
@@ -59,13 +59,15 @@ export class ThemePlugin implements CursorPlugin {
       el.style.height = '0px';
       el.style.margin = '0px';
       el.style.background = 'transparent';
-      
+
       this.wrapper = document.createElement('div');
       this.wrapper.className = 'cursor-theme-wrapper';
       this.wrapper.style.position = 'absolute';
       this.wrapper.style.top = '0';
       this.wrapper.style.left = '0';
-      
+      // this.wrapper.style.pointerEvents = 'none';
+      // this.wrapper.style.zIndex = '9999999';
+
       this.cursorRef.cursor.el.appendChild(this.wrapper);
     }
 
@@ -74,7 +76,7 @@ export class ThemePlugin implements CursorPlugin {
 
   private renderCursor(type: string): void {
     if (!this.wrapper) return;
-    
+
     const themeItem = this.themePack[type] || this.themePack.default;
     if (!themeItem) return;
 
@@ -112,7 +114,7 @@ export class ThemePlugin implements CursorPlugin {
           this.wrapper.setAttribute(`data-cursor-${key}`, value.toString());
         }
       }
-      
+
       if (themeItem && themeItem.onStateChange) {
         themeItem.onStateChange(this.wrapper, newState);
       }
@@ -127,12 +129,12 @@ export class ThemePlugin implements CursorPlugin {
       // Need viewport coordinates
       const clientX = x - window.scrollX;
       const clientY = y - window.scrollY;
-      
+
       // Temporarily hide wrapper so elementFromPoint works correctly underneath it
       if (this.wrapper) this.wrapper.style.pointerEvents = 'none';
 
       const element = document.elementFromPoint(clientX, clientY);
-      
+
       if (element && element !== this.lastElement) {
         this.lastElement = element;
         this.autoDetectCursor(element);
@@ -144,7 +146,7 @@ export class ThemePlugin implements CursorPlugin {
 
   private autoDetectCursor(element: Element): void {
     if (!this.cursorRef) return;
-    
+
     // Simplistic heuristic, could use getComputedStyle
     const tag = element.tagName.toLowerCase();
     const style = window.getComputedStyle(element);
@@ -154,7 +156,11 @@ export class ThemePlugin implements CursorPlugin {
 
     if (cssCursor === 'pointer' || tag === 'a' || tag === 'button') {
       targetCursor = 'pointer';
-    } else if (tag === 'input' || tag === 'textarea' || (element as HTMLElement).isContentEditable) {
+    } else if (
+      tag === 'input' ||
+      tag === 'textarea' ||
+      (element as HTMLElement).isContentEditable
+    ) {
       // Ignore some inputs
       if (tag === 'input') {
         const type = (element as HTMLInputElement).type;
@@ -167,14 +173,14 @@ export class ThemePlugin implements CursorPlugin {
         targetCursor = 'text';
       }
     } else {
-       targetCursor = 'default';
+      targetCursor = 'default';
     }
 
     // Only update synchronously to prevent massive promise queueing delays during move
     if (!this.cursorRef.state.theme) {
       this.cursorRef.state.theme = {};
     }
-    
+
     if (this.cursorRef.state.theme.cursor !== targetCursor) {
       this.cursorRef.state.theme.cursor = targetCursor;
       this.renderCursor(targetCursor);

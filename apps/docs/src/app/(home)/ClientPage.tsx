@@ -107,7 +107,7 @@ const initialSettings: SettingsState = {
     trail: true,
   },
   rippleConfig: {
-    color: 'rgba(0, 0, 0, 0.3)',
+    color: '#000000',
     duration: 600,
     size: 50,
   },

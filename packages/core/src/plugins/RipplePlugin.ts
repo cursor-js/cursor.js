@@ -56,7 +56,7 @@ export class RipplePlugin implements CursorPlugin {
     ripple.style.transition = `transform ${duration}ms linear, opacity ${duration}ms linear`;
     ripple.style.left = `${x}px`;
     ripple.style.top = `${y}px`;
-    ripple.style.zIndex = '999999';
+    // ripple.style.zIndex = '9999998';
 
     document.body.appendChild(ripple);
 
