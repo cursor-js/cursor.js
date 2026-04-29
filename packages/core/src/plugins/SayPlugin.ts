@@ -69,11 +69,18 @@ export class SayPlugin implements CursorPlugin {
 
     // Position the bubble
     if (position === 'cursor') {
-      const cursorRect = cursor.cursor.el.getBoundingClientRect();
-      const x = cursorRect.left + window.scrollX + 20;
-      const y = cursorRect.top + window.scrollY - 10;
-      this.bubbleElement.style.left = `${x}px`;
-      this.bubbleElement.style.top = `${y}px`;
+      this.bubbleElement.style.position = 'fixed';
+      this.bubbleElement.style.top = '50%';
+      this.bubbleElement.style.left = '50%';
+      this.bubbleElement.style.transform = 'translate(-50%, -50%)';
+      this.bubbleElement.style.maxWidth = '80%';
+      this.bubbleElement.style.textAlign = 'center';
+      this.bubbleElement.style.background = 'rgba(0, 0, 0, 0.85)';
+      this.bubbleElement.style.color = 'white';
+      this.bubbleElement.style.borderRadius = '8px';
+      this.bubbleElement.style.fontSize = '16px';
+      this.bubbleElement.style.lineHeight = '1.4';
+      this.bubbleElement.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
     } else if (position === 'bottom') {
       this.bubbleElement.style.position = 'fixed';
       this.bubbleElement.style.bottom = '20px';
