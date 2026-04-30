@@ -1,4 +1,5 @@
-import type { Cursor, CursorPlugin } from '@cursor.js/core';
+import type { Cursor } from '../core/Cursor';
+import type { CursorPlugin } from './CursorPlugin';
 import { SayPlugin as SayPluginClass } from './SayPlugin';
 
 export interface SpeechPluginOptions {

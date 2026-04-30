@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { Cursor } from '../core/Cursor';
 import { SayPlugin } from './SayPlugin';
 import { SpeechPlugin } from './SpeechPlugin';
