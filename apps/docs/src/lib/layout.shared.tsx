@@ -12,6 +12,11 @@ export function baseOptions(): BaseLayoutProps {
         url: '/docs/core-api/cursor',
         active: 'nested-url',
       },
+      {
+        text: 'Pro',
+        url: '/pro',
+        active: 'nested-url',
+      },
     ],
   };
 }
