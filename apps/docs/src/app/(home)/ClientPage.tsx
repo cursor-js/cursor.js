@@ -363,7 +363,7 @@ export function ClientPage() {
     }
 
     if (plugins.speech) {
-      c.use(new SpeechPlugin({ enabled: true, lang: 'tr-TR' }));
+      c.use(new SpeechPlugin({ enabled: true, voiceName: 'Google US English' }));
     } else {
       c.removePlugin('speech');
     }

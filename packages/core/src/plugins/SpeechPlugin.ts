@@ -7,20 +7,26 @@ export interface SpeechPluginOptions {
   rate?: number;
   pitch?: number;
   volume?: number;
+  /** Exact voice name to use (e.g., 'Google US English'). If not provided, best voice is auto-selected. */
+  voiceName?: string;
 }
 
 export class SpeechPlugin implements CursorPlugin {
   name = 'speech';
-  private options: Required<Omit<SpeechPluginOptions, 'enabled'>> & { enabled: boolean };
+  private options: Required<Omit<SpeechPluginOptions, 'enabled'>> & {
+    enabled: boolean;
+    voiceName: string;
+  };
   private originalOnBeforeSay: ((text: string, options?: any) => void) | null = null;
 
   constructor(options: SpeechPluginOptions = {}) {
     this.options = {
       enabled: options.enabled ?? true,
-      lang: options.lang ?? 'tr-TR',
+      lang: options.lang ?? 'en-US',
       rate: options.rate ?? 1,
       pitch: options.pitch ?? 1,
       volume: options.volume ?? 1,
+      voiceName: options.voiceName ?? '',
     };
   }
 
@@ -40,8 +46,8 @@ export class SpeechPlugin implements CursorPlugin {
       this.originalOnBeforeSay?.(text, options);
 
       // Check if speech is enabled (global + per-call)
-      const shouldSpeak = this.options.enabled && (options?.speak !== false);
-      
+      const shouldSpeak = this.options.enabled && options?.speak !== false;
+
       if (shouldSpeak) {
         this.speak(text);
       }
@@ -58,7 +64,47 @@ export class SpeechPlugin implements CursorPlugin {
     speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = this.options.lang;
+    const lang = this.options.lang;
+    const trySpeak = () => {
+      const voices = speechSynthesis.getVoices();
+      this.applyVoiceAndSpeak(utterance, lang, voices);
+    };
+
+    // Voices may not be loaded yet in some browsers
+    const voices = speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      trySpeak();
+    } else {
+      speechSynthesis.addEventListener(
+        'voiceschanged',
+        () => {
+          trySpeak();
+        },
+        { once: true },
+      );
+    }
+  }
+
+  private applyVoiceAndSpeak(
+    utterance: SpeechSynthesisUtterance,
+    lang: string,
+    voices: SpeechSynthesisVoice[],
+  ): void {
+    // Use exact voice if specified, otherwise use first matching voice
+    let voice = this.options.voiceName
+      ? voices.find((v) => v.name === this.options.voiceName)
+      : voices.find((v) => v.lang.startsWith(lang.split('-')[0])) ||
+        voices.find((v) => v.lang === lang) ||
+        voices[0];
+
+    if (voice) {
+      utterance.voice = voice;
+      console.debug(`[SpeechPlugin] Using voice: "${voice.name}" (${voice.lang})`);
+    } else {
+      console.warn('[SpeechPlugin] No voice found, using default');
+    }
+
+    utterance.lang = lang;
     utterance.rate = this.options.rate;
     utterance.pitch = this.options.pitch;
     utterance.volume = this.options.volume;
