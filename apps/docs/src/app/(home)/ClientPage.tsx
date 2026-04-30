@@ -72,6 +72,10 @@ type SettingsState = {
     color: string;
     fadeDuration: number;
   };
+  clickSoundConfig: {
+    volume: number;
+    soundUrl: string;
+  };
 };
 
 type SettingsAction =
@@ -89,6 +93,11 @@ type SettingsAction =
   | {
       type: 'UPDATE_TRAIL_CONFIG';
       key: keyof SettingsState['trailConfig'];
+      value: string | number;
+    }
+  | {
+      type: 'UPDATE_CLICKSOUND_CONFIG';
+      key: keyof SettingsState['clickSoundConfig'];
       value: string | number;
     };
 
@@ -119,6 +128,10 @@ const initialSettings: SettingsState = {
     color: '#0099ff',
     fadeDuration: 500,
   },
+  clickSoundConfig: {
+    volume: 0.5,
+    soundUrl: '/click.mp3',
+  },
 };
 
 function settingsReducer(state: SettingsState, action: SettingsAction): SettingsState {
@@ -131,6 +144,8 @@ function settingsReducer(state: SettingsState, action: SettingsAction): Settings
       return { ...state, rippleConfig: { ...state.rippleConfig, [action.key]: action.value } };
     case 'UPDATE_TRAIL_CONFIG':
       return { ...state, trailConfig: { ...state.trailConfig, [action.key]: action.value } };
+    case 'UPDATE_CLICKSOUND_CONFIG':
+      return { ...state, clickSoundConfig: { ...state.clickSoundConfig, [action.key]: action.value } };
     default:
       return state;
   }
@@ -241,7 +256,7 @@ export function ClientPage() {
     const c = actorRef.current;
     if (!c) return;
 
-    const { coreConfig, plugins, rippleConfig, trailConfig } = settings;
+    const { coreConfig, plugins, rippleConfig, trailConfig, clickSoundConfig } = settings;
 
     c.setState({ humanize: coreConfig.humanize, speed: coreConfig.speed, size: coreConfig.size });
 
@@ -320,7 +335,13 @@ export function ClientPage() {
     }
 
     if (plugins.clickSound) {
-      c.use(new ClickSoundPlugin());
+      c.removePlugin('ClickSoundPlugin');
+      c.use(
+        new ClickSoundPlugin({
+          volume: clickSoundConfig.volume,
+          soundUrl: clickSoundConfig.soundUrl,
+        }),
+      );
     } else {
       c.removePlugin('ClickSoundPlugin');
     }
@@ -857,7 +878,7 @@ export function ClientPage() {
 
                 {/* ClickSound Plugin */}
                 <AccordionItem value="clicksound" className="relative">
-                  <SettingsAccordionTrigger hideIcon className="hover:no-underline">
+                  <SettingsAccordionTrigger className="hover:no-underline">
                     <div className="flex items-center gap-1.5">
                       ClickSound
                       <HoverCard>
@@ -890,6 +911,51 @@ export function ClientPage() {
                       }
                     />
                   </div>
+                  <SettingsAccordionContent>
+                    <div className="space-y-2 py-2">
+                      <div className="flex flex-row items-center justify-between gap-2">
+                        <Label htmlFor="clicksound-volume" className="text-xs font-normal">
+                          volume
+                        </Label>
+                        <InputGroup className="h-7 w-24">
+                          <InputGroupInput
+                            id="clicksound-volume"
+                            type="number"
+                            min={0}
+                            max={1}
+                            step={0.1}
+                            value={settings.clickSoundConfig.volume}
+                            onChange={(e) =>
+                              dispatch({
+                                type: 'UPDATE_CLICKSOUND_CONFIG',
+                                key: 'volume',
+                                value: Number(e.target.value),
+                              })
+                            }
+                          />
+                        </InputGroup>
+                      </div>
+                      <div className="flex flex-row items-center justify-between gap-2">
+                        <Label htmlFor="clicksound-url" className="text-xs font-normal">
+                          soundUrl
+                        </Label>
+                        <InputGroup className="h-7 w-full max-w-[12rem]">
+                          <InputGroupInput
+                            id="clicksound-url"
+                            type="text"
+                            value={settings.clickSoundConfig.soundUrl}
+                            onChange={(e) =>
+                              dispatch({
+                                type: 'UPDATE_CLICKSOUND_CONFIG',
+                                key: 'soundUrl',
+                                value: e.target.value,
+                              })
+                            }
+                          />
+                        </InputGroup>
+                      </div>
+                    </div>
+                  </SettingsAccordionContent>
                 </AccordionItem>
 
                 {/* Say Plugin */}
