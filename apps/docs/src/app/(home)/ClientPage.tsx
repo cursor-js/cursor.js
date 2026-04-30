@@ -8,6 +8,8 @@ import {
   RipplePlugin,
   ClickSoundPlugin,
   LoggingPlugin,
+  SayPlugin,
+  SpeechPlugin,
   defaultTheme,
 } from '@cursor.js/core';
 import { TrailPlugin } from '@cursor.js/pro';
@@ -60,6 +62,8 @@ type SettingsState = {
     clickSound: boolean;
     logging: boolean;
     trail: boolean;
+    say: boolean;
+    speech: boolean;
   };
   rippleConfig: {
     color: string;
@@ -105,6 +109,8 @@ const initialSettings: SettingsState = {
     clickSound: false,
     logging: false,
     trail: true,
+    say: true,
+    speech: true,
   },
   rippleConfig: {
     color: '#000000',
@@ -176,6 +182,7 @@ export function ClientPage() {
           (ctx) =>
             ctx
               .hover('#demo-email')
+              .say('Let me fill this out for you!', { duration: 2000, position: 'subtitle' })
               .wait(300)
               .do(() => isActive && setEmail(''))
               .type('#demo-email', 'hello@cursor.js', { delay: 60 })
@@ -192,6 +199,7 @@ export function ClientPage() {
               .wait(600),
         )
         .hover('#demo-submit')
+        .say('And click submit!', { duration: 1500 })
         .wait(300)
         .click('#demo-submit')
         .wait(1000)
@@ -346,6 +354,18 @@ export function ClientPage() {
       );
     } else {
       c.removePlugin('trail');
+    }
+
+    if (plugins.say) {
+      c.use(new SayPlugin());
+    } else {
+      c.removePlugin('say');
+    }
+
+    if (plugins.speech) {
+      c.use(new SpeechPlugin({ enabled: true, voiceName: 'Google US English' }));
+    } else {
+      c.removePlugin('speech');
     }
   }, [settings]);
 
@@ -837,6 +857,32 @@ export function ClientPage() {
                       </HoverCardContent>
                     </HoverCard>
                   </div>
+                </SettingsSectionHeader>
+              </SettingsSection>
+
+              {/* Say Plugin Section */}
+              <SettingsSection>
+                <SettingsSectionHeader
+                  id="enable-say"
+                  checked={settings.plugins.say}
+                  onCheckedChange={(checked) =>
+                    dispatch({ type: 'TOGGLE_PLUGIN', plugin: 'say', enabled: checked })
+                  }
+                >
+                  <div className="flex items-center gap-1.5">Say (Speech Bubble)</div>
+                </SettingsSectionHeader>
+              </SettingsSection>
+
+              {/* Speech Plugin Section */}
+              <SettingsSection>
+                <SettingsSectionHeader
+                  id="enable-speech"
+                  checked={settings.plugins.speech}
+                  onCheckedChange={(checked) =>
+                    dispatch({ type: 'TOGGLE_PLUGIN', plugin: 'speech', enabled: checked })
+                  }
+                >
+                  <div className="flex items-center gap-1.5">Speech (Web Speech API)</div>
                 </SettingsSectionHeader>
               </SettingsSection>
 
