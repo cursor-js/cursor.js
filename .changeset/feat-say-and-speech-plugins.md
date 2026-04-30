@@ -1,5 +1,5 @@
 ---
-"@cursor.js/core": minor
+'@cursor.js/core': minor
 ---
 
 Add SayPlugin for visual speech bubbles and SpeechPlugin for Web Speech API synthesis
