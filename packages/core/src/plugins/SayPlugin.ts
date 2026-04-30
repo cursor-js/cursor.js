@@ -25,7 +25,7 @@ export class SayPlugin implements CursorPlugin {
   public onAfterSay: ((text: string) => void) | null = null;
   private options: SayPluginOptions;
   private bubbleElement: HTMLElement | null = null;
-  private boundMoveHandler: ((e: MouseEvent) => void) | null = null;
+  private moveIntervalId: ReturnType<typeof setInterval> | null = null;
 
   constructor(options: SayPluginOptions = {}) {
     this.options = {
@@ -124,15 +124,17 @@ export class SayPlugin implements CursorPlugin {
     // Trigger onBeforeSay hook (for SpeechPlugin etc.)
     this.onBeforeSay?.(text, options);
 
-    // Track cursor position if in cursor mode
+    // Track ghost cursor position if in cursor mode
     if (position === 'cursor') {
-      this.boundMoveHandler = (e: MouseEvent) => {
-        if (this.bubbleElement) {
-          this.bubbleElement.style.left = `${e.clientX + 30}px`;
-          this.bubbleElement.style.top = `${e.clientY - 10}px`;
+      this.moveIntervalId = setInterval(() => {
+        if (this.bubbleElement && cursor.cursor && cursor.cursor.el) {
+          const cursorRect = cursor.cursor.el.getBoundingClientRect();
+          const x = cursorRect.left + window.scrollX + 30;
+          const y = cursorRect.top + window.scrollY - 10;
+          this.bubbleElement.style.left = `${x}px`;
+          this.bubbleElement.style.top = `${y}px`;
         }
-      };
-      document.addEventListener('mousemove', this.boundMoveHandler);
+      }, 16); // ~60fps
     }
 
     // Calculate duration based on text length if not provided
@@ -146,10 +148,10 @@ export class SayPlugin implements CursorPlugin {
       await new Promise((resolve) => setTimeout(resolve, 200)); // wait for fade out
     }
 
-    // Remove event listener if in cursor mode
-    if (position === 'cursor' && this.boundMoveHandler) {
-      document.removeEventListener('mousemove', this.boundMoveHandler);
-      this.boundMoveHandler = null;
+    // Clear interval if in cursor mode
+    if (position === 'cursor' && this.moveIntervalId) {
+      clearInterval(this.moveIntervalId);
+      this.moveIntervalId = null;
     }
 
     // Trigger onAfterSay hook
