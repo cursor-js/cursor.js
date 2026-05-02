@@ -34,9 +34,9 @@ export function BackgroundStars({ count = 80 }) {
             top: `${s.y}%`,
             width: `${s.size}px`,
             height: `${s.size}px`,
-            '--dur': `${s.dur}s` as any,
-            '--delay': `${s.delay}s` as any,
-          }}
+            '--dur': `${s.dur}s`,
+            '--delay': `${s.delay}s`,
+          } as React.CSSProperties}
         />
       ))}
     </>

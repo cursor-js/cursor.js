@@ -64,7 +64,7 @@ export function Comet({ angle = 45, isVisible = true }) {
     >
       <div className="comet-head" />
 
-      <div className="comet-tail" style={{ '--angle': `${angle}deg` }}>
+      <div className="comet-tail" style={{ '--angle': `${angle}deg` } as React.CSSProperties}>
         <div className="tail-glow" />
         <div className="tail-glow-2" />
       </div>
@@ -84,7 +84,7 @@ export function Comet({ angle = 45, isVisible = true }) {
               '--dy': `${star.dy}px`,
               '--duration': `${star.duration}s`,
               '--delay': `${star.delay}s`,
-            }}
+            } as React.CSSProperties}
           />
         ) : (
           <div
@@ -99,7 +99,7 @@ export function Comet({ angle = 45, isVisible = true }) {
               '--dy': `${star.dy}px`,
               '--duration': `${star.duration}s`,
               '--delay': `${star.delay}s`,
-            }}
+            } as React.CSSProperties}
           >
             <StarSVG color={star.color} />
           </div>
