@@ -3,7 +3,26 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
+      "env": [
+        "DATABASE_URL",
+        "GEMINI_API_KEY",
+        "NEON_PROJECT_ID",
+        "POSTGRES_URL_NON_POOLING",
+        "POSTGRES_URL",
+        "POSTGRES_PRISMA_URL",
+        "POSTGRES_DATABASE",
+        "POSTGRES_HOST",
+        "PGPASSWORD",
+        "PGHOST_UNPOOLED",
+        "POSTGRES_URL_NO_SSL",
+        "DATABASE_URL_UNPOOLED",
+        "POSTGRES_USER",
+        "PGUSER",
+        "PGHOST",
+        "POSTGRES_PASSWORD",
+        "BLOB_READ_WRITE_TOKEN"
+      ]
     },
     "dev": {
       "cache": false,
