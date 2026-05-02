@@ -1,7 +1,18 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
+import { useTheme } from 'next-themes';
+import './background-stars.css';
 
 export function BackgroundStars({ count = 80 }) {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const stars = useMemo(() => {
+    if (!mounted || resolvedTheme !== 'dark') return [];
+
     return Array.from({ length: count }, (_, i) => ({
       id: i,
       x: Math.random() * 100,

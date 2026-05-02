@@ -55,6 +55,7 @@ import {
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Comet } from '@/components/app/comet';
+import { BackgroundStars } from '@/components/app/background-stars';
 
 type SettingsState = {
   coreConfig: {
@@ -450,8 +451,11 @@ export function ClientPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <main className="flex-1">
+    <div className="flex min-h-screen flex-col bg-background text-foreground relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <BackgroundStars count={50} />
+      </div>
+      <main className="flex-1 relative z-10">
         <section className="container mx-auto flex flex-col items-center justify-center space-y-6 pt-24 pb-8 md:pt-7 text-center px-6">
           <div className="flex flex-col items-center space-y-8">
             <div className="relative w-20 h-26">
