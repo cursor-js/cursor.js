@@ -30,4 +30,10 @@ export const TrailPlugin = class {
   onDestroy() {}
 };
 
+export const GeminiTTSPlugin = class {
+  name = 'gemini-tts-mock';
+  constructor(args: any) {}
+  install() {}
+};
+
 export default mockProxy;

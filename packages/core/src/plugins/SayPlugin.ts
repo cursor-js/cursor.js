@@ -21,7 +21,7 @@ export interface SayPluginOptions {
 
 export class SayPlugin implements CursorPlugin {
   name = 'say';
-  public onBeforeSay: ((text: string, options?: SayOptions) => void) | null = null;
+  public onBeforeSay: ((text: string, options?: SayOptions) => Promise<void> | void) | null = null;
   public onAfterSay: ((text: string) => void) | null = null;
   private options: SayPluginOptions;
   private bubbleElement: HTMLElement | null = null;
@@ -122,7 +122,7 @@ export class SayPlugin implements CursorPlugin {
     });
 
     // Trigger onBeforeSay hook (for SpeechPlugin etc.)
-    this.onBeforeSay?.(text, options);
+    await this.onBeforeSay?.(text, options);
 
     // Track ghost cursor position if in cursor mode
     if (position === 'cursor') {

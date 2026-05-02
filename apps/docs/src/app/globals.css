@@ -119,6 +119,23 @@
   --sidebar-ring: oklch(0.58 0.031 107.3);
 }
 
+/* Cursor TTS Loading State Animation */
+.cursor-js-tts-loading {
+  animation: pulse-ring 1s infinite alternate;
+  filter: drop-shadow(0 0 8px rgba(0, 255, 38, 0.8));
+}
+
+@keyframes pulse-ring {
+  0% {
+    opacity: 0.6;
+    filter: drop-shadow(0 0 4px rgba(0, 255, 38, 0.8));
+  }
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 12px rgba(0, 255, 38, 1));
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

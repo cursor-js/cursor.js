@@ -28,7 +28,7 @@ export class Cursor {
     };
     this.state = { ...this.options }; // Initialize state with options
     this.cursor = new GhostCursor();
-    
+
     if (this.options.size !== undefined) {
       this.cursor.setSize(this.options.size);
     }
@@ -38,6 +38,10 @@ export class Cursor {
     this.plugins.push(plugin);
     plugin.install(this);
     return this;
+  }
+
+  getPlugin(name: string): CursorPlugin | undefined {
+    return this.plugins.find((p) => p.name === name);
   }
 
   removePlugin(name: string): this {
@@ -80,7 +84,7 @@ export class Cursor {
       EventDispatcher.toggleMimicHover(this.currentHoveredElement, false);
       EventDispatcher.triggerMouseEvent(this.currentHoveredElement, 'mouseleave');
     }
-    
+
     this.currentHoveredElement = element;
 
     this.plugins.forEach((p) => p.onHoverStart?.(element));
@@ -111,13 +115,12 @@ export class Cursor {
 
     // Simulate mouseleave and revert to default state logically when focus is done
     // But since it's a script sequence, we just wait a tiny bit to give the user time
-    // and let the next action trigger elements. 
-    // To restore the default cursor, we trigger an empty state update since ThemePlugin resets on 'default' 
+    // and let the next action trigger elements.
+    // To restore the default cursor, we trigger an empty state update since ThemePlugin resets on 'default'
     // Usually hover stays until next move. If they want default instantly after it finishes:
     // Actually, in auto mode, it should be naturally handled if we reset state when moving away.
     // Let's explicitly trigger a mouseleave from the previous element if we had one.
     // However, the cleanest way to revert to default is to let the user chain a `move(x,y)` out.
-
   }
 
   // 2. Click command
