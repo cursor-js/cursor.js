@@ -12,7 +12,7 @@ import {
   SpeechPlugin,
   defaultTheme,
 } from '@cursor.js/core';
-import { TrailPlugin } from '@cursor.js/pro';
+import { TrailPlugin, GeminiTTSPlugin } from '@cursor.js/pro';
 
 import {
   Carousel,
@@ -25,6 +25,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Info } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import {
   Accordion,
@@ -32,7 +39,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { SettingsAccordionTrigger, SettingsAccordionContent } from '@/components/app/settings-accordion';
+import {
+  SettingsAccordionTrigger,
+  SettingsAccordionContent,
+} from '@/components/app/settings-accordion';
 import { Switch } from '@/components/ui/switch';
 import {
   RippleDemo,
@@ -44,6 +54,7 @@ import {
 
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Comet } from '@/components/app/comet';
 
 type SettingsState = {
   coreConfig: {
@@ -60,6 +71,7 @@ type SettingsState = {
     trail: boolean;
     say: boolean;
     speech: boolean;
+    geminiTts: boolean;
   };
   rippleConfig: {
     color: string;
@@ -75,6 +87,10 @@ type SettingsState = {
   clickSoundConfig: {
     volume: number;
     soundUrl: string;
+  };
+  geminiTtsConfig: {
+    speaker: string;
+    language: string;
   };
 };
 
@@ -99,6 +115,11 @@ type SettingsAction =
       type: 'UPDATE_CLICKSOUND_CONFIG';
       key: keyof SettingsState['clickSoundConfig'];
       value: string | number;
+    }
+  | {
+      type: 'UPDATE_GEMINI_TTS_CONFIG';
+      key: keyof SettingsState['geminiTtsConfig'];
+      value: string;
     };
 
 const initialSettings: SettingsState = {
@@ -115,7 +136,8 @@ const initialSettings: SettingsState = {
     logging: false,
     trail: true,
     say: true,
-    speech: true,
+    speech: false,
+    geminiTts: true,
   },
   rippleConfig: {
     color: '#000000',
@@ -132,6 +154,10 @@ const initialSettings: SettingsState = {
     volume: 0.5,
     soundUrl: '/click.mp3',
   },
+  geminiTtsConfig: {
+    speaker: 'Achernar',
+    language: 'en',
+  },
 };
 
 function settingsReducer(state: SettingsState, action: SettingsAction): SettingsState {
@@ -145,7 +171,15 @@ function settingsReducer(state: SettingsState, action: SettingsAction): Settings
     case 'UPDATE_TRAIL_CONFIG':
       return { ...state, trailConfig: { ...state.trailConfig, [action.key]: action.value } };
     case 'UPDATE_CLICKSOUND_CONFIG':
-      return { ...state, clickSoundConfig: { ...state.clickSoundConfig, [action.key]: action.value } };
+      return {
+        ...state,
+        clickSoundConfig: { ...state.clickSoundConfig, [action.key]: action.value },
+      };
+    case 'UPDATE_GEMINI_TTS_CONFIG':
+      return {
+        ...state,
+        geminiTtsConfig: { ...state.geminiTtsConfig, [action.key]: action.value },
+      };
     default:
       return state;
   }
@@ -239,6 +273,7 @@ export function ClientPage() {
           setDemoState('done');
           setTimeout(() => isActive && setDemoState('idle'), 3000);
         })
+        .wait(3000)
         .do(buildDemoSequence); // Re-queue the scenario at the end
     };
 
@@ -256,11 +291,13 @@ export function ClientPage() {
     const c = actorRef.current;
     if (!c) return;
 
-    const { coreConfig, plugins, rippleConfig, trailConfig, clickSoundConfig } = settings;
+    const { coreConfig, plugins, rippleConfig, trailConfig, clickSoundConfig, geminiTtsConfig } =
+      settings;
 
     c.setState({ humanize: coreConfig.humanize, speed: coreConfig.speed, size: coreConfig.size });
 
     if (plugins.theme) {
+      c.removePlugin('ThemePlugin');
       c.use(
         new ThemePlugin({
           ...defaultTheme,
@@ -323,12 +360,14 @@ export function ClientPage() {
     }
 
     if (plugins.indicator) {
+      c.removePlugin('IndicatorPlugin');
       c.use(new IndicatorPlugin());
     } else {
       c.removePlugin('IndicatorPlugin');
     }
 
     if (plugins.logging) {
+      c.removePlugin('LoggingPlugin');
       c.use(new LoggingPlugin());
     } else {
       c.removePlugin('LoggingPlugin');
@@ -374,15 +413,31 @@ export function ClientPage() {
     }
 
     if (plugins.say) {
+      c.removePlugin('say');
       c.use(new SayPlugin());
     } else {
       c.removePlugin('say');
     }
 
     if (plugins.speech) {
+      c.removePlugin('speech');
       c.use(new SpeechPlugin({ enabled: true, voiceName: 'Google US English' }));
     } else {
       c.removePlugin('speech');
+    }
+
+    if (plugins.geminiTts) {
+      c.removePlugin('gemini-tts');
+      c.use(
+        new GeminiTTSPlugin({
+          speaker: geminiTtsConfig.speaker,
+          language: geminiTtsConfig.language,
+          model: 'gemini-3.1-flash-tts-preview',
+          style: 'Read aloud in a warm, welcoming tone.',
+        }),
+      );
+    } else {
+      c.removePlugin('gemini-tts');
     }
   }, [settings]);
 
@@ -401,6 +456,7 @@ export function ClientPage() {
           <div className="flex flex-col items-center space-y-8">
             <div className="relative w-20 h-26">
               <div id="cursor-beginning" className="absolute left-0 top-0 size-px" />
+              <Comet angle={55} isVisible={demoState !== 'running'} />
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
               cursor.js
@@ -606,6 +662,111 @@ export function ClientPage() {
                       }
                     />
                   </div>
+                </AccordionItem>
+
+                {/* Gemini TTS Plugin */}
+                <AccordionItem value="geminitTts" className="relative">
+                  <SettingsAccordionTrigger className="hover:no-underline">
+                    <div className="flex items-center gap-1.5">
+                      Gemini TTS (Pro)
+                      <HoverCard>
+                        <HoverCardTrigger asChild>
+                          <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                        </HoverCardTrigger>
+                        <HoverCardContent
+                          side="left"
+                          className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] p-4 text-sm"
+                        >
+                          <p>Generates high-quality human voice using Google Gemini TTS.</p>
+                          <p className="mt-2 font-medium">
+                            Notice the 'cursor-js-tts-loading' class is applied while the audio is
+                            generating!
+                          </p>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
+                  </SettingsAccordionTrigger>
+                  <div className="absolute right-0 top-4">
+                    <Switch
+                      id="enable-gemini-tts"
+                      checked={settings.plugins.geminiTts}
+                      onCheckedChange={(checked) =>
+                        dispatch({ type: 'TOGGLE_PLUGIN', plugin: 'geminiTts', enabled: checked })
+                      }
+                    />
+                  </div>
+                  <SettingsAccordionContent>
+                    <div className="space-y-2 py-2">
+                      <div className="flex flex-row items-center justify-between gap-2">
+                        <Label htmlFor="gemini-speaker" className="text-xs font-normal">
+                          Speaker Model
+                        </Label>
+                        <Select
+                          value={settings.geminiTtsConfig.speaker}
+                          onValueChange={(value) =>
+                            dispatch({
+                              type: 'UPDATE_GEMINI_TTS_CONFIG',
+                              key: 'speaker',
+                              value: value,
+                            })
+                          }
+                        >
+                          <SelectTrigger id="gemini-speaker" className="h-7 w-32 text-xs">
+                            <SelectValue placeholder="Select Speaker" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Achernar">Achernar</SelectItem>
+                            <SelectItem value="Achird">Achird</SelectItem>
+                            <SelectItem value="Algenib">Algenib</SelectItem>
+                            <SelectItem value="Algieba">Algieba</SelectItem>
+                            <SelectItem value="Alnilam">Alnilam</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex flex-row items-center justify-between gap-2 mt-2">
+                        <Label
+                          htmlFor="gemini-language"
+                          className="text-xs font-normal text-muted-foreground"
+                        >
+                          Language
+                        </Label>
+                        <Input
+                          id="gemini-language"
+                          className="h-7 w-32 border-none bg-transparent shadow-none px-2 focus-visible:ring-0 text-xs opacity-50 cursor-not-allowed"
+                          value={settings.geminiTtsConfig.language}
+                          disabled
+                        />
+                      </div>
+                      <div className="flex flex-row items-center justify-between gap-2 mt-2">
+                        <Label
+                          htmlFor="gemini-model"
+                          className="text-xs font-normal text-muted-foreground"
+                        >
+                          Model
+                        </Label>
+                        <Input
+                          id="gemini-model"
+                          className="h-7 w-48 border-none bg-transparent shadow-none px-2 focus-visible:ring-0 text-xs opacity-50 cursor-not-allowed"
+                          value="gemini-3.1-flash-tts-preview"
+                          disabled
+                        />
+                      </div>
+                      <div className="flex flex-row items-center justify-between gap-2 mt-2">
+                        <Label
+                          htmlFor="gemini-style"
+                          className="text-xs font-normal text-muted-foreground"
+                        >
+                          Style
+                        </Label>
+                        <Input
+                          id="gemini-style"
+                          className="h-7 w-48 border-none bg-transparent shadow-none px-2 focus-visible:ring-0 text-xs opacity-50 cursor-not-allowed text-ellipsis overflow-hidden"
+                          value="Read aloud in a warm, welcoming tone."
+                          disabled
+                        />
+                      </div>
+                    </div>
+                  </SettingsAccordionContent>
                 </AccordionItem>
 
                 {/* Trail Plugin */}

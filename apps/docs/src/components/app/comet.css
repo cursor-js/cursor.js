@@ -1,0 +1,180 @@
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes starFall {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(0.2);
+  }
+}
+
+@keyframes cometGlow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 15px var(--glow1)) drop-shadow(0 0 30px var(--glow2));
+  }
+  50% {
+    filter: drop-shadow(0 0 25px var(--glow1)) drop-shadow(0 0 50px var(--glow2));
+  }
+}
+
+@keyframes headPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+[data-theme='dark'] {
+  --bg: #050510;
+  --bg-star-color: #ffffff;
+  --comet-head-from: #ffffff;
+  --comet-head-mid: #aaccff;
+  --comet-head-to: #1a3366;
+  --tail-a1: rgba(170, 200, 255, 0.4);
+  --tail-a2: rgba(100, 150, 220, 0.15);
+  --tail-b1: rgba(200, 220, 255, 0.3);
+  --tail-b2: rgba(130, 170, 240, 0.1);
+  --glow1: #aaccff;
+  --glow2: #5588cc;
+  --panel-bg: rgba(255, 255, 255, 0.06);
+  --panel-border: rgba(255, 255, 255, 0.1);
+  --panel-color: #ddeeff;
+  --panel-label: rgba(255, 255, 255, 0.5);
+  --slider-track: rgba(255, 255, 255, 0.12);
+  --slider-thumb: #aaccff;
+}
+
+[data-theme='light'] {
+  --bg: #e8e4f0;
+  --bg-star-color: #2a2540;
+  --comet-head-from: #334466;
+  --comet-head-mid: #5577aa;
+  --comet-head-to: #1a2244;
+  --tail-a1: rgba(60, 80, 140, 0.35);
+  --tail-a2: rgba(80, 100, 160, 0.12);
+  --tail-b1: rgba(70, 90, 150, 0.25);
+  --tail-b2: rgba(80, 110, 170, 0.08);
+  --glow1: #7799cc;
+  --glow2: #4466aa;
+  --panel-bg: rgba(0, 0, 0, 0.05);
+  --panel-border: rgba(0, 0, 0, 0.1);
+  --panel-color: #2a2540;
+  --panel-label: rgba(0, 0, 0, 0.4);
+  --slider-track: rgba(0, 0, 0, 0.15);
+  --slider-thumb: #5577aa;
+}
+
+.comet {
+  position: absolute;
+  top: 50px;
+  left: 20px;
+  animation: cometGlow 3s ease-in-out infinite;
+}
+
+.comet-head {
+  width: 40px;
+  height: 40px;
+  background: radial-gradient(
+    circle at 35% 35%,
+    var(--comet-head-from),
+    var(--comet-head-mid) 40%,
+    var(--comet-head-to)
+  );
+  border-radius: 50%;
+  position: relative;
+  z-index: 2;
+  animation: headPulse 2s ease-in-out infinite;
+  transition: background 0.5s ease;
+}
+
+.comet-tail {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 350px;
+  height: 350px;
+  transform: rotate(var(--angle));
+  transform-origin: 0 0;
+  pointer-events: none;
+  z-index: 1;
+  transition: transform 0.4s ease;
+}
+
+.tail-glow {
+  position: absolute;
+  top: -15px;
+  left: 0;
+  width: 300px;
+  height: 30px;
+  background: linear-gradient(90deg, var(--tail-a1), var(--tail-a2) 40%, transparent);
+  border-radius: 20px;
+  filter: blur(8px);
+  transition: background 0.5s ease;
+}
+
+.tail-glow-2 {
+  position: absolute;
+  top: -8px;
+  left: 0;
+  width: 250px;
+  height: 16px;
+  background: linear-gradient(90deg, var(--tail-b1), var(--tail-b2) 50%, transparent);
+  border-radius: 10px;
+  filter: blur(4px);
+  transition: background 0.5s ease;
+}
+
+.falling-star {
+  position: absolute;
+  border-radius: 50%;
+  animation: starFall var(--duration) ease-out infinite;
+  animation-delay: var(--delay);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.star-shape {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  animation: starFall var(--duration) ease-out infinite;
+  animation-delay: var(--delay);
+}
+
+.star-shape svg {
+  width: var(--size);
+  height: var(--size);
+  fill: var(--color);
+  filter: drop-shadow(0 0 3px var(--color));
+}
