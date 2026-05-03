@@ -365,3 +365,148 @@ export function TrailDemo() {
     </div>
   );
 }
+
+export function SayDemo() {
+  useEffect(() => {
+    let isActive = true;
+    let cursor: any;
+
+    async function init() {
+      // Dynamic imports to avoid SSR issues with some plugins if any
+      const { Cursor, SayPlugin } = await import('@cursor.js/core');
+      if (!isActive) return;
+
+      cursor = new Cursor({ speed: 0.8 });
+      cursor.use(new SayPlugin({}));
+
+      async function runLoop() {
+        if (!isActive) return;
+        await cursor.hover('#say-btn').say('Clicking this button!').click().wait(1000);
+        if (!isActive) return;
+        await cursor.move({ x: 50, y: 50 }).say('Done.').wait(1000);
+        if (!isActive) return;
+        runLoop();
+      }
+      runLoop();
+    }
+    init();
+
+    return () => {
+      isActive = false;
+      if (cursor) cursor.destroy();
+    };
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full w-full bg-slate-50 dark:bg-slate-900 border rounded-xl overflow-hidden relative">
+      <Button id="say-btn">Say Action</Button>
+    </div>
+  );
+}
+
+export function SpeechDemo() {
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    if (!started) return;
+
+    let isActive = true;
+    let cursor: any;
+
+    async function init() {
+      const { Cursor, SpeechPlugin } = await import('@cursor.js/core');
+      if (!isActive) return;
+
+      cursor = new Cursor({ speed: 0.8 });
+      cursor.use(
+        new SpeechPlugin({
+          lang: 'en-GB',
+        }),
+      );
+
+      async function runLoop() {
+        if (!isActive) return;
+        await cursor
+          .hover('#speech-btn')
+          .speak('I am about to click this button')
+          .click('#speech-btn')
+          .wait(2000);
+        if (!isActive) return;
+        runLoop();
+      }
+      runLoop();
+    }
+    init();
+
+    return () => {
+      isActive = false;
+      if (cursor) cursor.destroy();
+    };
+  }, [started]);
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full w-full bg-slate-50 dark:bg-slate-900 border rounded-xl overflow-hidden relative">
+      {!started ? (
+        <Button onClick={() => setStarted(true)}>Play Demo</Button>
+      ) : (
+        <Button id="speech-btn">Speech Action</Button>
+      )}
+    </div>
+  );
+}
+
+export function GeminiTTSDemo() {
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    if (!started) return;
+    let isActive = true;
+    let cursor: any;
+
+    async function init() {
+      const { Cursor, SayPlugin } = await import('@cursor.js/core');
+      const { GeminiTTSPlugin } = await import('@cursor.js/pro');
+      if (!isActive) return;
+
+      cursor = new Cursor({ speed: 0.8 });
+      cursor.use(new SayPlugin({}));
+      cursor.use(
+        new GeminiTTSPlugin({
+          speaker: 'Aoede',
+          style: 'conversational',
+          model: 'gemini-3.1-flash-tts-preview',
+          language: 'en-US',
+        }),
+      );
+
+      async function runLoop() {
+        if (!isActive) return;
+        await cursor
+          .hover('#gemini-tts-btn')
+          .say('I have a realistic voice now.')
+          .click('#gemini-tts-btn')
+          .wait(3000);
+        if (!isActive) return;
+        runLoop();
+      }
+      // Delay before start
+      setTimeout(() => runLoop(), 1000);
+    }
+    init();
+
+    return () => {
+      isActive = false;
+      if (cursor) cursor.destroy(); // Important to stop the audio when demo unmounts
+    };
+  }, [started]);
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full w-full bg-slate-50 dark:bg-slate-900 border rounded-xl overflow-hidden relative">
+      {!started ? (
+        <Button onClick={() => setStarted(true)}>Play Demo</Button>
+      ) : (
+        <Button id="gemini-tts-btn">Gemini TTS Action</Button>
+      )}
+    </div>
+  );
+}

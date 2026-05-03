@@ -1,0 +1,36 @@
+---
+title: Say
+description: A plugin that allows the cursor to display a text bubble.
+---
+
+## SayPlugin
+
+The `SayPlugin` allows you to display a text bubble near the cursor, simulating speech or text hints during automated flows.
+
+### Demo
+
+<iframe
+  src="/demos/say"
+  className="w-full h-80 rounded-xl border mt-6 overflow-hidden relative"
+/>
+
+### Options
+
+<auto-type-table
+  path="../../../../../packages/core/src/plugins/SayPlugin.ts"
+  name="SayPluginOptions"
+/>
+
+### Usage
+
+```ts
+import { Cursor, SayPlugin } from '@cursor.js/core';
+
+const cursor = new Cursor();
+
+cursor.use(new SayPlugin({
+  theme: 'dark' // optional settings
+}));
+
+cursor.hover('.btn').say('Clicking this button next!').click();
+```

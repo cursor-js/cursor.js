@@ -1,0 +1,36 @@
+---
+title: Speech
+description: A plugin that enables the cursor to speak text aloud using the Speech Synthesis API.
+---
+
+## SpeechPlugin
+
+The `SpeechPlugin` uses the web's native Speech Synthesis API to read text aloud synchronously with your cursor flows, enhancing presentations and automated demos.
+
+### Demo
+
+<iframe
+  src="/demos/speech"
+  className="w-full h-80 rounded-xl border mt-6 overflow-hidden relative"
+/>
+
+### Options
+
+<auto-type-table
+  path="../../../../../packages/core/src/plugins/SpeechPlugin.ts"
+  name="SpeechPluginOptions"
+/>
+
+### Usage
+
+```ts
+import { Cursor, SpeechPlugin } from '@cursor.js/core';
+
+const cursor = new Cursor();
+
+cursor.use(new SpeechPlugin({
+  voice: 'Google US English' // optional options
+}));
+
+cursor.hover('.btn').speak('I am about to click this button').click();
+```

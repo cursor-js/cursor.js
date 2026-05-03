@@ -1,0 +1,40 @@
+---
+title: Gemini TTS
+description: A plugin that enables the cursor to speak text aloud using high-quality Google Gemini TTS capabilities.
+---
+
+## GeminiTTSPlugin
+
+The `GeminiTTSPlugin` utilizes Gemini's Text-to-Speech APIs to read text aloud with realistic, high-quality voices natively and seamlessly during an automated script run.
+
+### Demo
+
+<iframe
+  src="/demos/geminitts"
+  className="w-full h-80 rounded-xl border mt-6 overflow-hidden relative"
+/>
+
+### Options
+
+<auto-type-table
+  path="../../../../../packages/pro/src/GeminiTTSPlugin.ts"
+  name="GeminiTTSOptions"
+/>
+
+### Usage
+
+```ts
+import { Cursor } from '@cursor.js/core';
+import { GeminiTTSPlugin } from '@cursor.js/pro';
+
+const cursor = new Cursor();
+
+// Configure the TTS plugin with speaker options
+cursor.use(new GeminiTTSPlugin({
+  speaker: 'Aoede',
+  style: 'conversational'
+}));
+
+// Use the say() action to generate TTS natively
+cursor.hover('.btn').say('I have a realistic voice now.').click();
+```
