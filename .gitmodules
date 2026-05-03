@@ -1,6 +1,6 @@
 [submodule "packages/pro"]
 	path = packages/pro
-        url = ../pro.git
+	url = ../pro.git
 [submodule "packages/skills"]
 	path = packages/skills
 	url = https://github.com/cursor-js/skills.git
