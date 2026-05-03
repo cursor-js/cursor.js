@@ -9,7 +9,7 @@ export function baseOptions(): BaseLayoutProps {
     links: [
       {
         text: 'Docs',
-        url: '/docs/core-api/cursor',
+        url: '/docs',
         active: 'nested-url',
       },
       {
