@@ -16,7 +16,7 @@ function cleanup {
 trap cleanup EXIT
 
 function submodule_workaround {
-  if [ "$GITHUB_TOKEN" == "" ]; then
+  if [ -z "${GITHUB_TOKEN:-}" ]; then
     echo "GITHUB_TOKEN is empty!"
     exit 1
   fi
