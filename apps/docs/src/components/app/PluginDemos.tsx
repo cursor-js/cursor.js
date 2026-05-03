@@ -377,9 +377,7 @@ export function SayDemo() {
       if (!isActive) return;
 
       cursor = new Cursor({ speed: 0.8 });
-      cursor.use(new SayPlugin({
-        
-      }));
+      cursor.use(new SayPlugin({}));
 
       async function runLoop() {
         if (!isActive) return;
@@ -407,7 +405,11 @@ export function SayDemo() {
 }
 
 export function SpeechDemo() {
+  const [started, setStarted] = useState(false);
+
   useEffect(() => {
+    if (!started) return;
+
     let isActive = true;
     let cursor: any;
 
@@ -416,13 +418,19 @@ export function SpeechDemo() {
       if (!isActive) return;
 
       cursor = new Cursor({ speed: 0.8 });
-      cursor.use(new SpeechPlugin({
-        lang: 'en-GB'
-      }));
+      cursor.use(
+        new SpeechPlugin({
+          lang: 'en-GB',
+        }),
+      );
 
       async function runLoop() {
         if (!isActive) return;
-        await cursor.hover('#speech-btn').speak('I am about to click this button').click().wait(2000);
+        await cursor
+          .hover('#speech-btn')
+          .speak('I am about to click this button')
+          .click('#speech-btn')
+          .wait(2000);
         if (!isActive) return;
         runLoop();
       }
@@ -434,17 +442,24 @@ export function SpeechDemo() {
       isActive = false;
       if (cursor) cursor.destroy();
     };
-  }, []);
+  }, [started]);
 
   return (
     <div className="flex flex-col items-center justify-center h-full w-full bg-slate-50 dark:bg-slate-900 border rounded-xl overflow-hidden relative">
-      <Button id="speech-btn">Speech Action</Button>
+      {!started ? (
+        <Button onClick={() => setStarted(true)}>Play Demo</Button>
+      ) : (
+        <Button id="speech-btn">Speech Action</Button>
+      )}
     </div>
   );
 }
 
 export function GeminiTTSDemo() {
+  const [started, setStarted] = useState(false);
+
   useEffect(() => {
+    if (!started) return;
     let isActive = true;
     let cursor: any;
 
@@ -454,17 +469,23 @@ export function GeminiTTSDemo() {
       if (!isActive) return;
 
       cursor = new Cursor({ speed: 0.8 });
-      cursor.use(new SayPlugin({  }));
-      cursor.use(new GeminiTTSPlugin({
-        speaker: 'Aoede',
-        style: 'conversational',
-        model: 'gemini-2.0-flash',
-        language: 'en-US'
-      }));
+      cursor.use(new SayPlugin({}));
+      cursor.use(
+        new GeminiTTSPlugin({
+          speaker: 'Aoede',
+          style: 'conversational',
+          model: 'gemini-3.1-flash-tts-preview',
+          language: 'en-US',
+        }),
+      );
 
       async function runLoop() {
         if (!isActive) return;
-        await cursor.hover('#gemini-tts-btn').say('I have a realistic voice now.').click().wait(3000);
+        await cursor
+          .hover('#gemini-tts-btn')
+          .say('I have a realistic voice now.')
+          .click('#gemini-tts-btn')
+          .wait(3000);
         if (!isActive) return;
         runLoop();
       }
@@ -477,11 +498,15 @@ export function GeminiTTSDemo() {
       isActive = false;
       if (cursor) cursor.destroy(); // Important to stop the audio when demo unmounts
     };
-  }, []);
+  }, [started]);
 
   return (
     <div className="flex flex-col items-center justify-center h-full w-full bg-slate-50 dark:bg-slate-900 border rounded-xl overflow-hidden relative">
-      <Button id="gemini-tts-btn">Gemini TTS Action</Button>
+      {!started ? (
+        <Button onClick={() => setStarted(true)}>Play Demo</Button>
+      ) : (
+        <Button id="gemini-tts-btn">Gemini TTS Action</Button>
+      )}
     </div>
   );
 }
