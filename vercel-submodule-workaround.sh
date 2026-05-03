@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -Eeuo pipefail
+set -xEeuo pipefail
 
 GITMODULES=".gitmodules"
 FEXT=".bak"
@@ -16,13 +16,14 @@ function cleanup {
 trap cleanup EXIT
 
 function submodule_workaround {
-  if [ "$GITHUB_TOKEN" == "" ]; then
+  if [ -z "${GITHUB_TOKEN:-}" ]; then
     echo "GITHUB_TOKEN is empty!"
     exit 1
   fi
 
   echo "Monkey patching..."
   sed -i"$FEXT" "s|url = \.\./|url = https://oauth2:${GITHUB_TOKEN}@github.com/cursor-js/|" "$GITMODULES"
+  sed -i"$FEXT" "s|url = https://github.com/|url = https://oauth2:${GITHUB_TOKEN}@github.com/|" "$GITMODULES"
   echo "Done!"
 
   echo "Synchronising submodules' remote URL configuration..."
