@@ -458,7 +458,7 @@ export function GeminiTTSDemo() {
       cursor.use(new GeminiTTSPlugin({
         speaker: 'Aoede',
         style: 'conversational',
-        model: 'en-US-Journey-F',
+        model: 'gemini-2.0-flash',
         language: 'en-US'
       }));
 
