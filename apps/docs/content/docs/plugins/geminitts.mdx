@@ -35,6 +35,6 @@ cursor.use(new GeminiTTSPlugin({
   style: 'conversational'
 }));
 
-// Use the tts() action or it overrides speak() depending on internals
-cursor.hover('.btn').speak('I have a realistic voice now.').click();
+// Use the say() action to generate TTS natively
+cursor.hover('.btn').say('I have a realistic voice now.').click();
 ```
