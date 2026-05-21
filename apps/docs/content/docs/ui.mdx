@@ -1,0 +1,151 @@
+---
+title: React UI
+description: Free installable React building blocks for cursor.js.
+---
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+`CursorPlayer` is a free, installable React UI block for cursor.js. It gives you a visible cursor anchor plus composable play, pause, and stop controls while keeping the code fully editable inside your app.
+
+## Preview
+
+<CursorPlayerShowcase />
+
+## Overlay example
+
+In tighter layouts, you can stack `PlayPause` on top of the waiting cursor and keep it quiet until hover.
+
+<CursorPlayerOverlayShowcase />
+
+## Installation
+
+<Tabs items={["Command", "Manual"]}>
+<Tab>
+
+```bash
+pnpm dlx shadcn@latest add http://localhost:3000/r/cursor-player.json
+```
+
+</Tab>
+<Tab>
+
+<Steps className="mb-0 pt-2">
+<Step>
+
+Copy the registry files into your app:
+
+- `@components/cursor-player.tsx`
+- `@hooks/use-cursor-player.ts`
+
+</Step>
+
+<Step>
+
+Install the peer dependencies used by the block:
+
+```bash
+pnpm add @cursor.js/core lucide-react
+```
+
+</Step>
+
+<Step>
+
+Make sure your app already has shadcn `button` or adjust the import paths to match your project structure.
+
+</Step>
+</Steps>
+
+</Tab>
+</Tabs>
+
+## Usage
+
+```tsx
+import { Cursor } from '@cursor.js/core';
+import { Pause, Play } from 'lucide-react';
+import { CursorPlayer } from '@/components/cursor-player';
+
+function createSignupCursor(anchorElement: HTMLElement) {
+  const cursor = new Cursor({
+    humanize: true,
+    speed: 0.7,
+    startPoint: anchorElement,
+  });
+
+  return cursor;
+}
+
+function buildSignupSequence(cursor: Cursor) {
+  cursor
+    .hover('#email')
+    .type('#email', 'hello@cursorjs.com', { delay: 50 })
+    .click('#join')
+    .wait(350);
+}
+
+export function DemoLauncher() {
+  return (
+    <CursorPlayer createCursor={createSignupCursor} buildSequence={buildSignupSequence}>
+      <CursorPlayer.Cursor className="size-5" />
+
+      <CursorPlayer.PlayPause>
+        <CursorPlayer.PlayIcon asChild>
+          <Play className="size-4 fill-current" />
+        </CursorPlayer.PlayIcon>
+        <CursorPlayer.PauseIcon asChild>
+          <Pause className="size-4 fill-current" />
+        </CursorPlayer.PauseIcon>
+      </CursorPlayer.PlayPause>
+
+      <CursorPlayer.StopButton />
+    </CursorPlayer>
+  );
+}
+```
+
+`CursorPlayer.Cursor` uses its real rendered size as the preview frame. If you change it with classes like `size-5` or `w-6 h-6`, the waiting cursor is scaled to fit that box automatically.
+
+## Composition
+
+Use the following composition to build a `CursorPlayer`:
+
+```text
+CursorPlayer
+|- CursorPlayer.Cursor
+|- CursorPlayer.PlayPause
+|  |- CursorPlayer.PlayIcon
+|  `- CursorPlayer.PauseIcon
+`- CursorPlayer.StopButton
+```
+
+When a run completes, `CursorPlayer` restores its waiting preview at the anchor automatically. In most cases you should not manually move back to `anchorElement` at the end of the sequence.
+
+## Behavior patterns
+
+The end of a cursor.js demo should usually be modeled in the sequence itself instead of a separate global `endBehavior` option.
+
+- Stop chaining actions if the demo should finish where it ended.
+- Move back to a known anchor and call `.do(buildDemoSequence)` if it should loop.
+
+```tsx
+function buildDemoSequence(cursor: Cursor) {
+  cursor
+    .hover('#email')
+    .type('#email', 'hello@cursorjs.com')
+    .click('#join')
+    .wait(350);
+}
+```
+
+## Included
+
+The block includes:
+
+- `CursorPlayer`
+- `CursorPlayer.Cursor`
+- `CursorPlayer.PlayPause`
+- `CursorPlayer.PlayIcon`
+- `CursorPlayer.PauseIcon`
+- `CursorPlayer.StopButton`
+- `useCursorPlayer`

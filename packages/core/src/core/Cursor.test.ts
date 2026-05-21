@@ -48,6 +48,42 @@ describe('Cursor', () => {
     expect(actor).toBeInstanceOf(Cursor);
   });
 
+  it('starts at the viewport center when no startPoint is provided', () => {
+    const actor = new Cursor();
+
+    expect(actor.cursor.x).toBe(500);
+    expect(actor.cursor.y).toBe(400);
+  });
+
+  it('accepts startPoint coordinates, elements, and selectors', () => {
+    const fromCoordinates = new Cursor({
+      startPoint: { x: 10, y: 20 },
+    });
+    expect(fromCoordinates.cursor.x).toBe(10);
+    expect(fromCoordinates.cursor.y).toBe(20);
+
+    const fromElement = new Cursor({
+      startPoint: btn,
+    });
+    expect(fromElement.cursor.x).toBe(150);
+    expect(fromElement.cursor.y).toBe(125);
+
+    const fromSelector = new Cursor({
+      startPoint: '#test-btn',
+    });
+    expect(fromSelector.cursor.x).toBe(150);
+    expect(fromSelector.cursor.y).toBe(125);
+  });
+
+  it('falls back to the viewport center when a selector startPoint is missing', () => {
+    const actor = new Cursor({
+      startPoint: '#missing',
+    });
+
+    expect(actor.cursor.x).toBe(500);
+    expect(actor.cursor.y).toBe(400);
+  });
+
   it('chains and resolves hover promise successfully', async () => {
     const actor = new Cursor({ humanize: false, speed: 1.0 }); // Fast for tests
     let hovered = false;

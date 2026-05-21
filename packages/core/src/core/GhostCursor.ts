@@ -1,4 +1,7 @@
-export interface GhostCursorOptions {}
+export interface GhostCursorOptions {
+  initialX?: number;
+  initialY?: number;
+}
 
 export class GhostCursor {
   public el: HTMLDivElement;
@@ -6,7 +9,10 @@ export class GhostCursor {
   public y: number = 0;
   public scale: number = 1;
 
-  constructor(_options: GhostCursorOptions = {}) {
+  constructor(options: GhostCursorOptions = {}) {
+    const initialX = options.initialX ?? 0;
+    const initialY = options.initialY ?? 0;
+
     this.el = document.createElement('div');
     this.el.style.cssText = `
       position: absolute;
@@ -19,10 +25,27 @@ export class GhostCursor {
       pointer-events: none;
       z-index: 999999;
       transform-origin: center center;
-      transition: transform 0.05s linear;
+      transition: transform 0.05s linear, opacity 0.16s ease-out;
+      opacity: 0;
     `;
 
+    this.x = initialX;
+    this.y = initialY;
+    this.el.style.transform = `translate(${this.x}px, ${this.y}px) scale(${this.scale})`;
+
     document.body.appendChild(this.el);
+
+    const reveal = () => {
+      if (this.el.isConnected) {
+        this.el.style.opacity = '1';
+      }
+    };
+
+    if (typeof window !== 'undefined' && window.requestAnimationFrame) {
+      window.requestAnimationFrame(() => reveal());
+    } else {
+      setTimeout(reveal, 16);
+    }
   }
 
   setSize(scale: number) {
