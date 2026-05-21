@@ -9,6 +9,11 @@ import {
   SoundDemo,
   LoggingDemo,
 } from '@/components/app/PluginDemos';
+import {
+  CursorPlayerOverlayShowcase,
+  CursorPlayerShowcase,
+} from '@/components/app/CursorPlayerShowcase';
+import { CursorPlayerSourceFiles } from '@/components/app/CursorPlayerSourceFiles';
 
 export function getMDXComponents(components?: MDXComponents) {
   return {
@@ -20,6 +25,9 @@ export function getMDXComponents(components?: MDXComponents) {
     IndicatorDemo,
     SoundDemo,
     LoggingDemo,
+    CursorPlayerShowcase,
+    CursorPlayerOverlayShowcase,
+    CursorPlayerSourceFiles,
     ...components,
   } satisfies MDXComponents;
 }

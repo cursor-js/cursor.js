@@ -1,9 +1,18 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GhostCursor } from './GhostCursor';
 
 describe('GhostCursor', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
+    if (!window.requestAnimationFrame) {
+      Object.defineProperty(window, 'requestAnimationFrame', {
+        value: (callback: FrameRequestCallback) => {
+          callback(16);
+          return 1;
+        },
+        writable: true,
+      });
+    }
   });
 
   it('creates DOM elements and SVGs on init', () => {
@@ -30,6 +39,26 @@ describe('GhostCursor', () => {
 
     expect(cursor.el.style.transform).toBe('translate(100px, 200px) scale(2.5)');
     expect(cursor.scale).toBe(2.5);
+  });
+
+  it('uses the provided initial position and fades in after mount', () => {
+    let revealFrame: FrameRequestCallback | null = null;
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
+      revealFrame = callback;
+      return 1;
+    });
+
+    const cursor = new GhostCursor({ initialX: 50, initialY: 75 });
+
+    expect(cursor.x).toBe(50);
+    expect(cursor.y).toBe(75);
+    expect(cursor.el.style.transform).toBe('translate(50px, 75px) scale(1)');
+    expect(cursor.el.style.opacity).toBe('0');
+
+    expect(revealFrame).toBeTypeOf('function');
+    revealFrame!(16);
+
+    expect(cursor.el.style.opacity).toBe('1');
   });
 
   it('removes elements on destroy', () => {        

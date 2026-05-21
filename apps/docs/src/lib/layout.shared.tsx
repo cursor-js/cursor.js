@@ -13,6 +13,11 @@ export function baseOptions(): BaseLayoutProps {
         active: 'nested-url',
       },
       {
+        text: 'React UI',
+        url: '/docs/ui',
+        active: 'nested-url',
+      },
+      {
         text: 'Pro',
         url: '/pro',
         active: 'nested-url',

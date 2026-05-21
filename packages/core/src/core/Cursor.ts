@@ -5,11 +5,13 @@ import type { CursorPlugin } from '../plugins/CursorPlugin';
 
 export type CursorEvent = 'pause' | 'play' | 'destroy' | string;
 export type EventCallback = (...args: any[]) => void;
+export type CursorStartPoint = { x: number; y: number } | Element | string;
 
 export interface CursorOptions {
   speed?: number; // 0 to 1
   humanize?: boolean; // Default true
   size?: number; // Cursor scale size default 1
+  startPoint?: CursorStartPoint;
 }
 
 export class Cursor {
@@ -30,8 +32,13 @@ export class Cursor {
       size: 1,
       ...options,
     };
-    this.state = { ...this.options }; // Initialize state with options
-    this.cursor = new GhostCursor();
+    const { startPoint, ...stateOptions } = this.options;
+    this.state = { ...stateOptions }; // Initialize state with serializable runtime options
+    const initialPosition = this.resolveInitialPosition(startPoint);
+    this.cursor = new GhostCursor({
+      initialX: initialPosition.x,
+      initialY: initialPosition.y,
+    });
 
     if (this.options.size !== undefined) {
       this.cursor.setSize(this.options.size);
@@ -116,6 +123,32 @@ export class Cursor {
         setTimeout(loop, 16);
       }
     });
+  }
+
+  private resolveInitialPosition(startPoint?: CursorStartPoint): { x: number; y: number } {
+    if (startPoint && typeof startPoint === 'object' && 'x' in startPoint && 'y' in startPoint) {
+      return startPoint;
+    }
+
+    const element =
+      typeof startPoint === 'string'
+        ? document.querySelector(startPoint)
+        : startPoint instanceof Element
+          ? startPoint
+          : null;
+
+    if (element) {
+      const rect = element.getBoundingClientRect();
+      return {
+        x: rect.left + window.scrollX + rect.width / 2,
+        y: rect.top + window.scrollY + rect.height / 2,
+      };
+    }
+
+    return {
+      x: window.scrollX + window.innerWidth / 2,
+      y: window.scrollY + window.innerHeight / 2,
+    };
   }
 
   // 1. Hover command
