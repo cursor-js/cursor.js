@@ -13,6 +13,7 @@ import {
   CursorPlayerOverlayShowcase,
   CursorPlayerShowcase,
 } from '@/components/app/CursorPlayerShowcase';
+import { CursorPlayerSourceFiles } from '@/components/app/CursorPlayerSourceFiles';
 
 export function getMDXComponents(components?: MDXComponents) {
   return {
@@ -26,6 +27,7 @@ export function getMDXComponents(components?: MDXComponents) {
     LoggingDemo,
     CursorPlayerShowcase,
     CursorPlayerOverlayShowcase,
+    CursorPlayerSourceFiles,
     ...components,
   } satisfies MDXComponents;
 }

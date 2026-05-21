@@ -28,6 +28,15 @@ type SignupTargets = {
   submit: string;
 };
 
+type PlanOption = {
+  cardId: string;
+  inputId: string;
+  value: string;
+  title: string;
+  description: string;
+  badge?: string;
+};
+
 const defaultSignupTargets: SignupTargets = {
   email: '#ui-demo-email',
   plan: '#ui-demo-plan',
@@ -39,6 +48,33 @@ const overlaySignupTargets: SignupTargets = {
   plan: '#overlay-demo-plan',
   submit: '#overlay-demo-submit',
 };
+
+function getPlanOptions(targets: SignupTargets): PlanOption[] {
+  return [
+    {
+      cardId: targets.plan.slice(1),
+      inputId: `${targets.plan.slice(1)}-input`,
+      value: 'starter',
+      title: 'Starter walkthrough',
+      description: 'A quick product tour for first-time users.',
+      badge: 'Free',
+    },
+    {
+      cardId: `${targets.plan.slice(1)}-team`,
+      inputId: `${targets.plan.slice(1)}-team-input`,
+      value: 'team',
+      title: 'Team onboarding',
+      description: 'Show invite flows, roles, and shared workspace setup.',
+    },
+    {
+      cardId: `${targets.plan.slice(1)}-ops`,
+      inputId: `${targets.plan.slice(1)}-ops-input`,
+      value: 'ops',
+      title: 'Ops handoff',
+      description: 'Highlight reporting, approvals, and daily workflow steps.',
+    },
+  ];
+}
 
 function buildSignupSequence(
   cursor: ReturnType<typeof createSignupCursor>,
@@ -164,6 +200,8 @@ function DemoTargetPanel({
   title?: string;
   targets: SignupTargets;
 }) {
+  const planOptions = getPlanOptions(targets);
+
   return (
     <div className="rounded-[24px] bg-card p-6">
       <p className="text-sm font-medium text-muted-foreground">{title}</p>
@@ -180,18 +218,54 @@ function DemoTargetPanel({
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <span className="text-sm font-medium tracking-tight text-foreground">Plan</span>
-          <button
-            id={targets.plan.slice(1)}
-            type="button"
-            className="flex w-full items-center justify-between rounded-2xl border border-border bg-muted/40 px-4 py-3 text-left text-sm transition hover:border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
-          >
-            <span>Starter walkthrough</span>
-            <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-              Free
-            </span>
-          </button>
+          <div className="space-y-3">
+            {planOptions.map((plan, index) => (
+              <label
+                key={plan.cardId}
+                id={plan.cardId}
+                htmlFor={plan.inputId}
+                className={cn(
+                  'group flex w-full cursor-pointer items-start gap-3 rounded-2xl border border-border bg-muted/30 px-4 py-3 text-left transition hover:border-emerald-300 hover:bg-emerald-50/60 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 has-[:checked]:shadow-[0_0_0_1px_rgba(16,185,129,0.15)] dark:hover:bg-emerald-950/30 dark:has-[:checked]:bg-emerald-950/40',
+                )}
+              >
+                <input
+                  id={plan.inputId}
+                  type="radio"
+                  name={`${targets.plan.slice(1)}-group`}
+                  value={plan.value}
+                  defaultChecked={index === 1}
+                  className="sr-only"
+                />
+                <span
+                  className={cn(
+                    'mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border border-muted-foreground/30 bg-background group-has-[:checked]:border-emerald-500 group-has-[:checked]:bg-emerald-500',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'size-1.5 rounded-full bg-transparent group-has-[:checked]:bg-white',
+                    )}
+                  />
+                </span>
+
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-medium text-foreground">{plan.title}</span>
+                    {plan.badge ? (
+                      <span className="rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                        {plan.badge}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="mt-1 block text-sm leading-5 text-muted-foreground">
+                    {plan.description}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </div>
         </div>
 
         <button
