@@ -1,7 +1,7 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
   "name": "cursorjs-ui",
-  "homepage": "https://cursorjs.com/ui",
+  "homepage": "https://cursorjs.com/docs/ui",
   "items": [
     {
       "name": "cursor-player",
@@ -9,7 +9,7 @@
       "title": "Cursor Player",
       "description": "A free compound component for starting, pausing, resuming, and stopping cursor.js demos.",
       "dependencies": ["@cursor.js/core", "lucide-react"],
-      "registryDependencies": ["button", "card"],
+      "registryDependencies": ["button"],
       "files": [
         {
           "path": "registry/default/cursor-player/cursor-player.tsx",
