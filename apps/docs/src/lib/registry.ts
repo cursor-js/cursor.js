@@ -1,4 +1,4 @@
-import { access, readFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -35,29 +35,11 @@ export interface RegistryItemPayload extends Omit<RegistryItemDefinition, 'files
 
 const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
 const docsRoot = path.resolve(moduleDirectory, '..', '..');
+const registryPath = path.join(docsRoot, 'registry.json');
 
 let registryIndexPromise: Promise<RegistryIndexDefinition> | null = null;
 
-async function pathExists(filePath: string) {
-  try {
-    await access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function getDocsRoot() {
-  if (await pathExists(path.join(docsRoot, 'registry.json'))) {
-    return docsRoot;
-  }
-
-  throw new Error('Unable to resolve the docs app root for the registry.');
-}
-
 async function readRegistryIndexSource() {
-  const docsRoot = await getDocsRoot();
-  const registryPath = path.join(docsRoot, 'registry.json');
   const registrySource = await readFile(registryPath, 'utf8');
 
   return JSON.parse(registrySource) as RegistryIndexDefinition;
@@ -69,10 +51,11 @@ export async function readRegistryIndex() {
 }
 
 async function readRegistryFileContent(filePath: string) {
-  const docsRoot = await getDocsRoot();
-  const absolutePath = path.join(docsRoot, filePath);
+  if (!filePath) {
+    throw new Error('Registry file path is missing.');
+  }
 
-  return readFile(absolutePath, 'utf8');
+  return readFile(path.join(docsRoot, filePath), 'utf8');
 }
 
 export async function readRegistryItem(name: string) {
