@@ -1,4 +1,5 @@
 import { access, readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 interface RegistryFileDefinition {
@@ -32,9 +33,9 @@ export interface RegistryItemPayload extends Omit<RegistryItemDefinition, 'files
   files: RegistryFilePayload[];
 }
 
-const docsRootCandidates = [process.cwd(), path.resolve(process.cwd(), 'apps/docs')];
+const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
+const docsRoot = path.resolve(moduleDirectory, '..', '..');
 
-let docsRootPromise: Promise<string> | null = null;
 let registryIndexPromise: Promise<RegistryIndexDefinition> | null = null;
 
 async function pathExists(filePath: string) {
@@ -46,19 +47,12 @@ async function pathExists(filePath: string) {
   }
 }
 
-async function resolveDocsRoot() {
-  for (const candidate of docsRootCandidates) {
-    if (await pathExists(path.join(candidate, 'registry.json'))) {
-      return candidate;
-    }
+async function getDocsRoot() {
+  if (await pathExists(path.join(docsRoot, 'registry.json'))) {
+    return docsRoot;
   }
 
   throw new Error('Unable to resolve the docs app root for the registry.');
-}
-
-async function getDocsRoot() {
-  docsRootPromise ??= resolveDocsRoot();
-  return docsRootPromise;
 }
 
 async function readRegistryIndexSource() {
