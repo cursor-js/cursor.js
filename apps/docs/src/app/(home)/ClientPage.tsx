@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useReducer, ReactNode } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import dynamic from 'next/dynamic';
 
 const CodeEditor = dynamic(
@@ -39,7 +39,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Info, Gem, Play, Pause, RotateCcw, Copy, Check } from 'lucide-react';
+import { Info, Gem, Play, Pause, RotateCcw, Copy, Check, Settings } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -58,6 +58,7 @@ import {
   SettingsAccordionTrigger,
   SettingsAccordionContent,
 } from '@/components/app/settings-accordion';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import {
   RippleDemo,
@@ -71,7 +72,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/in
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Comet } from '@/components/app/comet';
 import { BackgroundStars } from '@/components/app/background-stars';
-import { FloatingPlayer } from '@/components/app/floating-player';
+import { CursorPlayer } from '../../../registry/default/cursor-player/cursor-player';
 import { ThemeCursorPicker } from '@/components/app/theme-cursor-picker';
 import {
   buildThemePackFromSelection,
@@ -281,22 +282,20 @@ function settingsReducer(state: SettingsState, action: SettingsAction): Settings
   }
 }
 
-const BEGINNING_CURSOR_SIZE = 3;
+const BEGINNING_CURSOR_SIZE = 1;
+const initialTodos = [
+  { id: 1, text: 'Learn Cursor.js', completed: false },
+  { id: 2, text: 'Star on GitHub', completed: false },
+];
 
 export function ClientPage() {
-  const [demoState, setDemoState] = useState<'idle' | 'running' | 'paused' | 'done'>('idle');
-  const actorRef = useRef<any>(null);
-
   // Form states
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
   // Todo state
-  const [todos, setTodos] = useState([
-    { id: 1, text: 'Learn Cursor.js', completed: false },
-    { id: 2, text: 'Star on GitHub', completed: false },
-  ]);
+  const [todos, setTodos] = useState(initialTodos);
   const [todoInput, setTodoInput] = useState('');
   const [todoToDelete, setTodoToDelete] = useState<number | null>(null);
 
@@ -375,254 +374,33 @@ c.move('#btn1')
   // Consolidated settings state via useReducer
   const [settings, dispatch] = useReducer(settingsReducer, initialSettings);
 
-  useEffect(() => {
-    const c = new Cursor({
+  const resetDemoUi = () => {
+    setEmail('');
+    setPassword('');
+    setSubmitted(false);
+    setTodos(initialTodos);
+    setTodoInput('');
+    setTodoToDelete(null);
+  };
+
+  const createHomeDemoCursor = (anchorElement: HTMLElement) => {
+    const cursor = new Cursor({
       humanize: settings.coreConfig.humanize,
       speed: settings.coreConfig.speed,
+      startPoint: anchorElement,
     });
-    actorRef.current = c;
-    setDemoState('idle');
-    let isActive = true;
-
-    // Listen to native kütüphane events for UI state sync
-    c.on('pause', () => {
-      if (!isActive) return;
-      setDemoState((prev) => (prev === 'idle' || prev === 'done' ? prev : 'paused'));
-    });
-    c.on('play', () => {
-      if (!isActive) return;
-      setDemoState('running');
-    });
-
-    // Seed action-augmenting plugins before building the demo sequence.
-    if (settings.plugins.floating) {
-      c.use(new FloatingPlugin());
-    }
-
-    if (settings.plugins.prompt) {
-      c.use(new PromptPlugin());
-    }
-
-    if (settings.plugins.say) {
-      c.use(new SayPlugin());
-    }
-
-    if (settings.plugins.outline) {
-      c.use(new OutlinePlugin());
-    }
-
-    if (settings.plugins.spotlight) {
-      c.use(new SpotlightPlugin());
-    }
-
-    if (settings.plugins.waitForUser) {
-      c.use(new WaitForUserPlugin());
-    }
-
-    // Wrap the repeatable scenario in a function and link recursively
-    const buildDemoSequence = () => {
-      if (!isActive) return;
-      const hasSay = Boolean(c.getPlugin('say'));
-      const hasPrompt = Boolean(c.getPlugin('prompt'));
-      const hasOutline = () => Boolean(c.getPlugin('outline'));
-      const hasSpotlight = Boolean(c.getPlugin('spotlight'));
-      const hasWaitForUser = Boolean(c.getPlugin('wait-for-user'));
-
-      let sequence = c
-        .do(() => c.pause()) // Sequence natural pause point
-        .wait(500)
-        .setState({ size: settings.coreConfig.size });
-
-      if (hasSay) {
-        sequence = sequence.say('Let me introduce you to Cursor.js, which is who I am.', {
-          waitUntilFinished: false,
-        });
-      }
-
-      // Sadece outline aktifse çalıştır
-      sequence
-        .if(
-          hasOutline,
-          (ctx) =>
-            (ctx as any).outlineCircle('#hero-title', {
-              duration: 1500,
-              loopCount: 1,
-            }) as Cursor,
-        )
-        .wait(1000)
-        .until(
-          () => {
-            const prevBtn = document.querySelector('.carousel-prev');
-            return prevBtn?.hasAttribute('disabled') || false;
-          },
-          (ctx) => ctx.click('.carousel-prev').wait(500),
-        )
-        .if(
-          () =>
-            hasSay &&
-            document.querySelector<HTMLInputElement>('#demo-email')?.value !== 'hello@cursor.js',
-          (ctx) =>
-            ctx
-              .hover('#demo-email')
-              .say('Let me fill this out for you!', {
-                duration: 2000,
-                position: 'subtitle',
-              })
-              .do(() => isActive && setEmail(''))
-              .type('#demo-email', 'hello@cursor.js'),
-        )
-        .if(
-          () =>
-            !hasSay &&
-            document.querySelector<HTMLInputElement>('#demo-email')?.value !== 'hello@cursor.js',
-          (ctx) =>
-            ctx
-              .hover('#demo-email')
-              .do(() => isActive && setEmail(''))
-              .type('#demo-email', 'hello@cursor.js'),
-        )
-        .if(
-          () => document.querySelector<HTMLInputElement>('#demo-password')?.value !== 'secret',
-          (ctx) =>
-            ctx
-              .hover('#demo-password')
-              .wait(300)
-              .do(() => isActive && setPassword(''))
-              .type('#demo-password', 'secret', { delay: 60 })
-              .wait(600),
-        )
-        .hover('#demo-submit')
-        .if(
-          () => hasSay,
-          (ctx) => ctx.say('And click submit!', { duration: 1500 }),
-        )
-        .wait(300)
-        .click('#demo-submit')
-        .wait(1000)
-        .do(() => isActive && setSubmitted(true))
-        .hover('.carousel-next')
-        .wait(400)
-        .click('.carousel-next')
-        .wait(1000)
-        .hover('#demo-accordion-1')
-        .setState({ ripple: { color: '#10b98180' }, size: settings.coreConfig.size * 1.5 })
-        .wait(400)
-        .click('#demo-accordion-1')
-        .setState({
-          ripple: { color: settings.rippleConfig.color + '80' },
-          size: settings.coreConfig.size,
-        })
-        .wait(1200)
-        .hover('#demo-accordion-2')
-        .wait(400)
-        .click('#demo-accordion-2')
-        .wait(1000)
-        .hover('.carousel-next')
-        .wait(400)
-        .click('.carousel-next')
-        .wait(1000)
-        // Todo app ops
-        .hover('#todo-input')
-        .type('#todo-input', 'Build an AI agent')
-        .wait(200)
-        .hover('#todo-add')
-        .click('#todo-add')
-        .wait(1000)
-        .hover('#todo-check-1')
-        .click('#todo-check-1')
-        .wait(1000)
-        .hover('.todo-item-2')
-        .if(
-          () => hasSay,
-          (ctx) => ctx.say("Let's delete this one.", { duration: 1500, position: 'subtitle' }),
-        )
-        .wait(1000)
-        .if(hasOutline, (ctx) =>
-          (ctx as any).outlineUnderline('.todo-item-2', { duration: 1000, loopCount: 2 }).wait(300),
-        )
-        .hover('#todo-delete-2')
-        .wait(300)
-        .click('#todo-delete-2')
-        .wait(1000)
-        .if(
-          () => hasPrompt && !hasWaitForUser,
-          (ctx) =>
-            ctx.prompt('Would you really like to delete this item?', {
-              buttons: [{ label: 'Yes, click delete!', onClick: 'continue', type: 'danger' }],
-            }),
-        )
-        .if(
-          () => hasWaitForUser,
-          (ctx) =>
-            (ctx as any).waitForUser({
-              target: '#todo-confirm-delete',
-              event: 'click',
-              message: 'Your turn: confirm the deletion to continue.',
-              spotlight: hasSpotlight,
-              backdrop: hasSpotlight,
-              pauseEffects: true,
-              speak: true,
-              resumeLabel: 'Skip manually',
-            }),
-        )
-        .if(
-          () => !hasWaitForUser,
-          (ctx) => ctx.hover('#todo-confirm-delete').wait(300).click('#todo-confirm-delete'),
-        )
-        .wait(1000)
-        .hover('#cursor-beginning')
-        .setState({ size: BEGINNING_CURSOR_SIZE })
-        .do(() => {
-          if (!isActive) return;
-          setDemoState('done');
-          // Reset forms AND todos
-          setEmail('');
-          setPassword('');
-          setSubmitted(false);
-          setTodos([
-            { id: 1, text: 'Learn Cursor.js', completed: false },
-            { id: 2, text: 'Star on GitHub', completed: false },
-          ]);
-          setTodoInput('');
-
-          setTimeout(() => isActive && setDemoState('idle'), 3000);
-        })
-        .wait(3000)
-        .do(buildDemoSequence); // Re-queue the scenario at the end
-    };
-
-    c.setState({ size: BEGINNING_CURSOR_SIZE }).move('#cursor-beginning').do(buildDemoSequence);
-
-    return () => {
-      isActive = false;
-      c.destroy();
-    };
-  }, [
-    settings.plugins.floating,
-    settings.plugins.outline,
-    settings.plugins.prompt,
-    settings.plugins.say,
-    settings.plugins.speech,
-    settings.plugins.geminiTts,
-    settings.plugins.spotlight,
-    settings.plugins.waitForUser,
-    settings.coreConfig.humanize,
-    settings.coreConfig.speed,
-  ]);
-
-  // Sync cursor plugins whenever settings change
-  useEffect(() => {
-    const c = actorRef.current;
-    if (!c) return;
 
     const { coreConfig, plugins, rippleConfig, trailConfig, soundConfig, geminiTtsConfig } =
       settings;
 
-    c.setState({ humanize: coreConfig.humanize, speed: coreConfig.speed, size: coreConfig.size });
+    cursor.setState({
+      humanize: coreConfig.humanize,
+      speed: coreConfig.speed,
+      size: BEGINNING_CURSOR_SIZE,
+    });
 
     if (plugins.theme) {
-      c.removePlugin('ThemePlugin');
-      c.use(
+      cursor.use(
         new ThemePlugin(
           buildThemePackFromSelection(
             settings.themeConfig.cursorSelection,
@@ -630,53 +408,38 @@ c.move('#btn1')
           ),
         ),
       );
-    } else {
-      c.removePlugin('ThemePlugin');
     }
 
     if (plugins.indicator) {
-      c.removePlugin('IndicatorPlugin');
-      c.use(new IndicatorPlugin());
-    } else {
-      c.removePlugin('IndicatorPlugin');
+      cursor.use(new IndicatorPlugin());
     }
 
     if (plugins.logging) {
-      c.removePlugin('LoggingPlugin');
-      c.use(new LoggingPlugin());
-    } else {
-      c.removePlugin('LoggingPlugin');
+      cursor.use(new LoggingPlugin());
     }
 
     if (plugins.sound) {
-      c.removePlugin('SoundPlugin');
-      c.use(
+      cursor.use(
         new SoundPlugin({
           volume: soundConfig.volume,
           clickSoundUrl: soundConfig.clickSoundUrl,
           typingSoundUrl: soundConfig.typingSoundUrl,
         }),
       );
-    } else {
-      c.removePlugin('SoundPlugin');
     }
 
     if (plugins.ripple) {
-      c.removePlugin('RipplePlugin');
-      c.use(
+      cursor.use(
         new RipplePlugin({
-          color: rippleConfig.color + '80',
+          color: `${rippleConfig.color}80`,
           duration: rippleConfig.duration,
           size: rippleConfig.size,
         }),
       );
-    } else {
-      c.removePlugin('RipplePlugin');
     }
 
     if (plugins.trail) {
-      c.removePlugin('trail');
-      c.use(
+      cursor.use(
         new TrailPlugin({
           color: trailConfig.color,
           fadeDuration: trailConfig.fadeDuration,
@@ -684,13 +447,10 @@ c.move('#btn1')
           length: trailConfig.length,
         }),
       );
-    } else {
-      c.removePlugin('trail');
     }
 
     if (plugins.particle) {
-      c.removePlugin('particle');
-      c.use(
+      cursor.use(
         new ParticlePlugin({
           size: settings.particleConfig.size,
           color: settings.particleConfig.color,
@@ -699,41 +459,26 @@ c.move('#btn1')
           scatterDistance: settings.particleConfig.scatterDistance,
         }),
       );
-    } else {
-      c.removePlugin('particle');
     }
 
     if (plugins.floating) {
-      c.removePlugin('floating');
-      c.use(new FloatingPlugin());
-    } else {
-      c.removePlugin('floating');
+      cursor.use(new FloatingPlugin());
     }
 
     if (plugins.prompt) {
-      c.removePlugin('prompt');
-      c.use(new PromptPlugin());
-    } else {
-      c.removePlugin('prompt');
+      cursor.use(new PromptPlugin());
     }
 
     if (plugins.say) {
-      c.removePlugin('say');
-      c.use(new SayPlugin());
-    } else {
-      c.removePlugin('say');
+      cursor.use(new SayPlugin());
     }
 
     if (plugins.speech) {
-      c.removePlugin('speech');
-      c.use(new SpeechPlugin({ enabled: true, voiceName: 'Google US English' }));
-    } else {
-      c.removePlugin('speech');
+      cursor.use(new SpeechPlugin({ enabled: true, voiceName: 'Google US English' }));
     }
 
     if (plugins.geminiTts) {
-      c.removePlugin('gemini-tts');
-      c.use(
+      cursor.use(
         new GeminiTTSPlugin({
           speaker: geminiTtsConfig.speaker,
           language: geminiTtsConfig.language,
@@ -741,65 +486,199 @@ c.move('#btn1')
           style: 'Read aloud in a warm, welcoming tone.',
         }),
       );
-    } else {
-      c.removePlugin('gemini-tts');
     }
 
     if (plugins.outline) {
-      c.removePlugin('outline');
-      c.use(new OutlinePlugin());
-    } else {
-      c.removePlugin('outline');
+      cursor.use(new OutlinePlugin());
     }
 
     if (plugins.spotlight) {
-      c.removePlugin('spotlight');
-      c.use(new SpotlightPlugin());
-    } else {
-      c.removePlugin('spotlight');
+      cursor.use(new SpotlightPlugin());
     }
 
     if (plugins.waitForUser) {
-      c.removePlugin('wait-for-user');
-      c.use(new WaitForUserPlugin());
-    } else {
-      c.removePlugin('wait-for-user');
+      cursor.use(new WaitForUserPlugin());
     }
-  }, [settings]);
 
-  const runDemo = () => {
-    if (!actorRef.current || demoState === 'running') return;
+    return cursor;
+  };
 
-    if (demoState === 'paused') {
-      actorRef.current.play(); // Native event will trigger setDemoState('running')
-    } else {
-      setSubmitted(false);
-      setEmail('');
-      setPassword('');
-      actorRef.current.play(); // Resume from natural pause point
+  const buildHomeDemoSequence = (cursor: ReturnType<typeof createHomeDemoCursor>) => {
+    const hasSay = settings.plugins.say;
+    const hasPrompt = settings.plugins.prompt;
+    const hasOutline = () => settings.plugins.outline;
+    const hasSpotlight = settings.plugins.spotlight;
+    const hasWaitForUser = settings.plugins.waitForUser;
+
+    let sequence = cursor.wait(500).setState({ size: settings.coreConfig.size });
+
+    if (hasSay) {
+      sequence = sequence.say('Let me introduce you to Cursor.js, which is who I am.', {
+        waitUntilFinished: false,
+      });
     }
+
+    sequence
+      .if(hasOutline, (ctx) =>
+        (
+          ctx as Cursor & {
+            outlineCircle: (
+              target: string,
+              options: { duration: number; loopCount: number },
+            ) => Cursor;
+          }
+        ).outlineCircle('#hero-title', {
+          duration: 1500,
+          loopCount: 1,
+        }),
+      )
+      .wait(1000)
+      .until(
+        () => {
+          const prevBtn = document.querySelector('.carousel-prev');
+          return prevBtn?.hasAttribute('disabled') || false;
+        },
+        (ctx) => ctx.click('.carousel-prev').wait(500),
+      )
+      .if(
+        () =>
+          hasSay &&
+          document.querySelector<HTMLInputElement>('#demo-email')?.value !== 'hello@cursor.js',
+        (ctx) =>
+          ctx
+            .hover('#demo-email')
+            .say('Let me fill this out for you!', {
+              duration: 2000,
+              position: 'subtitle',
+            })
+            .do(() => setEmail(''))
+            .type('#demo-email', 'hello@cursor.js'),
+      )
+      .if(
+        () =>
+          !hasSay &&
+          document.querySelector<HTMLInputElement>('#demo-email')?.value !== 'hello@cursor.js',
+        (ctx) =>
+          ctx
+            .hover('#demo-email')
+            .do(() => setEmail(''))
+            .type('#demo-email', 'hello@cursor.js'),
+      )
+      .if(
+        () => document.querySelector<HTMLInputElement>('#demo-password')?.value !== 'secret',
+        (ctx) =>
+          ctx
+            .hover('#demo-password')
+            .wait(300)
+            .do(() => setPassword(''))
+            .type('#demo-password', 'secret', { delay: 60 })
+            .wait(600),
+      )
+      .hover('#demo-submit')
+      .if(
+        () => hasSay,
+        (ctx) => ctx.say('And click submit!', { duration: 1500 }),
+      )
+      .wait(300)
+      .click('#demo-submit')
+      .wait(1000)
+      .do(() => setSubmitted(true))
+      .hover('.carousel-next')
+      .wait(400)
+      .click('.carousel-next')
+      .wait(1000)
+      .hover('#demo-accordion-1')
+      .setState({ ripple: { color: '#10b98180' }, size: settings.coreConfig.size * 1.5 })
+      .wait(400)
+      .click('#demo-accordion-1')
+      .setState({
+        ripple: { color: `${settings.rippleConfig.color}80` },
+        size: settings.coreConfig.size,
+      })
+      .wait(1200)
+      .hover('#demo-accordion-2')
+      .wait(400)
+      .click('#demo-accordion-2')
+      .wait(1000)
+      .hover('.carousel-next')
+      .wait(400)
+      .click('.carousel-next')
+      .wait(1000)
+      .hover('#todo-input')
+      .do(() => setTodoInput(''))
+      .type('#todo-input', 'Build an AI agent')
+      .wait(200)
+      .hover('#todo-add')
+      .click('#todo-add')
+      .wait(1000)
+      .hover('#todo-check-1')
+      .click('#todo-check-1')
+      .wait(1000)
+      .hover('.todo-item-2')
+      .if(
+        () => hasSay,
+        (ctx) => ctx.say("Let's delete this one.", { duration: 1500, position: 'subtitle' }),
+      )
+      .wait(1000)
+      .if(hasOutline, (ctx) =>
+        (
+          ctx as Cursor & {
+            outlineUnderline: (
+              target: string,
+              options: { duration: number; loopCount: number },
+            ) => Cursor;
+          }
+        )
+          .outlineUnderline('.todo-item-2', { duration: 1000, loopCount: 2 })
+          .wait(300),
+      )
+      .hover('#todo-delete-2')
+      .wait(300)
+      .click('#todo-delete-2')
+      .wait(1000)
+      .if(
+        () => hasPrompt && !hasWaitForUser,
+        (ctx) =>
+          ctx.prompt('Would you really like to delete this item?', {
+            buttons: [{ label: 'Yes, click delete!', onClick: 'continue', type: 'danger' }],
+          }),
+      )
+      .if(
+        () => hasWaitForUser,
+        (ctx) =>
+          (
+            ctx as Cursor & {
+              waitForUser: (options: {
+                target: string;
+                event: string;
+                message: string;
+                spotlight: boolean;
+                backdrop: boolean;
+                pauseEffects: boolean;
+                speak: boolean;
+                resumeLabel: string;
+              }) => Cursor;
+            }
+          ).waitForUser({
+            target: '#todo-confirm-delete',
+            event: 'click',
+            message: 'Your turn: confirm the deletion to continue.',
+            spotlight: hasSpotlight,
+            backdrop: hasSpotlight,
+            pauseEffects: true,
+            speak: true,
+            resumeLabel: 'Skip manually',
+          }),
+      )
+      .if(
+        () => !hasWaitForUser,
+        (ctx) => ctx.hover('#todo-confirm-delete').wait(300).click('#todo-confirm-delete'),
+      )
+      .wait(1800)
+      .do(resetDemoUi);
   };
 
-  const pauseDemo = () => {
-    if (!actorRef.current || demoState !== 'running') return;
-    actorRef.current.pause(); // Native event will trigger setDemoState('paused')
-  };
-
-  const restartDemo = () => {
-    if (!actorRef.current) return;
-
-    // Stop actor
-    actorRef.current.pause();
-    actorRef.current.destroy();
-
-    setDemoState('idle');
-    setSubmitted(false);
-    setEmail('');
-    setPassword('');
-    setTimeout(() => {
-      window.location.reload(); // Hard reload for simplicity since component state resets are complex
-    }, 100);
-  };
+  const homePlayerKey = JSON.stringify(settings);
 
   const [copiedNpm, setCopiedNpm] = useState(false);
   const [copiedNpx, setCopiedNpx] = useState(false);
@@ -818,1129 +697,1203 @@ c.move('#btn1')
       <main className="flex-1 relative z-10">
         <section className="container mx-auto flex flex-col items-center justify-center space-y-6 pt-24 pb-8 md:pt-7 text-center px-6">
           <div className="flex flex-col items-center space-y-8">
-            <div className="relative w-20 h-26">
-              <div id="cursor-beginning" className="absolute left-0 top-0 size-px" />
-              <Comet angle={55} isVisible={demoState === 'idle' || demoState === 'done'} />
-            </div>
-            <h1
-              id="hero-title"
-              className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl mb-4"
+            <CursorPlayer
+              key={homePlayerKey}
+              createCursor={createHomeDemoCursor}
+              buildSequence={buildHomeDemoSequence}
             >
-              cursor.js
-            </h1>
-            <p className="max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
-              Open source cursor automation for polished product demos and guided UX flows.
-              Human-like motion, programmable by design.
-            </p>
-            <div className="h-14 mt-4 w-full flex justify-center">
-              <FloatingPlayer
-                isFixed={demoState === 'running' || demoState === 'paused'}
-                demoState={demoState}
-                onRun={runDemo}
-                onPause={pauseDemo}
-                onRestart={restartDemo}
-                settingsContent={
-                  <div className="overflow-y-auto flex flex-col p-4">
-                    <Accordion type="single" collapsible className="w-full">
-                      {/* General / Common Settings */}
-                      <AccordionItem value="general">
-                        <SettingsAccordionTrigger>
-                          <div className="flex items-center gap-1.5">General</div>
-                        </SettingsAccordionTrigger>
-                        <SettingsAccordionContent>
-                          <div className="space-y-2 py-2 pt-2">
-                            <div className="flex items-center justify-between gap-2 mt-2">
-                              <Label htmlFor="enable-humanize">humanize</Label>
-                              <div className="flex items-center gap-1">
+              <div className="flex flex-col items-center space-y-8">
+                <CursorPlayer.Status>
+                  {({ state }) => (
+                    <div className="relative h-26 w-20">
+                      <Comet angle={55} isVisible={state === 'idle' || state === 'error'} />
+                      <CursorPlayer.Cursor id="cursor-beginning" className="h-26 w-20" />
+                    </div>
+                  )}
+                </CursorPlayer.Status>
+                <h1
+                  id="hero-title"
+                  className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl mb-4"
+                >
+                  cursor.js
+                </h1>
+                <p className="max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
+                  Open source cursor automation for polished product demos and guided UX flows.
+                  Human-like motion, programmable by design.
+                </p>
+                <div className="mt-4 flex w-full justify-center">
+                  <div className="z-[50] flex items-center gap-2 rounded-full border bg-background/80 p-2 shadow-lg backdrop-blur-lg">
+                    <CursorPlayer.PlayPause size="sm" variant="default" className="rounded-full">
+                      <CursorPlayer.PlayIcon asChild>
+                        <Play className="mr-2 h-4 w-4" />
+                      </CursorPlayer.PlayIcon>
+                      <CursorPlayer.PauseIcon asChild>
+                        <Pause className="mr-2 h-4 w-4" />
+                      </CursorPlayer.PauseIcon>
+                      <span>Run Live Demo</span>
+                    </CursorPlayer.PlayPause>
+                    <CursorPlayer.Status>
+                      {({ state }) => (
+                        <div
+                          data-state={state}
+                          className="contents data-[state=idle]:hidden data-[state=error]:hidden"
+                        >
+                          <CursorPlayer.StopButton
+                            variant="destructive"
+                            size="icon"
+                            className="rounded-full"
+                            onClick={resetDemoUi}
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </CursorPlayer.StopButton>
+                          <div className="mx-1 h-6 w-px bg-border" />
+                        </div>
+                      )}
+                    </CursorPlayer.Status>
+                    <Sheet>
+                      <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon" className="rounded-full">
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                      </SheetTrigger>
+                      <SheetContent side="right" className="z-[99999] w-[350px] p-0 sm:w-[400px]">
+                        <SheetHeader className="p-4 pb-0 text-left">
+                          <SheetTitle>Cursor Settings</SheetTitle>
+                        </SheetHeader>
+                        <div className="overflow-y-auto flex flex-col p-4">
+                          <Accordion type="single" collapsible className="w-full">
+                            {/* General / Common Settings */}
+                            <AccordionItem value="general">
+                              <SettingsAccordionTrigger>
+                                <div className="flex items-center gap-1.5">General</div>
+                              </SettingsAccordionTrigger>
+                              <SettingsAccordionContent>
+                                <div className="space-y-2 py-2 pt-2">
+                                  <div className="flex items-center justify-between gap-2 mt-2">
+                                    <Label htmlFor="enable-humanize">humanize</Label>
+                                    <div className="flex items-center gap-1">
+                                      <Switch
+                                        id="enable-humanize"
+                                        checked={settings.coreConfig.humanize}
+                                        onCheckedChange={(checked) =>
+                                          dispatch({
+                                            type: 'UPDATE_CORE_CONFIG',
+                                            key: 'humanize',
+                                            value: checked,
+                                          })
+                                        }
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center justify-between gap-2 mt-2">
+                                    <Label htmlFor="core-speed">speed</Label>
+                                    <InputGroup className="h-7 w-24">
+                                      <InputGroupInput
+                                        id="core-speed"
+                                        type="number"
+                                        min={0.1}
+                                        max={5}
+                                        step={0.1}
+                                        value={settings.coreConfig.speed}
+                                        onChange={(e) =>
+                                          dispatch({
+                                            type: 'UPDATE_CORE_CONFIG',
+                                            key: 'speed',
+                                            value: Number(e.target.value),
+                                          })
+                                        }
+                                        className="h-7 text-right"
+                                      />
+                                      <InputGroupAddon align="inline-end">x</InputGroupAddon>
+                                    </InputGroup>
+                                  </div>
+
+                                  <div className="flex items-center justify-between gap-2 mt-2">
+                                    <Label htmlFor="core-size">size</Label>
+                                    <InputGroup className="h-7 w-24">
+                                      <InputGroupInput
+                                        id="core-size"
+                                        type="number"
+                                        min={0.1}
+                                        max={10}
+                                        step={0.1}
+                                        value={settings.coreConfig.size}
+                                        onChange={(e) =>
+                                          dispatch({
+                                            type: 'UPDATE_CORE_CONFIG',
+                                            key: 'size',
+                                            value: Number(e.target.value),
+                                          })
+                                        }
+                                        className="h-7 text-right"
+                                      />
+                                      <InputGroupAddon align="inline-end">x</InputGroupAddon>
+                                    </InputGroup>
+                                  </div>
+                                </div>
+                              </SettingsAccordionContent>
+                            </AccordionItem>
+
+                            {/* Theme Plugin */}
+                            <AccordionItem value="theme" className="relative">
+                              <SettingsAccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-1.5">
+                                  Theme
+                                  <HoverCard>
+                                    <HoverCardTrigger asChild>
+                                      <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                                    </HoverCardTrigger>
+                                    <HoverCardContent
+                                      side="left"
+                                      className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
+                                    >
+                                      <iframe
+                                        src="/demos/theme"
+                                        className="w-full h-full border-0 overflow-hidden"
+                                        scrolling="no"
+                                      />
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                </div>
+                              </SettingsAccordionTrigger>
+                              <div className="absolute right-0 top-4">
                                 <Switch
-                                  id="enable-humanize"
-                                  checked={settings.coreConfig.humanize}
+                                  id="enable-theme"
+                                  checked={settings.plugins.theme}
                                   onCheckedChange={(checked) =>
                                     dispatch({
-                                      type: 'UPDATE_CORE_CONFIG',
-                                      key: 'humanize',
-                                      value: checked,
+                                      type: 'TOGGLE_PLUGIN',
+                                      plugin: 'theme',
+                                      enabled: checked,
                                     })
                                   }
                                 />
                               </div>
-                            </div>
-
-                            <div className="flex items-center justify-between gap-2 mt-2">
-                              <Label htmlFor="core-speed">speed</Label>
-                              <InputGroup className="h-7 w-24">
-                                <InputGroupInput
-                                  id="core-speed"
-                                  type="number"
-                                  min={0.1}
-                                  max={5}
-                                  step={0.1}
-                                  value={settings.coreConfig.speed}
-                                  onChange={(e) =>
-                                    dispatch({
-                                      type: 'UPDATE_CORE_CONFIG',
-                                      key: 'speed',
-                                      value: Number(e.target.value),
-                                    })
+                              <SettingsAccordionContent>
+                                <ThemeCursorPicker
+                                  selection={settings.themeConfig.cursorSelection}
+                                  presets={settings.themeConfig.presetSelection}
+                                  onSelectCursor={(slot, value) =>
+                                    dispatch({ type: 'UPDATE_THEME_CURSOR', slot, value })
                                   }
-                                  className="h-7 text-right"
-                                />
-                                <InputGroupAddon align="inline-end">x</InputGroupAddon>
-                              </InputGroup>
-                            </div>
-
-                            <div className="flex items-center justify-between gap-2 mt-2">
-                              <Label htmlFor="core-size">size</Label>
-                              <InputGroup className="h-7 w-24">
-                                <InputGroupInput
-                                  id="core-size"
-                                  type="number"
-                                  min={0.1}
-                                  max={10}
-                                  step={0.1}
-                                  value={settings.coreConfig.size}
-                                  onChange={(e) =>
-                                    dispatch({
-                                      type: 'UPDATE_CORE_CONFIG',
-                                      key: 'size',
-                                      value: Number(e.target.value),
-                                    })
+                                  onSelectPreset={(slot, value) =>
+                                    dispatch({ type: 'UPDATE_THEME_PRESET', slot, value })
                                   }
-                                  className="h-7 text-right"
+                                  disabled={!settings.plugins.theme}
                                 />
-                                <InputGroupAddon align="inline-end">x</InputGroupAddon>
-                              </InputGroup>
-                            </div>
-                          </div>
-                        </SettingsAccordionContent>
-                      </AccordionItem>
+                              </SettingsAccordionContent>
+                            </AccordionItem>
 
-                      {/* Theme Plugin */}
-                      <AccordionItem value="theme" className="relative">
-                        <SettingsAccordionTrigger className="hover:no-underline">
-                          <div className="flex items-center gap-1.5">
-                            Theme
-                            <HoverCard>
-                              <HoverCardTrigger asChild>
-                                <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
-                              </HoverCardTrigger>
-                              <HoverCardContent
-                                side="left"
-                                className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
-                              >
-                                <iframe
-                                  src="/demos/theme"
-                                  className="w-full h-full border-0 overflow-hidden"
-                                  scrolling="no"
-                                />
-                              </HoverCardContent>
-                            </HoverCard>
-                          </div>
-                        </SettingsAccordionTrigger>
-                        <div className="absolute right-0 top-4">
-                          <Switch
-                            id="enable-theme"
-                            checked={settings.plugins.theme}
-                            onCheckedChange={(checked) =>
-                              dispatch({ type: 'TOGGLE_PLUGIN', plugin: 'theme', enabled: checked })
-                            }
-                          />
-                        </div>
-                        <SettingsAccordionContent>
-                          <ThemeCursorPicker
-                            selection={settings.themeConfig.cursorSelection}
-                            presets={settings.themeConfig.presetSelection}
-                            onSelectCursor={(slot, value) =>
-                              dispatch({ type: 'UPDATE_THEME_CURSOR', slot, value })
-                            }
-                            onSelectPreset={(slot, value) =>
-                              dispatch({ type: 'UPDATE_THEME_PRESET', slot, value })
-                            }
-                            disabled={!settings.plugins.theme}
-                          />
-                        </SettingsAccordionContent>
-                      </AccordionItem>
-
-                      {/* Gemini TTS Plugin */}
-                      <AccordionItem value="geminitTts" className="relative">
-                        <SettingsAccordionTrigger className="hover:no-underline">
-                          <div className="flex items-center gap-1.5">
-                            Gemini TTS
-                            <span title="Pro" className="flex items-center">
-                              <Gem className="w-4 h-4 text-orange-500" />
-                            </span>
-                            <HoverCard>
-                              <HoverCardTrigger asChild>
-                                <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
-                              </HoverCardTrigger>
-                              <HoverCardContent
-                                side="left"
-                                className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] p-4 text-sm"
-                              >
-                                <p>Generates high-quality human voice using Google Gemini TTS.</p>
-                                <p className="mt-2 font-medium">
-                                  Notice the 'cursor-js-tts-loading' class is applied while the
-                                  audio is generating!
-                                </p>
-                              </HoverCardContent>
-                            </HoverCard>
-                          </div>
-                        </SettingsAccordionTrigger>
-                        <div className="absolute right-0 top-4">
-                          <Switch
-                            id="enable-gemini-tts"
-                            checked={settings.plugins.geminiTts}
-                            onCheckedChange={(checked) =>
-                              dispatch({
-                                type: 'TOGGLE_PLUGIN',
-                                plugin: 'geminiTts',
-                                enabled: checked,
-                              })
-                            }
-                          />
-                        </div>
-                        <SettingsAccordionContent>
-                          <div className="space-y-2 py-2">
-                            <div className="flex flex-row items-center justify-between gap-2">
-                              <Label htmlFor="gemini-speaker" className="text-xs font-normal">
-                                Speaker Model
-                              </Label>
-                              <Select
-                                value={settings.geminiTtsConfig.speaker}
-                                onValueChange={(value) =>
-                                  dispatch({
-                                    type: 'UPDATE_GEMINI_TTS_CONFIG',
-                                    key: 'speaker',
-                                    value: value,
-                                  })
-                                }
-                              >
-                                <SelectTrigger id="gemini-speaker" className="h-7 w-32 text-xs">
-                                  <SelectValue placeholder="Select Speaker" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Achernar">Achernar</SelectItem>
-                                  <SelectItem value="Achird">Achird</SelectItem>
-                                  <SelectItem value="Algenib">Algenib</SelectItem>
-                                  <SelectItem value="Algieba">Algieba</SelectItem>
-                                  <SelectItem value="Alnilam">Alnilam</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="flex flex-row items-center justify-between gap-2 mt-2">
-                              <Label
-                                htmlFor="gemini-language"
-                                className="text-xs font-normal text-muted-foreground"
-                              >
-                                Language
-                              </Label>
-                              <Input
-                                id="gemini-language"
-                                className="h-7 w-32 border-none bg-transparent shadow-none px-2 focus-visible:ring-0 text-xs opacity-50 cursor-not-allowed"
-                                value={settings.geminiTtsConfig.language}
-                                disabled
-                              />
-                            </div>
-                            <div className="flex flex-row items-center justify-between gap-2 mt-2">
-                              <Label
-                                htmlFor="gemini-model"
-                                className="text-xs font-normal text-muted-foreground"
-                              >
-                                Model
-                              </Label>
-                              <Input
-                                id="gemini-model"
-                                className="h-7 w-48 border-none bg-transparent shadow-none px-2 focus-visible:ring-0 text-xs opacity-50 cursor-not-allowed"
-                                value="gemini-3.1-flash-tts-preview"
-                                disabled
-                              />
-                            </div>
-                            <div className="flex flex-row items-center justify-between gap-2 mt-2">
-                              <Label
-                                htmlFor="gemini-style"
-                                className="text-xs font-normal text-muted-foreground"
-                              >
-                                Style
-                              </Label>
-                              <Input
-                                id="gemini-style"
-                                className="h-7 w-48 border-none bg-transparent shadow-none px-2 focus-visible:ring-0 text-xs opacity-50 cursor-not-allowed text-ellipsis overflow-hidden"
-                                value="Read aloud in a warm, welcoming tone."
-                                disabled
-                              />
-                            </div>
-                          </div>
-                        </SettingsAccordionContent>
-                      </AccordionItem>
-
-                      {/* Floating Plugin */}
-                      <AccordionItem value="floating" className="relative">
-                        <SettingsAccordionTrigger className="hover:no-underline">
-                          <div className="flex items-center gap-1.5">
-                            Floating
-                            <span title="Pro" className="flex items-center">
-                              <Gem className="w-4 h-4 text-orange-500" />
-                            </span>
-                            <HoverCard>
-                              <HoverCardTrigger asChild>
-                                <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
-                              </HoverCardTrigger>
-                              <HoverCardContent
-                                side="left"
-                                className="z-[9999999] w-[320px] rounded-lg border bg-background p-4 text-sm shadow-md"
-                              >
-                                <p>
-                                  Shared Floating UI positioning for <code>.say()</code>,{' '}
-                                  <code>.prompt()</code>, and <code>.waitForUser()</code>.
-                                </p>
-                              </HoverCardContent>
-                            </HoverCard>
-                          </div>
-                        </SettingsAccordionTrigger>
-                        <div className="absolute right-0 top-4">
-                          <Switch
-                            id="enable-floating"
-                            checked={settings.plugins.floating}
-                            onCheckedChange={(checked) =>
-                              dispatch({
-                                type: 'TOGGLE_PLUGIN',
-                                plugin: 'floating',
-                                enabled: checked,
-                              })
-                            }
-                          />
-                        </div>
-                        <SettingsAccordionContent>
-                          <div className="space-y-2 py-2">
-                            <p className="text-xs text-muted-foreground">
-                              Enables Floating UI collision-aware positioning for any enabled{' '}
-                              <code>SayPlugin</code>, <code>PromptPlugin</code>, or{' '}
-                              <code>WaitForUserPlugin</code> instances.
-                            </p>
-                          </div>
-                        </SettingsAccordionContent>
-                      </AccordionItem>
-
-                      {/* Outline Plugin */}
-                      <AccordionItem value="outline" className="relative">
-                        <SettingsAccordionTrigger className="w-full pr-12 hover:no-underline">
-                          <div className="flex items-center gap-1.5">
-                            Outline
-                            <span title="Pro" className="flex items-center">
-                              <Gem className="w-4 h-4 text-orange-500" />
-                            </span>
-                            <HoverCard>
-                              <HoverCardTrigger asChild>
-                                <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
-                              </HoverCardTrigger>
-                              <HoverCardContent
-                                side="left"
-                                className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] p-4 text-sm"
-                              >
-                                <p>
-                                  Generates smooth orbiting animations around target elements,
-                                  making your demos more engaging.
-                                </p>
-                              </HoverCardContent>
-                            </HoverCard>
-                          </div>
-                        </SettingsAccordionTrigger>
-                        <div className="absolute right-0 top-4">
-                          <Switch
-                            id="enable-outline"
-                            checked={settings.plugins.outline}
-                            onCheckedChange={(checked) =>
-                              dispatch({
-                                type: 'TOGGLE_PLUGIN',
-                                plugin: 'outline',
-                                enabled: checked,
-                              })
-                            }
-                          />
-                        </div>
-                        <SettingsAccordionContent>
-                          <div className="space-y-2 py-2">
-                            <p className="text-xs text-muted-foreground">
-                              Used programmatically via{' '}
-                              <code>.outlineCircle(selector, options)</code>.
-                            </p>
-                          </div>
-                        </SettingsAccordionContent>
-                      </AccordionItem>
-
-                      {/* Trail Plugin */}
-                      <AccordionItem value="trail" className="relative">
-                        <SettingsAccordionTrigger className="hover:no-underline">
-                          <div className="flex items-center gap-1.5">
-                            Trail
-                            <span title="Pro" className="flex items-center">
-                              <Gem className="w-4 h-4 text-orange-500" />
-                            </span>
-                            <HoverCard>
-                              <HoverCardTrigger asChild>
-                                <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
-                              </HoverCardTrigger>
-                              <HoverCardContent
-                                side="left"
-                                className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
-                              >
-                                <iframe
-                                  src="/demos/trail"
-                                  className="w-full h-full border-0 overflow-hidden"
-                                  scrolling="no"
-                                />
-                              </HoverCardContent>
-                            </HoverCard>
-                          </div>
-                        </SettingsAccordionTrigger>
-                        <div className="absolute right-0 top-4">
-                          <Switch
-                            id="enable-trail"
-                            checked={settings.plugins.trail}
-                            onCheckedChange={(checked) =>
-                              dispatch({ type: 'TOGGLE_PLUGIN', plugin: 'trail', enabled: checked })
-                            }
-                          />
-                        </div>
-                        <SettingsAccordionContent>
-                          <div className="space-y-2 py-2">
-                            <div className="flex flex-row items-center justify-between gap-2">
-                              <Label htmlFor="trail-length" className="text-xs font-normal">
-                                length
-                              </Label>
-                              <InputGroup className="h-7 w-24">
-                                <InputGroupInput
-                                  id="trail-length"
-                                  type="number"
-                                  min={5}
-                                  max={200}
-                                  step={5}
-                                  value={settings.trailConfig.length}
-                                  onChange={(e) =>
+                            {/* Gemini TTS Plugin */}
+                            <AccordionItem value="geminitTts" className="relative">
+                              <SettingsAccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-1.5">
+                                  Gemini TTS
+                                  <span title="Pro" className="flex items-center">
+                                    <Gem className="w-4 h-4 text-orange-500" />
+                                  </span>
+                                  <HoverCard>
+                                    <HoverCardTrigger asChild>
+                                      <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                                    </HoverCardTrigger>
+                                    <HoverCardContent
+                                      side="left"
+                                      className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] p-4 text-sm"
+                                    >
+                                      <p>
+                                        Generates high-quality human voice using Google Gemini TTS.
+                                      </p>
+                                      <p className="mt-2 font-medium">
+                                        Notice the 'cursor-js-tts-loading' class is applied while
+                                        the audio is generating!
+                                      </p>
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                </div>
+                              </SettingsAccordionTrigger>
+                              <div className="absolute right-0 top-4">
+                                <Switch
+                                  id="enable-gemini-tts"
+                                  checked={settings.plugins.geminiTts}
+                                  onCheckedChange={(checked) =>
                                     dispatch({
-                                      type: 'UPDATE_TRAIL_CONFIG',
-                                      key: 'length',
-                                      value: Number(e.target.value),
+                                      type: 'TOGGLE_PLUGIN',
+                                      plugin: 'geminiTts',
+                                      enabled: checked,
                                     })
                                   }
                                 />
-                                <InputGroupAddon align="inline-end">px</InputGroupAddon>
-                              </InputGroup>
-                            </div>
-                            <div className="flex flex-row items-center justify-between gap-2">
-                              <Label htmlFor="trail-color" className="text-xs font-normal">
-                                color
-                              </Label>
-                              <InputGroup className="h-7 w-28">
-                                <InputGroupInput
-                                  className="w-10"
-                                  id="trail-color"
-                                  type="color"
-                                  value={settings.trailConfig.color}
-                                  onChange={(e) =>
-                                    dispatch({
-                                      type: 'UPDATE_TRAIL_CONFIG',
-                                      key: 'color',
-                                      value: e.target.value,
-                                    })
-                                  }
-                                />
-                                <InputGroupAddon align="inline-end">
-                                  {settings.trailConfig.color}
-                                </InputGroupAddon>
-                              </InputGroup>
-                            </div>
-                            <div className="flex flex-row items-center justify-between gap-2">
-                              <Label htmlFor="trail-fade" className="text-xs font-normal">
-                                fadeDuration
-                              </Label>
-                              <InputGroup className="h-7 w-24">
-                                <InputGroupInput
-                                  id="trail-fade"
-                                  type="number"
-                                  min={100}
-                                  max={3000}
-                                  step={100}
-                                  value={settings.trailConfig.fadeDuration}
-                                  onChange={(e) =>
-                                    dispatch({
-                                      type: 'UPDATE_TRAIL_CONFIG',
-                                      key: 'fadeDuration',
-                                      value: Number(e.target.value),
-                                    })
-                                  }
-                                />
-                                <InputGroupAddon align="inline-end">ms</InputGroupAddon>
-                              </InputGroup>
-                            </div>
-                            <div className="flex flex-row items-center justify-between gap-2">
-                              <Label htmlFor="trail-thickness" className="text-xs font-normal">
-                                thickness
-                              </Label>
-                              <InputGroup className="h-7 w-24">
-                                <InputGroupInput
-                                  id="trail-thickness"
-                                  type="number"
-                                  min={1}
-                                  max={20}
-                                  step={1}
-                                  value={settings.trailConfig.thickness}
-                                  onChange={(e) =>
-                                    dispatch({
-                                      type: 'UPDATE_TRAIL_CONFIG',
-                                      key: 'thickness',
-                                      value: Number(e.target.value),
-                                    })
-                                  }
-                                />
-                                <InputGroupAddon align="inline-end">px</InputGroupAddon>
-                              </InputGroup>
-                            </div>
-                          </div>
-                        </SettingsAccordionContent>
-                      </AccordionItem>
+                              </div>
+                              <SettingsAccordionContent>
+                                <div className="space-y-2 py-2">
+                                  <div className="flex flex-row items-center justify-between gap-2">
+                                    <Label htmlFor="gemini-speaker" className="text-xs font-normal">
+                                      Speaker Model
+                                    </Label>
+                                    <Select
+                                      value={settings.geminiTtsConfig.speaker}
+                                      onValueChange={(value) =>
+                                        dispatch({
+                                          type: 'UPDATE_GEMINI_TTS_CONFIG',
+                                          key: 'speaker',
+                                          value: value,
+                                        })
+                                      }
+                                    >
+                                      <SelectTrigger
+                                        id="gemini-speaker"
+                                        className="h-7 w-32 text-xs"
+                                      >
+                                        <SelectValue placeholder="Select Speaker" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="Achernar">Achernar</SelectItem>
+                                        <SelectItem value="Achird">Achird</SelectItem>
+                                        <SelectItem value="Algenib">Algenib</SelectItem>
+                                        <SelectItem value="Algieba">Algieba</SelectItem>
+                                        <SelectItem value="Alnilam">Alnilam</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="flex flex-row items-center justify-between gap-2 mt-2">
+                                    <Label
+                                      htmlFor="gemini-language"
+                                      className="text-xs font-normal text-muted-foreground"
+                                    >
+                                      Language
+                                    </Label>
+                                    <Input
+                                      id="gemini-language"
+                                      className="h-7 w-32 border-none bg-transparent shadow-none px-2 focus-visible:ring-0 text-xs opacity-50 cursor-not-allowed"
+                                      value={settings.geminiTtsConfig.language}
+                                      disabled
+                                    />
+                                  </div>
+                                  <div className="flex flex-row items-center justify-between gap-2 mt-2">
+                                    <Label
+                                      htmlFor="gemini-model"
+                                      className="text-xs font-normal text-muted-foreground"
+                                    >
+                                      Model
+                                    </Label>
+                                    <Input
+                                      id="gemini-model"
+                                      className="h-7 w-48 border-none bg-transparent shadow-none px-2 focus-visible:ring-0 text-xs opacity-50 cursor-not-allowed"
+                                      value="gemini-3.1-flash-tts-preview"
+                                      disabled
+                                    />
+                                  </div>
+                                  <div className="flex flex-row items-center justify-between gap-2 mt-2">
+                                    <Label
+                                      htmlFor="gemini-style"
+                                      className="text-xs font-normal text-muted-foreground"
+                                    >
+                                      Style
+                                    </Label>
+                                    <Input
+                                      id="gemini-style"
+                                      className="h-7 w-48 border-none bg-transparent shadow-none px-2 focus-visible:ring-0 text-xs opacity-50 cursor-not-allowed text-ellipsis overflow-hidden"
+                                      value="Read aloud in a warm, welcoming tone."
+                                      disabled
+                                    />
+                                  </div>
+                                </div>
+                              </SettingsAccordionContent>
+                            </AccordionItem>
 
-                      {/* Particle Plugin */}
-                      <AccordionItem value="particle" className="relative">
-                        <SettingsAccordionTrigger className="hover:no-underline">
-                          <div className="flex items-center gap-1.5">
-                            Particle
-                            <span title="Pro" className="flex items-center">
-                              <Gem className="w-4 h-4 text-orange-500" />
-                            </span>
-                            <HoverCard>
-                              <HoverCardTrigger asChild>
-                                <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
-                              </HoverCardTrigger>
-                              <HoverCardContent
-                                side="left"
-                                className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
-                              >
-                                <iframe
-                                  src="/demos/particle"
-                                  className="w-full h-full border-0 overflow-hidden"
-                                  scrolling="no"
-                                />
-                              </HoverCardContent>
-                            </HoverCard>
-                          </div>
-                        </SettingsAccordionTrigger>
-                        <div className="absolute right-0 top-4">
-                          <Switch
-                            id="enable-particle"
-                            checked={settings.plugins.particle}
-                            onCheckedChange={(checked) =>
-                              dispatch({
-                                type: 'TOGGLE_PLUGIN',
-                                plugin: 'particle',
-                                enabled: checked,
-                              })
-                            }
-                          />
-                        </div>
-                        <SettingsAccordionContent>
-                          <div className="space-y-2 py-2">
-                            <div className="flex flex-row items-center justify-between gap-2">
-                              <Label htmlFor="particle-size" className="text-xs font-normal">
-                                size
-                              </Label>
-                              <InputGroup className="h-7 w-24">
-                                <InputGroupInput
-                                  id="particle-size"
-                                  type="number"
-                                  min={1}
-                                  max={20}
-                                  step={1}
-                                  value={settings.particleConfig.size}
-                                  onChange={(e) =>
+                            {/* Floating Plugin */}
+                            <AccordionItem value="floating" className="relative">
+                              <SettingsAccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-1.5">
+                                  Floating
+                                  <span title="Pro" className="flex items-center">
+                                    <Gem className="w-4 h-4 text-orange-500" />
+                                  </span>
+                                  <HoverCard>
+                                    <HoverCardTrigger asChild>
+                                      <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                                    </HoverCardTrigger>
+                                    <HoverCardContent
+                                      side="left"
+                                      className="z-[9999999] w-[320px] rounded-lg border bg-background p-4 text-sm shadow-md"
+                                    >
+                                      <p>
+                                        Shared Floating UI positioning for <code>.say()</code>,{' '}
+                                        <code>.prompt()</code>, and <code>.waitForUser()</code>.
+                                      </p>
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                </div>
+                              </SettingsAccordionTrigger>
+                              <div className="absolute right-0 top-4">
+                                <Switch
+                                  id="enable-floating"
+                                  checked={settings.plugins.floating}
+                                  onCheckedChange={(checked) =>
                                     dispatch({
-                                      type: 'UPDATE_PARTICLE_CONFIG',
-                                      key: 'size',
-                                      value: Number(e.target.value),
+                                      type: 'TOGGLE_PLUGIN',
+                                      plugin: 'floating',
+                                      enabled: checked,
                                     })
                                   }
                                 />
-                                <InputGroupAddon align="inline-end">px</InputGroupAddon>
-                              </InputGroup>
-                            </div>
-                            <div className="flex flex-row items-center justify-between gap-2">
-                              <Label htmlFor="particle-color" className="text-xs font-normal">
-                                color
-                              </Label>
-                              <InputGroup className="h-7 w-28">
-                                <InputGroupInput
-                                  className="w-10"
-                                  id="particle-color"
-                                  type="color"
-                                  value={settings.particleConfig.color}
-                                  onChange={(e) =>
-                                    dispatch({
-                                      type: 'UPDATE_PARTICLE_CONFIG',
-                                      key: 'color',
-                                      value: e.target.value,
-                                    })
-                                  }
-                                />
-                                <InputGroupAddon align="inline-end">
-                                  {settings.particleConfig.color}
-                                </InputGroupAddon>
-                              </InputGroup>
-                            </div>
-                            <div className="flex flex-row items-center justify-between gap-2">
-                              <Label htmlFor="particle-duration" className="text-xs font-normal">
-                                duration
-                              </Label>
-                              <InputGroup className="h-7 w-24">
-                                <InputGroupInput
-                                  id="particle-duration"
-                                  type="number"
-                                  min={100}
-                                  max={2000}
-                                  step={100}
-                                  value={settings.particleConfig.duration}
-                                  onChange={(e) =>
-                                    dispatch({
-                                      type: 'UPDATE_PARTICLE_CONFIG',
-                                      key: 'duration',
-                                      value: Number(e.target.value),
-                                    })
-                                  }
-                                />
-                                <InputGroupAddon align="inline-end">ms</InputGroupAddon>
-                              </InputGroup>
-                            </div>
-                          </div>
-                        </SettingsAccordionContent>
-                      </AccordionItem>
-                      {/* Ripple Plugin */}
-                      <AccordionItem value="ripple" className="relative">
-                        <SettingsAccordionTrigger className="hover:no-underline">
-                          <div className="flex items-center gap-1.5">
-                            Ripple
-                            <HoverCard>
-                              <HoverCardTrigger asChild>
-                                <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
-                              </HoverCardTrigger>
-                              <HoverCardContent
-                                side="left"
-                                className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
-                              >
-                                <iframe
-                                  src="/demos/ripple"
-                                  className="w-full h-full border-0 overflow-hidden"
-                                  scrolling="no"
-                                />
-                              </HoverCardContent>
-                            </HoverCard>
-                          </div>
-                        </SettingsAccordionTrigger>
-                        <div className="absolute right-0 top-4">
-                          <Switch
-                            id="enable-ripple"
-                            checked={settings.plugins.ripple}
-                            onCheckedChange={(checked) =>
-                              dispatch({
-                                type: 'TOGGLE_PLUGIN',
-                                plugin: 'ripple',
-                                enabled: checked,
-                              })
-                            }
-                          />
-                        </div>
-                        <SettingsAccordionContent>
-                          <div className="space-y-2 py-2">
-                            <div className="flex flex-row items-center justify-between gap-2">
-                              <Label htmlFor="ripple-color" className="text-xs font-normal">
-                                color
-                              </Label>
-                              <InputGroup className="h-7 w-28">
-                                <InputGroupInput
-                                  className="w-10"
-                                  id="ripple-color"
-                                  type="color"
-                                  value={settings.rippleConfig.color}
-                                  onChange={(e) =>
-                                    dispatch({
-                                      type: 'UPDATE_RIPPLE_CONFIG',
-                                      key: 'color',
-                                      value: e.target.value,
-                                    })
-                                  }
-                                />
-                                <InputGroupAddon align="inline-end">
-                                  {settings.rippleConfig.color}
-                                </InputGroupAddon>
-                              </InputGroup>
-                            </div>
-                            <div className="flex flex-row items-center justify-between gap-2">
-                              <Label htmlFor="ripple-duration" className="text-xs font-normal">
-                                duration
-                              </Label>
-                              <InputGroup className="h-7 w-24">
-                                <InputGroupInput
-                                  id="ripple-duration"
-                                  type="number"
-                                  min={100}
-                                  max={3000}
-                                  step={100}
-                                  value={settings.rippleConfig.duration}
-                                  onChange={(e) =>
-                                    dispatch({
-                                      type: 'UPDATE_RIPPLE_CONFIG',
-                                      key: 'duration',
-                                      value: Number(e.target.value),
-                                    })
-                                  }
-                                />
-                                <InputGroupAddon align="inline-end">ms</InputGroupAddon>
-                              </InputGroup>
-                            </div>
-                            <div className="flex flex-row items-center justify-between gap-2">
-                              <Label htmlFor="ripple-size" className="text-xs font-normal">
-                                size
-                              </Label>
-                              <InputGroup className="h-7 w-24">
-                                <InputGroupInput
-                                  id="ripple-size"
-                                  type="number"
-                                  min={10}
-                                  max={200}
-                                  step={10}
-                                  value={settings.rippleConfig.size}
-                                  onChange={(e) =>
-                                    dispatch({
-                                      type: 'UPDATE_RIPPLE_CONFIG',
-                                      key: 'size',
-                                      value: Number(e.target.value),
-                                    })
-                                  }
-                                />
-                                <InputGroupAddon align="inline-end">px</InputGroupAddon>
-                              </InputGroup>
-                            </div>
-                          </div>
-                        </SettingsAccordionContent>
-                      </AccordionItem>
+                              </div>
+                              <SettingsAccordionContent>
+                                <div className="space-y-2 py-2">
+                                  <p className="text-xs text-muted-foreground">
+                                    Enables Floating UI collision-aware positioning for any enabled{' '}
+                                    <code>SayPlugin</code>, <code>PromptPlugin</code>, or{' '}
+                                    <code>WaitForUserPlugin</code> instances.
+                                  </p>
+                                </div>
+                              </SettingsAccordionContent>
+                            </AccordionItem>
 
-                      {/* Indicator Plugin */}
-                      <AccordionItem value="indicator" className="relative">
-                        <SettingsAccordionTrigger hideIcon className="hover:no-underline">
-                          <div className="flex items-center gap-1.5">
-                            Indicator
-                            <HoverCard>
-                              <HoverCardTrigger asChild>
-                                <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
-                              </HoverCardTrigger>
-                              <HoverCardContent
-                                side="left"
-                                className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
-                              >
-                                <iframe
-                                  src="/demos/indicator"
-                                  className="w-full h-full border-0 overflow-hidden"
-                                  scrolling="no"
-                                />
-                              </HoverCardContent>
-                            </HoverCard>
-                          </div>
-                        </SettingsAccordionTrigger>
-                        <div className="absolute right-0 top-4">
-                          <Switch
-                            id="enable-indicator"
-                            checked={settings.plugins.indicator}
-                            onCheckedChange={(checked) =>
-                              dispatch({
-                                type: 'TOGGLE_PLUGIN',
-                                plugin: 'indicator',
-                                enabled: checked,
-                              })
-                            }
-                          />
-                        </div>
-                      </AccordionItem>
-
-                      {/* Sound Plugin */}
-                      <AccordionItem value="sound" className="relative">
-                        <SettingsAccordionTrigger className="hover:no-underline">
-                          <div className="flex items-center gap-1.5">
-                            Sound
-                            <HoverCard>
-                              <HoverCardTrigger asChild>
-                                <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
-                              </HoverCardTrigger>
-                              <HoverCardContent
-                                side="left"
-                                className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
-                              >
-                                <iframe
-                                  src="/demos/sound"
-                                  className="w-full h-full border-0 overflow-hidden"
-                                  scrolling="no"
-                                />
-                              </HoverCardContent>
-                            </HoverCard>
-                          </div>
-                        </SettingsAccordionTrigger>
-                        <div className="absolute right-0 top-4">
-                          <Switch
-                            id="enable-sound"
-                            checked={settings.plugins.sound}
-                            onCheckedChange={(checked) =>
-                              dispatch({
-                                type: 'TOGGLE_PLUGIN',
-                                plugin: 'sound',
-                                enabled: checked,
-                              })
-                            }
-                          />
-                        </div>
-                        <SettingsAccordionContent>
-                          <div className="space-y-2 py-2">
-                            <div className="flex flex-row items-center justify-between gap-2">
-                              <Label htmlFor="sound-volume" className="text-xs font-normal">
-                                volume
-                              </Label>
-                              <InputGroup className="h-7 w-24">
-                                <InputGroupInput
-                                  id="sound-volume"
-                                  type="number"
-                                  min={0}
-                                  max={1}
-                                  step={0.1}
-                                  value={settings.soundConfig.volume}
-                                  onChange={(e) =>
+                            {/* Outline Plugin */}
+                            <AccordionItem value="outline" className="relative">
+                              <SettingsAccordionTrigger className="w-full pr-12 hover:no-underline">
+                                <div className="flex items-center gap-1.5">
+                                  Outline
+                                  <span title="Pro" className="flex items-center">
+                                    <Gem className="w-4 h-4 text-orange-500" />
+                                  </span>
+                                  <HoverCard>
+                                    <HoverCardTrigger asChild>
+                                      <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                                    </HoverCardTrigger>
+                                    <HoverCardContent
+                                      side="left"
+                                      className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] p-4 text-sm"
+                                    >
+                                      <p>
+                                        Generates smooth orbiting animations around target elements,
+                                        making your demos more engaging.
+                                      </p>
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                </div>
+                              </SettingsAccordionTrigger>
+                              <div className="absolute right-0 top-4">
+                                <Switch
+                                  id="enable-outline"
+                                  checked={settings.plugins.outline}
+                                  onCheckedChange={(checked) =>
                                     dispatch({
-                                      type: 'UPDATE_SOUND_CONFIG',
-                                      key: 'volume',
-                                      value: Number(e.target.value),
+                                      type: 'TOGGLE_PLUGIN',
+                                      plugin: 'outline',
+                                      enabled: checked,
                                     })
                                   }
                                 />
-                              </InputGroup>
-                            </div>
-                            <div className="flex flex-row items-center justify-between gap-2">
-                              <Label htmlFor="sound-url" className="text-xs font-normal">
-                                clickSoundUrl
-                              </Label>
-                              <InputGroup className="h-7 w-full max-w-[12rem]">
-                                <InputGroupInput
-                                  id="sound-url"
-                                  type="text"
-                                  value={settings.soundConfig.clickSoundUrl}
-                                  onChange={(e) =>
+                              </div>
+                              <SettingsAccordionContent>
+                                <div className="space-y-2 py-2">
+                                  <p className="text-xs text-muted-foreground">
+                                    Used programmatically via{' '}
+                                    <code>.outlineCircle(selector, options)</code>.
+                                  </p>
+                                </div>
+                              </SettingsAccordionContent>
+                            </AccordionItem>
+
+                            {/* Trail Plugin */}
+                            <AccordionItem value="trail" className="relative">
+                              <SettingsAccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-1.5">
+                                  Trail
+                                  <span title="Pro" className="flex items-center">
+                                    <Gem className="w-4 h-4 text-orange-500" />
+                                  </span>
+                                  <HoverCard>
+                                    <HoverCardTrigger asChild>
+                                      <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                                    </HoverCardTrigger>
+                                    <HoverCardContent
+                                      side="left"
+                                      className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
+                                    >
+                                      <iframe
+                                        src="/demos/trail"
+                                        className="w-full h-full border-0 overflow-hidden"
+                                        scrolling="no"
+                                      />
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                </div>
+                              </SettingsAccordionTrigger>
+                              <div className="absolute right-0 top-4">
+                                <Switch
+                                  id="enable-trail"
+                                  checked={settings.plugins.trail}
+                                  onCheckedChange={(checked) =>
                                     dispatch({
-                                      type: 'UPDATE_SOUND_CONFIG',
-                                      key: 'clickSoundUrl',
-                                      value: e.target.value,
+                                      type: 'TOGGLE_PLUGIN',
+                                      plugin: 'trail',
+                                      enabled: checked,
                                     })
                                   }
                                 />
-                              </InputGroup>
-                            </div>
-                            <div className="flex flex-row items-center justify-between gap-2">
-                              <Label htmlFor="typing-sound-url" className="text-xs font-normal">
-                                typingSoundUrl
-                              </Label>
-                              <InputGroup className="h-7 w-full max-w-[12rem]">
-                                <InputGroupInput
-                                  id="typing-sound-url"
-                                  type="text"
-                                  value={settings.soundConfig.typingSoundUrl}
-                                  onChange={(e) =>
+                              </div>
+                              <SettingsAccordionContent>
+                                <div className="space-y-2 py-2">
+                                  <div className="flex flex-row items-center justify-between gap-2">
+                                    <Label htmlFor="trail-length" className="text-xs font-normal">
+                                      length
+                                    </Label>
+                                    <InputGroup className="h-7 w-24">
+                                      <InputGroupInput
+                                        id="trail-length"
+                                        type="number"
+                                        min={5}
+                                        max={200}
+                                        step={5}
+                                        value={settings.trailConfig.length}
+                                        onChange={(e) =>
+                                          dispatch({
+                                            type: 'UPDATE_TRAIL_CONFIG',
+                                            key: 'length',
+                                            value: Number(e.target.value),
+                                          })
+                                        }
+                                      />
+                                      <InputGroupAddon align="inline-end">px</InputGroupAddon>
+                                    </InputGroup>
+                                  </div>
+                                  <div className="flex flex-row items-center justify-between gap-2">
+                                    <Label htmlFor="trail-color" className="text-xs font-normal">
+                                      color
+                                    </Label>
+                                    <InputGroup className="h-7 w-28">
+                                      <InputGroupInput
+                                        className="w-10"
+                                        id="trail-color"
+                                        type="color"
+                                        value={settings.trailConfig.color}
+                                        onChange={(e) =>
+                                          dispatch({
+                                            type: 'UPDATE_TRAIL_CONFIG',
+                                            key: 'color',
+                                            value: e.target.value,
+                                          })
+                                        }
+                                      />
+                                      <InputGroupAddon align="inline-end">
+                                        {settings.trailConfig.color}
+                                      </InputGroupAddon>
+                                    </InputGroup>
+                                  </div>
+                                  <div className="flex flex-row items-center justify-between gap-2">
+                                    <Label htmlFor="trail-fade" className="text-xs font-normal">
+                                      fadeDuration
+                                    </Label>
+                                    <InputGroup className="h-7 w-24">
+                                      <InputGroupInput
+                                        id="trail-fade"
+                                        type="number"
+                                        min={100}
+                                        max={3000}
+                                        step={100}
+                                        value={settings.trailConfig.fadeDuration}
+                                        onChange={(e) =>
+                                          dispatch({
+                                            type: 'UPDATE_TRAIL_CONFIG',
+                                            key: 'fadeDuration',
+                                            value: Number(e.target.value),
+                                          })
+                                        }
+                                      />
+                                      <InputGroupAddon align="inline-end">ms</InputGroupAddon>
+                                    </InputGroup>
+                                  </div>
+                                  <div className="flex flex-row items-center justify-between gap-2">
+                                    <Label
+                                      htmlFor="trail-thickness"
+                                      className="text-xs font-normal"
+                                    >
+                                      thickness
+                                    </Label>
+                                    <InputGroup className="h-7 w-24">
+                                      <InputGroupInput
+                                        id="trail-thickness"
+                                        type="number"
+                                        min={1}
+                                        max={20}
+                                        step={1}
+                                        value={settings.trailConfig.thickness}
+                                        onChange={(e) =>
+                                          dispatch({
+                                            type: 'UPDATE_TRAIL_CONFIG',
+                                            key: 'thickness',
+                                            value: Number(e.target.value),
+                                          })
+                                        }
+                                      />
+                                      <InputGroupAddon align="inline-end">px</InputGroupAddon>
+                                    </InputGroup>
+                                  </div>
+                                </div>
+                              </SettingsAccordionContent>
+                            </AccordionItem>
+
+                            {/* Particle Plugin */}
+                            <AccordionItem value="particle" className="relative">
+                              <SettingsAccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-1.5">
+                                  Particle
+                                  <span title="Pro" className="flex items-center">
+                                    <Gem className="w-4 h-4 text-orange-500" />
+                                  </span>
+                                  <HoverCard>
+                                    <HoverCardTrigger asChild>
+                                      <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                                    </HoverCardTrigger>
+                                    <HoverCardContent
+                                      side="left"
+                                      className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
+                                    >
+                                      <iframe
+                                        src="/demos/particle"
+                                        className="w-full h-full border-0 overflow-hidden"
+                                        scrolling="no"
+                                      />
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                </div>
+                              </SettingsAccordionTrigger>
+                              <div className="absolute right-0 top-4">
+                                <Switch
+                                  id="enable-particle"
+                                  checked={settings.plugins.particle}
+                                  onCheckedChange={(checked) =>
                                     dispatch({
-                                      type: 'UPDATE_SOUND_CONFIG',
-                                      key: 'typingSoundUrl',
-                                      value: e.target.value,
+                                      type: 'TOGGLE_PLUGIN',
+                                      plugin: 'particle',
+                                      enabled: checked,
                                     })
                                   }
                                 />
-                              </InputGroup>
-                            </div>
-                          </div>
-                        </SettingsAccordionContent>
-                      </AccordionItem>
-
-                      {/* Prompt Plugin */}
-                      <AccordionItem value="prompt" className="relative">
-                        <SettingsAccordionTrigger hideIcon className="hover:no-underline">
-                          <div className="flex items-center gap-1.5">
-                            Prompt
-                            <HoverCard>
-                              <HoverCardTrigger asChild>
-                                <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
-                              </HoverCardTrigger>
-                              <HoverCardContent
-                                side="left"
-                                className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
-                              >
-                                <iframe
-                                  src="/demos/prompt"
-                                  className="w-full h-full border-0 overflow-hidden"
-                                  scrolling="no"
+                              </div>
+                              <SettingsAccordionContent>
+                                <div className="space-y-2 py-2">
+                                  <div className="flex flex-row items-center justify-between gap-2">
+                                    <Label htmlFor="particle-size" className="text-xs font-normal">
+                                      size
+                                    </Label>
+                                    <InputGroup className="h-7 w-24">
+                                      <InputGroupInput
+                                        id="particle-size"
+                                        type="number"
+                                        min={1}
+                                        max={20}
+                                        step={1}
+                                        value={settings.particleConfig.size}
+                                        onChange={(e) =>
+                                          dispatch({
+                                            type: 'UPDATE_PARTICLE_CONFIG',
+                                            key: 'size',
+                                            value: Number(e.target.value),
+                                          })
+                                        }
+                                      />
+                                      <InputGroupAddon align="inline-end">px</InputGroupAddon>
+                                    </InputGroup>
+                                  </div>
+                                  <div className="flex flex-row items-center justify-between gap-2">
+                                    <Label htmlFor="particle-color" className="text-xs font-normal">
+                                      color
+                                    </Label>
+                                    <InputGroup className="h-7 w-28">
+                                      <InputGroupInput
+                                        className="w-10"
+                                        id="particle-color"
+                                        type="color"
+                                        value={settings.particleConfig.color}
+                                        onChange={(e) =>
+                                          dispatch({
+                                            type: 'UPDATE_PARTICLE_CONFIG',
+                                            key: 'color',
+                                            value: e.target.value,
+                                          })
+                                        }
+                                      />
+                                      <InputGroupAddon align="inline-end">
+                                        {settings.particleConfig.color}
+                                      </InputGroupAddon>
+                                    </InputGroup>
+                                  </div>
+                                  <div className="flex flex-row items-center justify-between gap-2">
+                                    <Label
+                                      htmlFor="particle-duration"
+                                      className="text-xs font-normal"
+                                    >
+                                      duration
+                                    </Label>
+                                    <InputGroup className="h-7 w-24">
+                                      <InputGroupInput
+                                        id="particle-duration"
+                                        type="number"
+                                        min={100}
+                                        max={2000}
+                                        step={100}
+                                        value={settings.particleConfig.duration}
+                                        onChange={(e) =>
+                                          dispatch({
+                                            type: 'UPDATE_PARTICLE_CONFIG',
+                                            key: 'duration',
+                                            value: Number(e.target.value),
+                                          })
+                                        }
+                                      />
+                                      <InputGroupAddon align="inline-end">ms</InputGroupAddon>
+                                    </InputGroup>
+                                  </div>
+                                </div>
+                              </SettingsAccordionContent>
+                            </AccordionItem>
+                            {/* Ripple Plugin */}
+                            <AccordionItem value="ripple" className="relative">
+                              <SettingsAccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-1.5">
+                                  Ripple
+                                  <HoverCard>
+                                    <HoverCardTrigger asChild>
+                                      <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                                    </HoverCardTrigger>
+                                    <HoverCardContent
+                                      side="left"
+                                      className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
+                                    >
+                                      <iframe
+                                        src="/demos/ripple"
+                                        className="w-full h-full border-0 overflow-hidden"
+                                        scrolling="no"
+                                      />
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                </div>
+                              </SettingsAccordionTrigger>
+                              <div className="absolute right-0 top-4">
+                                <Switch
+                                  id="enable-ripple"
+                                  checked={settings.plugins.ripple}
+                                  onCheckedChange={(checked) =>
+                                    dispatch({
+                                      type: 'TOGGLE_PLUGIN',
+                                      plugin: 'ripple',
+                                      enabled: checked,
+                                    })
+                                  }
                                 />
-                              </HoverCardContent>
-                            </HoverCard>
-                          </div>
-                        </SettingsAccordionTrigger>
-                        <div className="absolute right-0 top-4">
-                          <Switch
-                            id="enable-prompt"
-                            checked={settings.plugins.prompt}
-                            onCheckedChange={(checked) =>
-                              dispatch({
-                                type: 'TOGGLE_PLUGIN',
-                                plugin: 'prompt',
-                                enabled: checked,
-                              })
-                            }
-                          />
-                        </div>
-                      </AccordionItem>
+                              </div>
+                              <SettingsAccordionContent>
+                                <div className="space-y-2 py-2">
+                                  <div className="flex flex-row items-center justify-between gap-2">
+                                    <Label htmlFor="ripple-color" className="text-xs font-normal">
+                                      color
+                                    </Label>
+                                    <InputGroup className="h-7 w-28">
+                                      <InputGroupInput
+                                        className="w-10"
+                                        id="ripple-color"
+                                        type="color"
+                                        value={settings.rippleConfig.color}
+                                        onChange={(e) =>
+                                          dispatch({
+                                            type: 'UPDATE_RIPPLE_CONFIG',
+                                            key: 'color',
+                                            value: e.target.value,
+                                          })
+                                        }
+                                      />
+                                      <InputGroupAddon align="inline-end">
+                                        {settings.rippleConfig.color}
+                                      </InputGroupAddon>
+                                    </InputGroup>
+                                  </div>
+                                  <div className="flex flex-row items-center justify-between gap-2">
+                                    <Label
+                                      htmlFor="ripple-duration"
+                                      className="text-xs font-normal"
+                                    >
+                                      duration
+                                    </Label>
+                                    <InputGroup className="h-7 w-24">
+                                      <InputGroupInput
+                                        id="ripple-duration"
+                                        type="number"
+                                        min={100}
+                                        max={3000}
+                                        step={100}
+                                        value={settings.rippleConfig.duration}
+                                        onChange={(e) =>
+                                          dispatch({
+                                            type: 'UPDATE_RIPPLE_CONFIG',
+                                            key: 'duration',
+                                            value: Number(e.target.value),
+                                          })
+                                        }
+                                      />
+                                      <InputGroupAddon align="inline-end">ms</InputGroupAddon>
+                                    </InputGroup>
+                                  </div>
+                                  <div className="flex flex-row items-center justify-between gap-2">
+                                    <Label htmlFor="ripple-size" className="text-xs font-normal">
+                                      size
+                                    </Label>
+                                    <InputGroup className="h-7 w-24">
+                                      <InputGroupInput
+                                        id="ripple-size"
+                                        type="number"
+                                        min={10}
+                                        max={200}
+                                        step={10}
+                                        value={settings.rippleConfig.size}
+                                        onChange={(e) =>
+                                          dispatch({
+                                            type: 'UPDATE_RIPPLE_CONFIG',
+                                            key: 'size',
+                                            value: Number(e.target.value),
+                                          })
+                                        }
+                                      />
+                                      <InputGroupAddon align="inline-end">px</InputGroupAddon>
+                                    </InputGroup>
+                                  </div>
+                                </div>
+                              </SettingsAccordionContent>
+                            </AccordionItem>
 
-                      {/* Say Plugin */}
-                      <AccordionItem value="say" className="relative">
-                        <SettingsAccordionTrigger hideIcon className="hover:no-underline">
-                          <div className="flex items-center gap-1.5">
-                            Say
-                            <HoverCard>
-                              <HoverCardTrigger asChild>
-                                <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
-                              </HoverCardTrigger>
-                              <HoverCardContent
-                                side="left"
-                                className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
-                              >
-                                <iframe
-                                  src="/demos/say"
-                                  className="w-full h-full border-0 overflow-hidden"
-                                  scrolling="no"
+                            {/* Indicator Plugin */}
+                            <AccordionItem value="indicator" className="relative">
+                              <SettingsAccordionTrigger hideIcon className="hover:no-underline">
+                                <div className="flex items-center gap-1.5">
+                                  Indicator
+                                  <HoverCard>
+                                    <HoverCardTrigger asChild>
+                                      <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                                    </HoverCardTrigger>
+                                    <HoverCardContent
+                                      side="left"
+                                      className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
+                                    >
+                                      <iframe
+                                        src="/demos/indicator"
+                                        className="w-full h-full border-0 overflow-hidden"
+                                        scrolling="no"
+                                      />
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                </div>
+                              </SettingsAccordionTrigger>
+                              <div className="absolute right-0 top-4">
+                                <Switch
+                                  id="enable-indicator"
+                                  checked={settings.plugins.indicator}
+                                  onCheckedChange={(checked) =>
+                                    dispatch({
+                                      type: 'TOGGLE_PLUGIN',
+                                      plugin: 'indicator',
+                                      enabled: checked,
+                                    })
+                                  }
                                 />
-                              </HoverCardContent>
-                            </HoverCard>
-                          </div>
-                        </SettingsAccordionTrigger>
-                        <div className="absolute right-0 top-4">
-                          <Switch
-                            id="enable-say"
-                            checked={settings.plugins.say}
-                            onCheckedChange={(checked) =>
-                              dispatch({ type: 'TOGGLE_PLUGIN', plugin: 'say', enabled: checked })
-                            }
-                          />
-                        </div>
-                      </AccordionItem>
+                              </div>
+                            </AccordionItem>
 
-                      <AccordionItem value="spotlight" className="relative">
-                        <SettingsAccordionTrigger className="hover:no-underline">
-                          <div className="flex items-center gap-1.5">
-                            Spotlight
-                            <span title="Pro" className="flex items-center">
-                              <Gem className="w-4 h-4 text-orange-500" />
-                            </span>
-                            <HoverCard>
-                              <HoverCardTrigger asChild>
-                                <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
-                              </HoverCardTrigger>
-                              <HoverCardContent
-                                side="left"
-                                className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
-                              >
-                                <iframe
-                                  src="/demos/spotlight"
-                                  className="w-full h-full border-0 overflow-hidden"
-                                  scrolling="no"
+                            {/* Sound Plugin */}
+                            <AccordionItem value="sound" className="relative">
+                              <SettingsAccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-1.5">
+                                  Sound
+                                  <HoverCard>
+                                    <HoverCardTrigger asChild>
+                                      <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                                    </HoverCardTrigger>
+                                    <HoverCardContent
+                                      side="left"
+                                      className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
+                                    >
+                                      <iframe
+                                        src="/demos/sound"
+                                        className="w-full h-full border-0 overflow-hidden"
+                                        scrolling="no"
+                                      />
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                </div>
+                              </SettingsAccordionTrigger>
+                              <div className="absolute right-0 top-4">
+                                <Switch
+                                  id="enable-sound"
+                                  checked={settings.plugins.sound}
+                                  onCheckedChange={(checked) =>
+                                    dispatch({
+                                      type: 'TOGGLE_PLUGIN',
+                                      plugin: 'sound',
+                                      enabled: checked,
+                                    })
+                                  }
                                 />
-                              </HoverCardContent>
-                            </HoverCard>
-                          </div>
-                        </SettingsAccordionTrigger>
-                        <div className="absolute right-0 top-4">
-                          <Switch
-                            id="enable-spotlight"
-                            checked={settings.plugins.spotlight}
-                            onCheckedChange={(checked) =>
-                              dispatch({
-                                type: 'TOGGLE_PLUGIN',
-                                plugin: 'spotlight',
-                                enabled: checked,
-                              })
-                            }
-                          />
-                        </div>
-                        <SettingsAccordionContent>
-                          <div className="space-y-2 py-2">
-                            <p className="text-xs text-muted-foreground">
-                              Adds a reusable focus frame with optional backdrop dimming for
-                              guided steps, narration, and handoff flows.
-                            </p>
-                          </div>
-                        </SettingsAccordionContent>
-                      </AccordionItem>
+                              </div>
+                              <SettingsAccordionContent>
+                                <div className="space-y-2 py-2">
+                                  <div className="flex flex-row items-center justify-between gap-2">
+                                    <Label htmlFor="sound-volume" className="text-xs font-normal">
+                                      volume
+                                    </Label>
+                                    <InputGroup className="h-7 w-24">
+                                      <InputGroupInput
+                                        id="sound-volume"
+                                        type="number"
+                                        min={0}
+                                        max={1}
+                                        step={0.1}
+                                        value={settings.soundConfig.volume}
+                                        onChange={(e) =>
+                                          dispatch({
+                                            type: 'UPDATE_SOUND_CONFIG',
+                                            key: 'volume',
+                                            value: Number(e.target.value),
+                                          })
+                                        }
+                                      />
+                                    </InputGroup>
+                                  </div>
+                                  <div className="flex flex-row items-center justify-between gap-2">
+                                    <Label htmlFor="sound-url" className="text-xs font-normal">
+                                      clickSoundUrl
+                                    </Label>
+                                    <InputGroup className="h-7 w-full max-w-[12rem]">
+                                      <InputGroupInput
+                                        id="sound-url"
+                                        type="text"
+                                        value={settings.soundConfig.clickSoundUrl}
+                                        onChange={(e) =>
+                                          dispatch({
+                                            type: 'UPDATE_SOUND_CONFIG',
+                                            key: 'clickSoundUrl',
+                                            value: e.target.value,
+                                          })
+                                        }
+                                      />
+                                    </InputGroup>
+                                  </div>
+                                  <div className="flex flex-row items-center justify-between gap-2">
+                                    <Label
+                                      htmlFor="typing-sound-url"
+                                      className="text-xs font-normal"
+                                    >
+                                      typingSoundUrl
+                                    </Label>
+                                    <InputGroup className="h-7 w-full max-w-[12rem]">
+                                      <InputGroupInput
+                                        id="typing-sound-url"
+                                        type="text"
+                                        value={settings.soundConfig.typingSoundUrl}
+                                        onChange={(e) =>
+                                          dispatch({
+                                            type: 'UPDATE_SOUND_CONFIG',
+                                            key: 'typingSoundUrl',
+                                            value: e.target.value,
+                                          })
+                                        }
+                                      />
+                                    </InputGroup>
+                                  </div>
+                                </div>
+                              </SettingsAccordionContent>
+                            </AccordionItem>
 
-                      <AccordionItem value="wait-for-user" className="relative">
-                        <SettingsAccordionTrigger className="hover:no-underline">
-                          <div className="flex items-center gap-1.5">
-                            Wait For User
-                            <span title="Pro" className="flex items-center">
-                              <Gem className="w-4 h-4 text-orange-500" />
-                            </span>
-                            <HoverCard>
-                              <HoverCardTrigger asChild>
-                                <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
-                              </HoverCardTrigger>
-                              <HoverCardContent
-                                side="left"
-                                className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
-                              >
-                                <iframe
-                                  src="/demos/wait-for-user"
-                                  className="w-full h-full border-0 overflow-hidden"
-                                  scrolling="no"
+                            {/* Prompt Plugin */}
+                            <AccordionItem value="prompt" className="relative">
+                              <SettingsAccordionTrigger hideIcon className="hover:no-underline">
+                                <div className="flex items-center gap-1.5">
+                                  Prompt
+                                  <HoverCard>
+                                    <HoverCardTrigger asChild>
+                                      <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                                    </HoverCardTrigger>
+                                    <HoverCardContent
+                                      side="left"
+                                      className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
+                                    >
+                                      <iframe
+                                        src="/demos/prompt"
+                                        className="w-full h-full border-0 overflow-hidden"
+                                        scrolling="no"
+                                      />
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                </div>
+                              </SettingsAccordionTrigger>
+                              <div className="absolute right-0 top-4">
+                                <Switch
+                                  id="enable-prompt"
+                                  checked={settings.plugins.prompt}
+                                  onCheckedChange={(checked) =>
+                                    dispatch({
+                                      type: 'TOGGLE_PLUGIN',
+                                      plugin: 'prompt',
+                                      enabled: checked,
+                                    })
+                                  }
                                 />
-                              </HoverCardContent>
-                            </HoverCard>
-                          </div>
-                        </SettingsAccordionTrigger>
-                        <div className="absolute right-0 top-4">
-                          <Switch
-                            id="enable-wait-for-user"
-                            checked={settings.plugins.waitForUser}
-                            onCheckedChange={(checked) =>
-                              dispatch({
-                                type: 'TOGGLE_PLUGIN',
-                                plugin: 'waitForUser',
-                                enabled: checked,
-                              })
-                            }
-                          />
-                        </div>
-                        <SettingsAccordionContent>
-                          <div className="space-y-2 py-2">
-                            <p className="text-xs text-muted-foreground">
-                              Pauses the script and lets a real user finish the step before the
-                              demo resumes. Enable Spotlight as well for visual target emphasis.
-                            </p>
-                          </div>
-                        </SettingsAccordionContent>
-                      </AccordionItem>
+                              </div>
+                            </AccordionItem>
 
-                      {/* Speech Plugin */}
-                      <AccordionItem value="speech" className="relative">
-                        <SettingsAccordionTrigger hideIcon className="hover:no-underline">
-                          <div className="flex items-center gap-1.5">
-                            Speech
-                            <HoverCard>
-                              <HoverCardTrigger asChild>
-                                <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
-                              </HoverCardTrigger>
-                              <HoverCardContent
-                                side="left"
-                                className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
-                              >
-                                <iframe
-                                  src="/demos/speech"
-                                  className="w-full h-full border-0 overflow-hidden"
-                                  scrolling="no"
+                            {/* Say Plugin */}
+                            <AccordionItem value="say" className="relative">
+                              <SettingsAccordionTrigger hideIcon className="hover:no-underline">
+                                <div className="flex items-center gap-1.5">
+                                  Say
+                                  <HoverCard>
+                                    <HoverCardTrigger asChild>
+                                      <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                                    </HoverCardTrigger>
+                                    <HoverCardContent
+                                      side="left"
+                                      className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
+                                    >
+                                      <iframe
+                                        src="/demos/say"
+                                        className="w-full h-full border-0 overflow-hidden"
+                                        scrolling="no"
+                                      />
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                </div>
+                              </SettingsAccordionTrigger>
+                              <div className="absolute right-0 top-4">
+                                <Switch
+                                  id="enable-say"
+                                  checked={settings.plugins.say}
+                                  onCheckedChange={(checked) =>
+                                    dispatch({
+                                      type: 'TOGGLE_PLUGIN',
+                                      plugin: 'say',
+                                      enabled: checked,
+                                    })
+                                  }
                                 />
-                              </HoverCardContent>
-                            </HoverCard>
-                          </div>
-                        </SettingsAccordionTrigger>
-                        <div className="absolute right-0 top-4">
-                          <Switch
-                            id="enable-speech"
-                            checked={settings.plugins.speech}
-                            onCheckedChange={(checked) =>
-                              dispatch({
-                                type: 'TOGGLE_PLUGIN',
-                                plugin: 'speech',
-                                enabled: checked,
-                              })
-                            }
-                          />
-                        </div>
-                      </AccordionItem>
+                              </div>
+                            </AccordionItem>
 
-                      {/* Logging Plugin */}
-                      <AccordionItem value="logging" className="relative">
-                        <SettingsAccordionTrigger hideIcon className="hover:no-underline">
-                          <div className="flex items-center gap-1.5">
-                            Logging
-                            <HoverCard>
-                              <HoverCardTrigger asChild>
-                                <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
-                              </HoverCardTrigger>
-                              <HoverCardContent
-                                side="left"
-                                className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
-                              >
-                                <iframe
-                                  src="/demos/logging"
-                                  className="w-full h-full border-0 overflow-hidden"
-                                  scrolling="no"
+                            <AccordionItem value="spotlight" className="relative">
+                              <SettingsAccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-1.5">
+                                  Spotlight
+                                  <span title="Pro" className="flex items-center">
+                                    <Gem className="w-4 h-4 text-orange-500" />
+                                  </span>
+                                  <HoverCard>
+                                    <HoverCardTrigger asChild>
+                                      <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                                    </HoverCardTrigger>
+                                    <HoverCardContent
+                                      side="left"
+                                      className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
+                                    >
+                                      <iframe
+                                        src="/demos/spotlight"
+                                        className="w-full h-full border-0 overflow-hidden"
+                                        scrolling="no"
+                                      />
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                </div>
+                              </SettingsAccordionTrigger>
+                              <div className="absolute right-0 top-4">
+                                <Switch
+                                  id="enable-spotlight"
+                                  checked={settings.plugins.spotlight}
+                                  onCheckedChange={(checked) =>
+                                    dispatch({
+                                      type: 'TOGGLE_PLUGIN',
+                                      plugin: 'spotlight',
+                                      enabled: checked,
+                                    })
+                                  }
                                 />
-                              </HoverCardContent>
-                            </HoverCard>
-                          </div>
-                        </SettingsAccordionTrigger>
-                        <div className="absolute right-0 top-4">
-                          <Switch
-                            id="enable-logging"
-                            checked={settings.plugins.logging}
-                            onCheckedChange={(checked) =>
-                              dispatch({
-                                type: 'TOGGLE_PLUGIN',
-                                plugin: 'logging',
-                                enabled: checked,
-                              })
-                            }
-                          />
+                              </div>
+                              <SettingsAccordionContent>
+                                <div className="space-y-2 py-2">
+                                  <p className="text-xs text-muted-foreground">
+                                    Adds a reusable focus frame with optional backdrop dimming for
+                                    guided steps, narration, and handoff flows.
+                                  </p>
+                                </div>
+                              </SettingsAccordionContent>
+                            </AccordionItem>
+
+                            <AccordionItem value="wait-for-user" className="relative">
+                              <SettingsAccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-1.5">
+                                  Wait For User
+                                  <span title="Pro" className="flex items-center">
+                                    <Gem className="w-4 h-4 text-orange-500" />
+                                  </span>
+                                  <HoverCard>
+                                    <HoverCardTrigger asChild>
+                                      <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                                    </HoverCardTrigger>
+                                    <HoverCardContent
+                                      side="left"
+                                      className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
+                                    >
+                                      <iframe
+                                        src="/demos/wait-for-user"
+                                        className="w-full h-full border-0 overflow-hidden"
+                                        scrolling="no"
+                                      />
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                </div>
+                              </SettingsAccordionTrigger>
+                              <div className="absolute right-0 top-4">
+                                <Switch
+                                  id="enable-wait-for-user"
+                                  checked={settings.plugins.waitForUser}
+                                  onCheckedChange={(checked) =>
+                                    dispatch({
+                                      type: 'TOGGLE_PLUGIN',
+                                      plugin: 'waitForUser',
+                                      enabled: checked,
+                                    })
+                                  }
+                                />
+                              </div>
+                              <SettingsAccordionContent>
+                                <div className="space-y-2 py-2">
+                                  <p className="text-xs text-muted-foreground">
+                                    Pauses the script and lets a real user finish the step before
+                                    the demo resumes. Enable Spotlight as well for visual target
+                                    emphasis.
+                                  </p>
+                                </div>
+                              </SettingsAccordionContent>
+                            </AccordionItem>
+
+                            {/* Speech Plugin */}
+                            <AccordionItem value="speech" className="relative">
+                              <SettingsAccordionTrigger hideIcon className="hover:no-underline">
+                                <div className="flex items-center gap-1.5">
+                                  Speech
+                                  <HoverCard>
+                                    <HoverCardTrigger asChild>
+                                      <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                                    </HoverCardTrigger>
+                                    <HoverCardContent
+                                      side="left"
+                                      className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
+                                    >
+                                      <iframe
+                                        src="/demos/speech"
+                                        className="w-full h-full border-0 overflow-hidden"
+                                        scrolling="no"
+                                      />
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                </div>
+                              </SettingsAccordionTrigger>
+                              <div className="absolute right-0 top-4">
+                                <Switch
+                                  id="enable-speech"
+                                  checked={settings.plugins.speech}
+                                  onCheckedChange={(checked) =>
+                                    dispatch({
+                                      type: 'TOGGLE_PLUGIN',
+                                      plugin: 'speech',
+                                      enabled: checked,
+                                    })
+                                  }
+                                />
+                              </div>
+                            </AccordionItem>
+
+                            {/* Logging Plugin */}
+                            <AccordionItem value="logging" className="relative">
+                              <SettingsAccordionTrigger hideIcon className="hover:no-underline">
+                                <div className="flex items-center gap-1.5">
+                                  Logging
+                                  <HoverCard>
+                                    <HoverCardTrigger asChild>
+                                      <Info className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+                                    </HoverCardTrigger>
+                                    <HoverCardContent
+                                      side="left"
+                                      className="p-0 z-[9999999] overflow-hidden border bg-background rounded-lg shadow-md w-[320px] h-[250px]"
+                                    >
+                                      <iframe
+                                        src="/demos/logging"
+                                        className="w-full h-full border-0 overflow-hidden"
+                                        scrolling="no"
+                                      />
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                </div>
+                              </SettingsAccordionTrigger>
+                              <div className="absolute right-0 top-4">
+                                <Switch
+                                  id="enable-logging"
+                                  checked={settings.plugins.logging}
+                                  onCheckedChange={(checked) =>
+                                    dispatch({
+                                      type: 'TOGGLE_PLUGIN',
+                                      plugin: 'logging',
+                                      enabled: checked,
+                                    })
+                                  }
+                                />
+                              </div>
+                            </AccordionItem>
+                          </Accordion>
                         </div>
-                      </AccordionItem>
-                    </Accordion>
+                      </SheetContent>
+                    </Sheet>
                   </div>
-                }
-              />
+                </div>
+              </div>
+            </CursorPlayer>
+          </div>
+
+          <div className="flex flex-col md:flex-row items-center gap-4 pt-8 w-full max-w-2xl justify-center z-10 relative">
+            <div className="flex items-center justify-between w-full md:w-auto bg-muted/50 border border-border rounded-lg px-4 py-2 relative group hover:bg-muted/80 transition-colors">
+              <code className="text-sm font-mono text-muted-foreground mr-8">
+                npm i @cursor.js/core
+              </code>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 absolute right-1"
+                onClick={() => handleCopy('npm i @cursor.js/core', setCopiedNpm)}
+                title="Copy npm command"
+              >
+                {copiedNpm ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
             </div>
 
-            <div className="flex flex-col md:flex-row items-center gap-4 pt-8 w-full max-w-2xl justify-center z-10 relative">
-              <div className="flex items-center justify-between w-full md:w-auto bg-muted/50 border border-border rounded-lg px-4 py-2 relative group hover:bg-muted/80 transition-colors">
-                <code className="text-sm font-mono text-muted-foreground mr-8">
-                  npm i @cursor.js/core
-                </code>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 absolute right-1"
-                  onClick={() => handleCopy('npm i @cursor.js/core', setCopiedNpm)}
-                  title="Copy npm command"
-                >
-                  {copiedNpm ? (
-                    <Check className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-
-              <div className="flex items-center justify-between w-full md:w-auto bg-muted/50 border border-border rounded-lg px-4 py-2 relative group hover:bg-muted/80 transition-colors">
-                <code className="text-sm font-mono text-muted-foreground mr-8">
-                  npx skills add cursor-js/skills
-                </code>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 absolute right-1"
-                  onClick={() => handleCopy('npx skills add cursor-js/skills', setCopiedNpx)}
-                  title="Copy npx command"
-                >
-                  {copiedNpx ? (
-                    <Check className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
+            <div className="flex items-center justify-between w-full md:w-auto bg-muted/50 border border-border rounded-lg px-4 py-2 relative group hover:bg-muted/80 transition-colors">
+              <code className="text-sm font-mono text-muted-foreground mr-8">
+                npx skills add cursor-js/skills
+              </code>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 absolute right-1"
+                onClick={() => handleCopy('npx skills add cursor-js/skills', setCopiedNpx)}
+                title="Copy npx command"
+              >
+                {copiedNpx ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
             </div>
           </div>
         </section>

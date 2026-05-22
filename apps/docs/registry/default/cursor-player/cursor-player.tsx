@@ -202,9 +202,10 @@ function CursorPlayerStopButton({
   className,
   children,
   asChild = false,
+  onClick,
   ...props
 }: CursorPlayerButtonProps) {
-  const { stop, canStop } = useCursorPlayerContext();
+  const { state, stop, canStop } = useCursorPlayerContext();
   const content = children ?? (
     <>
       <Square className="size-4" />
@@ -218,7 +219,16 @@ function CursorPlayerStopButton({
       variant="ghost"
       className={className}
       asChild={asChild}
-      onClick={stop}
+      data-state={state}
+      onClick={(event) => {
+        onClick?.(event);
+
+        if (event.defaultPrevented) {
+          return;
+        }
+
+        stop();
+      }}
       disabled={!canStop}
       {...props}
     >
@@ -227,10 +237,21 @@ function CursorPlayerStopButton({
   );
 }
 
+function CursorPlayerStatus({
+  children,
+}: {
+  children: (controls: CursorPlayerContextValue) => React.ReactNode;
+}) {
+  const controls = useCursorPlayerContext();
+
+  return <>{children(controls)}</>;
+}
+
 export const CursorPlayer = Object.assign(CursorPlayerRoot, {
   Cursor: CursorPlayerCursor,
   PlayPause: CursorPlayerPlayPause,
   PlayIcon: CursorPlayerPlayIcon,
   PauseIcon: CursorPlayerPauseIcon,
   StopButton: CursorPlayerStopButton,
+  Status: CursorPlayerStatus,
 });

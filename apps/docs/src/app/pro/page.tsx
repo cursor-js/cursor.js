@@ -125,28 +125,6 @@ export default function ProLandingPage() {
             <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">Pricing</h2>
           </div>
 
-          <div className="mb-8 grid gap-4 rounded-2xl border bg-muted/20 p-4 md:grid-cols-3">
-            <div className="rounded-xl bg-background p-4">
-              <div className="text-sm font-medium">1. Pick a plan</div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Solo is ideal for one developer. Team covers shared usage across multiple seats.
-              </p>
-            </div>
-            <div className="rounded-xl bg-background p-4">
-              <div className="text-sm font-medium">2. Finish checkout</div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Payment, receipts, and the hosted purchase experience are handled in a dedicated
-                flow.
-              </p>
-            </div>
-            <div className="rounded-xl bg-background p-4">
-              <div className="text-sm font-medium">3. Receive your license</div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Use the delivered key anywhere premium features require verification or credits.
-              </p>
-            </div>
-          </div>
-
           <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
             <table className="w-full text-left text-sm">
               <thead className="bg-muted/50">
