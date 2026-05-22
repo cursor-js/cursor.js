@@ -14,6 +14,13 @@ export interface CursorOptions {
   startPoint?: CursorStartPoint;
 }
 
+class CursorAbortError extends Error {
+  constructor() {
+    super('Cursor operation aborted.');
+    this.name = 'CursorAbortError';
+  }
+}
+
 export class Cursor {
   public cursor: GhostCursor;
   public state: Record<string, any> = {};
@@ -22,8 +29,8 @@ export class Cursor {
   private plugins: CursorPlugin[] = [];
   public isGlobalPaused = false;
   private isDestroyed = false;
+  private abortController = new AbortController();
   private activeDelayResolvers = new Set<() => void>();
-  private abortCallbacks = new Set<() => void>();
   private currentHoveredElement: Element | null = null;
   private listeners: Record<string, EventCallback[]> = {};
 
@@ -76,25 +83,38 @@ export class Cursor {
         return;
       }
 
-      await task();
+      try {
+        await task();
+      } catch (error) {
+        if (!(error instanceof CursorAbortError)) {
+          throw error;
+        }
+      }
     });
     return this; // Allows chaining
   }
 
   private abortActiveWork() {
+    this.abortController.abort();
+
     for (const resolve of this.activeDelayResolvers) {
       resolve();
     }
     this.activeDelayResolvers.clear();
-
-    for (const callback of this.abortCallbacks) {
-      callback();
-    }
-    this.abortCallbacks.clear();
   }
 
-  private shouldAbort() {
-    return this.isDestroyed;
+  private throwIfAborted(signal: AbortSignal = this.abortController.signal) {
+    if (signal.aborted) {
+      throw new CursorAbortError();
+    }
+  }
+
+  private addAbortListener(signal: AbortSignal, callback: () => void) {
+    signal.addEventListener('abort', callback, { once: true });
+
+    return () => {
+      signal.removeEventListener('abort', callback);
+    };
   }
 
   then<TResult1 = void, TResult2 = never>(
@@ -104,29 +124,63 @@ export class Cursor {
     return this.promise.then(onfulfilled, onrejected);
   }
 
-  private async delay(ms: number) {
-    if (this.shouldAbort()) {
-      return;
-    }
+  private async delay(ms: number, signal: AbortSignal = this.abortController.signal) {
+    this.throwIfAborted(signal);
 
     if (ms <= 0) {
-      await new Promise<void>((resolve) => {
-        setTimeout(resolve, 0); // JSDOM might hang on requestAnimationFrame
+      await new Promise<void>((resolve, reject) => {
+        let removeAbortListener = () => {};
+        const cleanup = () => {
+          clearTimeout(timeoutId);
+          removeAbortListener();
+        };
+        const timeoutId = setTimeout(() => {
+          cleanup();
+          resolve();
+        }, 0); // JSDOM might hang on requestAnimationFrame
+        const abort = () => {
+          cleanup();
+          reject(new CursorAbortError());
+        };
+        removeAbortListener = this.addAbortListener(signal, abort);
+
+        if (signal.aborted) {
+          abort();
+        }
       });
       return;
     }
-    return new Promise<void>((resolve) => {
+    return new Promise<void>((resolve, reject) => {
       let start = performance.now();
       let elapsed = 0;
+      let cleanupAbort = () => {};
 
-      this.activeDelayResolvers.add(resolve);
+      const finish = () => {
+        if (!this.activeDelayResolvers.delete(finish)) {
+          return;
+        }
+
+        cleanupAbort();
+        resolve();
+      };
+
+      const abort = () => {
+        if (!this.activeDelayResolvers.delete(finish)) {
+          return;
+        }
+
+        cleanupAbort();
+        reject(new CursorAbortError());
+      };
+
+      this.activeDelayResolvers.add(finish);
+      cleanupAbort = this.addAbortListener(signal, abort);
 
       const loop = () => {
-        if (!this.activeDelayResolvers.has(resolve)) return; // Means skipped/aborted
+        if (!this.activeDelayResolvers.has(finish)) return; // Means skipped/aborted
 
-        if (this.shouldAbort()) {
-          this.activeDelayResolvers.delete(resolve);
-          resolve();
+        if (signal.aborted) {
+          abort();
           return;
         }
 
@@ -139,8 +193,7 @@ export class Cursor {
         }
 
         if (elapsed >= ms) {
-          this.activeDelayResolvers.delete(resolve);
-          resolve();
+          finish();
         } else {
           // Use setTimeout as a fallback in non-browser environments like tests
           if (typeof window !== 'undefined' && window.requestAnimationFrame) {
@@ -193,10 +246,6 @@ export class Cursor {
   }
 
   private async _hover(selector: string | Element) {
-    if (this.shouldAbort()) {
-      return;
-    }
-
     const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
     if (!element) throw new Error(`Element not found: ${selector}`);
 
@@ -208,6 +257,7 @@ export class Cursor {
     this.currentHoveredElement = element;
 
     this.plugins.forEach((p) => p.onHoverStart?.(element));
+    this.throwIfAborted();
 
     const rect = element.getBoundingClientRect();
     const targetX = rect.left + window.scrollX + rect.width / 2;
@@ -221,9 +271,6 @@ export class Cursor {
     ) {
       element.scrollIntoView({ behavior: 'smooth', block: 'center' });
       await this.delay(500);
-      if (this.shouldAbort()) {
-        return;
-      }
       const newRect = element.getBoundingClientRect();
       await this.moveGhostCursorTo(
         newRect.left + window.scrollX + newRect.width / 2,
@@ -254,25 +301,15 @@ export class Cursor {
   }
 
   private async _click(selector: string | Element) {
-    if (this.shouldAbort()) {
-      return;
-    }
-
     const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
     if (!element) throw new Error(`Element not found: ${selector}`);
 
     await this._hover(element);
-    if (this.shouldAbort()) {
-      return;
-    }
     this.plugins.forEach((p) => p.onClickStart?.(element));
 
     // Give browser a tiny frame window to start rendering visual click
     // effects (like ripple or particles) before synchronously taking focus
     await this.delay(300);
-    if (this.shouldAbort()) {
-      return;
-    }
 
     EventDispatcher.click(element as HTMLElement);
   }
@@ -280,17 +317,10 @@ export class Cursor {
   // 3. Type command
   type(selector: string | Element, text: string, options?: { delay?: number }): this {
     return this.enqueue(async () => {
-      if (this.shouldAbort()) {
-        return;
-      }
-
       const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
       if (!element) throw new Error(`Element not found: ${selector}`);
 
       await this._click(element);
-      if (this.shouldAbort()) {
-        return;
-      }
 
       this.plugins.forEach((p) => p.onTypeStart?.(text));
 
@@ -298,14 +328,9 @@ export class Cursor {
       if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
         const delay = options?.delay || 100;
         await this.delay(delay * 2 + Math.random() * delay); // Initial hesitation before starting to type
-        if (this.shouldAbort()) {
-          return;
-        }
         let currentText = element.value; // Cache value to avoid React state sync issues during pauses
         for (let i = 0; i < text.length; i++) {
-          if (this.shouldAbort()) {
-            return;
-          }
+          this.throwIfAborted();
           currentText += text[i];
           EventDispatcher.triggerInputEvent(element, currentText);
           await this.delay(delay / 2 + Math.random() * delay); // Human-like typing delay
@@ -354,12 +379,7 @@ export class Cursor {
 
   waitForEvent(selector: string | Element, eventName: string): this {
     return this.enqueue(() => {
-      return new Promise<void>((resolve) => {
-        if (this.shouldAbort()) {
-          resolve();
-          return;
-        }
-
+      return new Promise<void>((resolve, reject) => {
         const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
 
         if (!element) {
@@ -368,19 +388,24 @@ export class Cursor {
           return;
         }
 
-        const abort = () => {
+        const cleanup = () => {
           element.removeEventListener(eventName, handler);
-          this.abortCallbacks.delete(abort);
-          resolve();
+          removeAbortListener();
         };
 
         const handler = () => {
-          element.removeEventListener(eventName, handler);
-          this.abortCallbacks.delete(abort);
+          cleanup();
           resolve();
         };
 
-        this.abortCallbacks.add(abort);
+        const abort = () => {
+          cleanup();
+          reject(new CursorAbortError());
+        };
+
+        const removeAbortListener = this.addAbortListener(this.abortController.signal, abort);
+
+        this.throwIfAborted();
         element.addEventListener(eventName, handler);
       });
     });
@@ -434,10 +459,6 @@ export class Cursor {
   until(conditionFn: () => boolean, actionFn: (cursor: this) => void): this {
     return this.enqueue(async () => {
       const checkAndRun = async (): Promise<void> => {
-        if (this.shouldAbort()) {
-          return;
-        }
-
         if (!conditionFn()) {
           const subQueue: (() => Promise<void>)[] = [];
           const originalEnqueue = this.enqueue;
@@ -497,10 +518,6 @@ export class Cursor {
   }
 
   private async moveGhostCursorTo(targetX: number, targetY: number) {
-    if (this.shouldAbort()) {
-      return;
-    }
-
     this.plugins.forEach((p) => p.onMoveStart?.(targetX, targetY));
 
     const speedMultiplier = this.options.speed ?? 0.5;
@@ -508,9 +525,7 @@ export class Cursor {
     if (this.options.humanize) {
       const points = generateHumanPath(this.cursor.x, this.cursor.y, targetX, targetY);
       for (const point of points) {
-        if (this.shouldAbort()) {
-          return;
-        }
+        this.throwIfAborted();
         this.cursor.moveTo(point.x, point.y);
         this.plugins.forEach((p) => p.onMove?.(point.x, point.y));
         await this.delay(16 / speedMultiplier); // Speed-adjusted delay internally

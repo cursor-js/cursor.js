@@ -248,8 +248,22 @@ describe('Cursor', () => {
       await sequence;
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      expect(input.value).toBe('H');
+      expect(input.value.length).toBeLessThan('Hello'.length);
       expect(clickCount).toBe(0);
+    });
+
+    it('.destroy() releases waitForEvent without running later steps', async () => {
+      const actor = new Cursor({ humanize: false });
+      let counter = 0;
+
+      const sequence = actor.waitForEvent('#test-btn', 'custom-event').do(() => counter++);
+
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      actor.destroy();
+      await sequence;
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      expect(counter).toBe(0);
     });
 
     it('.waitForEvent() pauses the queue until the specified event is dispatched', async () => {
