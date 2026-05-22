@@ -14,7 +14,7 @@ export function baseOptions(): BaseLayoutProps {
       },
       {
         text: 'React UI',
-        url: '/docs/ui',
+        url: '/docs/ui/react',
         active: 'nested-url',
       },
       {
