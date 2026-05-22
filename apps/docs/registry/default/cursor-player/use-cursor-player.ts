@@ -51,29 +51,63 @@ function resolveVisualElement(cursorElement: HTMLElement) {
   return (cursorElement.querySelector(".cursor-theme-wrapper") as HTMLElement | null) ?? cursorElement;
 }
 
+function parseNumericAttribute(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function resolveVisualBaseSize(visualElement: HTMLElement) {
+  const svgElement = visualElement.querySelector("svg");
+
+  if (svgElement instanceof SVGSVGElement) {
+    const viewBox = svgElement.viewBox.baseVal;
+
+    if (viewBox && viewBox.width > 0 && viewBox.height > 0) {
+      return {
+        width: viewBox.width,
+        height: viewBox.height,
+      };
+    }
+
+    const width = parseNumericAttribute(svgElement.getAttribute("width"));
+    const height = parseNumericAttribute(svgElement.getAttribute("height"));
+
+    if (width && height) {
+      return { width, height };
+    }
+  }
+
+  const width = visualElement.offsetWidth;
+  const height = visualElement.offsetHeight;
+
+  if (width > 0 && height > 0) {
+    return { width, height };
+  }
+
+  return null;
+}
+
 function syncCursorScale(cursor: CursorPlayerRuntime, anchorFrameElement: HTMLElement) {
   const anchorRect = anchorFrameElement.getBoundingClientRect();
   const visualElement = resolveVisualElement(cursor.cursor.el);
-  const visualRect = visualElement.getBoundingClientRect();
-  const currentScale = cursor.cursor.scale || 1;
+  const visualBaseSize = resolveVisualBaseSize(visualElement);
 
   if (
     anchorRect.width <= 0 ||
     anchorRect.height <= 0 ||
-    visualRect.width <= 0 ||
-    visualRect.height <= 0
+    !visualBaseSize
   ) {
     return false;
   }
 
-  const naturalWidth = visualRect.width / currentScale;
-  const naturalHeight = visualRect.height / currentScale;
-
-  if (naturalWidth <= 0 || naturalHeight <= 0) {
-    return false;
-  }
-
-  const scale = Math.min(anchorRect.width / naturalWidth, anchorRect.height / naturalHeight);
+  const scale = Math.min(
+    anchorRect.width / visualBaseSize.width,
+    anchorRect.height / visualBaseSize.height,
+  );
   cursor.cursor.setSize(scale);
   return true;
 }
@@ -93,7 +127,7 @@ function scheduleScaleSync(
   cursor: CursorPlayerRuntime,
   anchorFrameElement: HTMLElement,
   isActive: () => boolean,
-  attempts = 4,
+  attempts = 3,
 ) {
   const run = (remaining: number) => {
     if (!isActive()) {
@@ -102,7 +136,11 @@ function scheduleScaleSync(
 
     const didSync = syncCursorScale(cursor, anchorFrameElement);
 
-    if (!didSync && remaining > 0 && typeof window !== "undefined" && window.requestAnimationFrame) {
+    if (typeof window === "undefined" || !window.requestAnimationFrame) {
+      return;
+    }
+
+    if (!didSync && remaining > 0) {
       window.requestAnimationFrame(() => run(remaining - 1));
     }
   };
@@ -148,7 +186,7 @@ export function useCursorPlayer<TCursor extends CursorPlayerRuntime>({
     bindingRef.current = null;
   };
 
-  const cleanupResizeObserver = () => {
+  const cleanupObservers = () => {
     resizeObserverRef.current?.disconnect();
     resizeObserverRef.current = null;
   };
@@ -159,7 +197,7 @@ export function useCursorPlayer<TCursor extends CursorPlayerRuntime>({
     runIdRef.current += 1;
     const runId = runIdRef.current;
 
-    cleanupResizeObserver();
+    cleanupObservers();
     clearBinding(true);
 
     const cursor = createCursor(nextAnchorElement);
@@ -200,7 +238,6 @@ export function useCursorPlayer<TCursor extends CursorPlayerRuntime>({
       });
 
       observer.observe(nextAnchorFrameElement);
-      observer.observe(resolveVisualElement(cursor.cursor.el));
       resizeObserverRef.current = observer;
     }
 
@@ -209,7 +246,7 @@ export function useCursorPlayer<TCursor extends CursorPlayerRuntime>({
 
   useEffect(() => {
     return () => {
-      cleanupResizeObserver();
+      cleanupObservers();
       clearBinding(true);
     };
   }, []);
@@ -240,7 +277,7 @@ export function useCursorPlayer<TCursor extends CursorPlayerRuntime>({
   const setAnchorElement = useCallback((element: HTMLElement | null) => {
     if (!element) {
       anchorElementRef.current = null;
-      cleanupResizeObserver();
+      cleanupObservers();
       clearBinding(true);
       return;
     }
@@ -252,7 +289,7 @@ export function useCursorPlayer<TCursor extends CursorPlayerRuntime>({
   const setAnchorFrameElement = useCallback((element: HTMLElement | null) => {
     if (!element) {
       anchorFrameElementRef.current = null;
-      cleanupResizeObserver();
+      cleanupObservers();
       clearBinding(true);
       return;
     }
