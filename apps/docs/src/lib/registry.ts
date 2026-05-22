@@ -1,5 +1,4 @@
-import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
+import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 interface RegistryFileDefinition {
@@ -33,13 +32,38 @@ export interface RegistryItemPayload extends Omit<RegistryItemDefinition, 'files
   files: RegistryFilePayload[];
 }
 
-const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
-const docsRoot = path.resolve(moduleDirectory, '..', '..');
-const registryPath = path.join(docsRoot, 'registry.json');
+const docsRootCandidates = [process.cwd(), path.resolve(process.cwd(), 'apps/docs')];
 
+let docsRootPromise: Promise<string> | null = null;
 let registryIndexPromise: Promise<RegistryIndexDefinition> | null = null;
 
+async function pathExists(filePath: string) {
+  try {
+    await access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function resolveDocsRoot() {
+  for (const candidate of docsRootCandidates) {
+    if (await pathExists(path.join(candidate, 'registry.json'))) {
+      return candidate;
+    }
+  }
+
+  throw new Error('Unable to resolve the docs app root for the registry.');
+}
+
+async function getDocsRoot() {
+  docsRootPromise ??= resolveDocsRoot();
+  return docsRootPromise;
+}
+
 async function readRegistryIndexSource() {
+  const docsRoot = await getDocsRoot();
+  const registryPath = path.join(docsRoot, 'registry.json');
   const registrySource = await readFile(registryPath, 'utf8');
 
   return JSON.parse(registrySource) as RegistryIndexDefinition;
@@ -51,11 +75,10 @@ export async function readRegistryIndex() {
 }
 
 async function readRegistryFileContent(filePath: string) {
-  if (!filePath) {
-    throw new Error('Registry file path is missing.');
-  }
+  const docsRoot = await getDocsRoot();
+  const absolutePath = path.join(docsRoot, filePath);
 
-  return readFile(path.join(docsRoot, filePath), 'utf8');
+  return readFile(absolutePath, 'utf8');
 }
 
 export async function readRegistryItem(name: string) {
