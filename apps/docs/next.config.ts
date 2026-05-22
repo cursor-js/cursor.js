@@ -24,12 +24,17 @@ if (!hasPro) {
   nextConfig.turbopack = {
     resolveAlias: {
       '@cursor.js/pro': path.resolve(process.cwd(), 'src/lib/pro-mock.ts'),
+      '@cursor.js/pro/cursors': path.resolve(process.cwd(), 'src/lib/pro-mock.ts'),
     },
   };
 
   // Fallback for Webpack (Production build 'next build')
   nextConfig.webpack = (config) => {
     config.resolve.alias['@cursor.js/pro'] = path.resolve(process.cwd(), 'src/lib/pro-mock.ts');
+    config.resolve.alias['@cursor.js/pro/cursors'] = path.resolve(
+      process.cwd(),
+      'src/lib/pro-mock.ts',
+    );
     return config;
   };
 }
