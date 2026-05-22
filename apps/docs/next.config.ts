@@ -15,7 +15,6 @@ const hasPro = fs.existsSync(proPackagePath);
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
-  outputFileTracingRoot: repoRoot,
   async rewrites() {
     return [
       {
@@ -29,7 +28,6 @@ const nextConfig: NextConfig = {
 if (!hasPro) {
   // Fallback for Turbopack (Next.js 15+ default dev server)
   nextConfig.turbopack = {
-    root: repoRoot,
     resolveAlias: {
       '@cursor.js/pro': proMockPath,
       '@cursor.js/pro/cursors': proMockPath,
