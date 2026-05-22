@@ -92,7 +92,7 @@ function CursorPlayerCursor({
   hotspot = 'top-left',
   ...props
 }: CursorPlayerCursorProps) {
-  const { setAnchorElement, setAnchorFrameElement } = useCursorPlayerContext();
+  const { setAnchorElement, setAnchorFrameElement, setPreviewElement } = useCursorPlayerContext();
   const Comp = asChild ? Slot.Root : 'span';
   const hotspotPosition = getHotspotPosition(hotspot);
 
@@ -106,6 +106,15 @@ function CursorPlayerCursor({
       <span
         ref={setAnchorElement}
         className="absolute h-px w-px"
+        style={{
+          left: hotspotPosition.left,
+          top: hotspotPosition.top,
+          transform: hotspot === 'center' ? 'translate(-50%, -50%)' : undefined,
+        }}
+      />
+      <span
+        ref={setPreviewElement}
+        className="pointer-events-none absolute"
         style={{
           left: hotspotPosition.left,
           top: hotspotPosition.top,
