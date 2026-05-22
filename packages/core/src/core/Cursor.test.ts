@@ -234,6 +234,24 @@ describe('Cursor', () => {
       expect(counter).toBe(3);
     });
 
+    it('.destroy() cancels the active step and prevents queued interactions from continuing', async () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+
+      const actor = new Cursor({ humanize: false, speed: 1.0 });
+      let clickCount = 0;
+      btn.addEventListener('click', () => clickCount++);
+
+      const sequence = actor.type('#test-input', 'Hello', { delay: 20 }).click('#test-btn');
+
+      await new Promise((resolve) => setTimeout(resolve, 365));
+      actor.destroy();
+      await sequence;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(input.value).toBe('H');
+      expect(clickCount).toBe(0);
+    });
+
     it('.waitForEvent() pauses the queue until the specified event is dispatched', async () => {
       const actor = new Cursor({ humanize: false });
       let counter = 0;

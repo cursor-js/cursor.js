@@ -21,7 +21,9 @@ export class Cursor {
   private promise: Promise<void> = Promise.resolve();
   private plugins: CursorPlugin[] = [];
   public isGlobalPaused = false;
+  private isDestroyed = false;
   private activeDelayResolvers = new Set<() => void>();
+  private abortCallbacks = new Set<() => void>();
   private currentHoveredElement: Element | null = null;
   private listeners: Record<string, EventCallback[]> = {};
 
@@ -69,8 +71,30 @@ export class Cursor {
   }
 
   private enqueue(task: () => Promise<void>): this {
-    this.promise = this.promise.then(() => task());
+    this.promise = this.promise.then(async () => {
+      if (this.isDestroyed) {
+        return;
+      }
+
+      await task();
+    });
     return this; // Allows chaining
+  }
+
+  private abortActiveWork() {
+    for (const resolve of this.activeDelayResolvers) {
+      resolve();
+    }
+    this.activeDelayResolvers.clear();
+
+    for (const callback of this.abortCallbacks) {
+      callback();
+    }
+    this.abortCallbacks.clear();
+  }
+
+  private shouldAbort() {
+    return this.isDestroyed;
   }
 
   then<TResult1 = void, TResult2 = never>(
@@ -81,6 +105,10 @@ export class Cursor {
   }
 
   private async delay(ms: number) {
+    if (this.shouldAbort()) {
+      return;
+    }
+
     if (ms <= 0) {
       await new Promise<void>((resolve) => {
         setTimeout(resolve, 0); // JSDOM might hang on requestAnimationFrame
@@ -95,6 +123,12 @@ export class Cursor {
 
       const loop = () => {
         if (!this.activeDelayResolvers.has(resolve)) return; // Means skipped/aborted
+
+        if (this.shouldAbort()) {
+          this.activeDelayResolvers.delete(resolve);
+          resolve();
+          return;
+        }
 
         const current = performance.now();
         const delta = current - start;
@@ -159,6 +193,10 @@ export class Cursor {
   }
 
   private async _hover(selector: string | Element) {
+    if (this.shouldAbort()) {
+      return;
+    }
+
     const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
     if (!element) throw new Error(`Element not found: ${selector}`);
 
@@ -183,6 +221,9 @@ export class Cursor {
     ) {
       element.scrollIntoView({ behavior: 'smooth', block: 'center' });
       await this.delay(500);
+      if (this.shouldAbort()) {
+        return;
+      }
       const newRect = element.getBoundingClientRect();
       await this.moveGhostCursorTo(
         newRect.left + window.scrollX + newRect.width / 2,
@@ -213,15 +254,25 @@ export class Cursor {
   }
 
   private async _click(selector: string | Element) {
+    if (this.shouldAbort()) {
+      return;
+    }
+
     const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
     if (!element) throw new Error(`Element not found: ${selector}`);
 
     await this._hover(element);
+    if (this.shouldAbort()) {
+      return;
+    }
     this.plugins.forEach((p) => p.onClickStart?.(element));
 
     // Give browser a tiny frame window to start rendering visual click
     // effects (like ripple or particles) before synchronously taking focus
     await this.delay(300);
+    if (this.shouldAbort()) {
+      return;
+    }
 
     EventDispatcher.click(element as HTMLElement);
   }
@@ -229,10 +280,17 @@ export class Cursor {
   // 3. Type command
   type(selector: string | Element, text: string, options?: { delay?: number }): this {
     return this.enqueue(async () => {
+      if (this.shouldAbort()) {
+        return;
+      }
+
       const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
       if (!element) throw new Error(`Element not found: ${selector}`);
 
       await this._click(element);
+      if (this.shouldAbort()) {
+        return;
+      }
 
       this.plugins.forEach((p) => p.onTypeStart?.(text));
 
@@ -240,8 +298,14 @@ export class Cursor {
       if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
         const delay = options?.delay || 100;
         await this.delay(delay * 2 + Math.random() * delay); // Initial hesitation before starting to type
+        if (this.shouldAbort()) {
+          return;
+        }
         let currentText = element.value; // Cache value to avoid React state sync issues during pauses
         for (let i = 0; i < text.length; i++) {
+          if (this.shouldAbort()) {
+            return;
+          }
           currentText += text[i];
           EventDispatcher.triggerInputEvent(element, currentText);
           await this.delay(delay / 2 + Math.random() * delay); // Human-like typing delay
@@ -291,6 +355,11 @@ export class Cursor {
   waitForEvent(selector: string | Element, eventName: string): this {
     return this.enqueue(() => {
       return new Promise<void>((resolve) => {
+        if (this.shouldAbort()) {
+          resolve();
+          return;
+        }
+
         const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
 
         if (!element) {
@@ -299,11 +368,19 @@ export class Cursor {
           return;
         }
 
-        const handler = () => {
+        const abort = () => {
           element.removeEventListener(eventName, handler);
+          this.abortCallbacks.delete(abort);
           resolve();
         };
 
+        const handler = () => {
+          element.removeEventListener(eventName, handler);
+          this.abortCallbacks.delete(abort);
+          resolve();
+        };
+
+        this.abortCallbacks.add(abort);
         element.addEventListener(eventName, handler);
       });
     });
@@ -357,6 +434,10 @@ export class Cursor {
   until(conditionFn: () => boolean, actionFn: (cursor: this) => void): this {
     return this.enqueue(async () => {
       const checkAndRun = async (): Promise<void> => {
+        if (this.shouldAbort()) {
+          return;
+        }
+
         if (!conditionFn()) {
           const subQueue: (() => Promise<void>)[] = [];
           const originalEnqueue = this.enqueue;
@@ -416,6 +497,10 @@ export class Cursor {
   }
 
   private async moveGhostCursorTo(targetX: number, targetY: number) {
+    if (this.shouldAbort()) {
+      return;
+    }
+
     this.plugins.forEach((p) => p.onMoveStart?.(targetX, targetY));
 
     const speedMultiplier = this.options.speed ?? 0.5;
@@ -423,6 +508,9 @@ export class Cursor {
     if (this.options.humanize) {
       const points = generateHumanPath(this.cursor.x, this.cursor.y, targetX, targetY);
       for (const point of points) {
+        if (this.shouldAbort()) {
+          return;
+        }
         this.cursor.moveTo(point.x, point.y);
         this.plugins.forEach((p) => p.onMove?.(point.x, point.y));
         await this.delay(16 / speedMultiplier); // Speed-adjusted delay internally
@@ -434,6 +522,19 @@ export class Cursor {
   }
 
   destroy() {
+    if (this.isDestroyed) {
+      return;
+    }
+
+    this.isDestroyed = true;
+    this.abortActiveWork();
+
+    if (this.currentHoveredElement) {
+      EventDispatcher.toggleMimicHover(this.currentHoveredElement, false);
+      EventDispatcher.triggerMouseEvent(this.currentHoveredElement, 'mouseleave');
+      this.currentHoveredElement = null;
+    }
+
     this.emit('destroy');
     this.plugins.forEach((p) => p.onDestroy?.());
     this.cursor.destroy();
