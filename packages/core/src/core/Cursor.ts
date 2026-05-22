@@ -14,6 +14,11 @@ export interface CursorOptions {
   startPoint?: CursorStartPoint;
 }
 
+export interface CursorPoint {
+  x: number;
+  y: number;
+}
+
 class CursorAbortError extends Error {
   constructor() {
     super('Cursor operation aborted.');
@@ -115,6 +120,84 @@ export class Cursor {
     return () => {
       signal.removeEventListener('abort', callback);
     };
+  }
+
+  private async forEachAbortable<T>(
+    items: Iterable<T>,
+    callback: (item: T) => Promise<void> | void,
+    signal: AbortSignal = this.abortController.signal,
+  ) {
+    for (const item of items) {
+      this.throwIfAborted(signal);
+      await callback(item);
+    }
+  }
+
+  private async waitForDomEvent(
+    element: Element,
+    eventName: string,
+    signal: AbortSignal = this.abortController.signal,
+  ) {
+    return new Promise<void>((resolve, reject) => {
+      const cleanup = () => {
+        element.removeEventListener(eventName, handler);
+        removeAbortListener();
+      };
+
+      const handler = () => {
+        cleanup();
+        resolve();
+      };
+
+      const abort = () => {
+        cleanup();
+        reject(new CursorAbortError());
+      };
+
+      const removeAbortListener = this.addAbortListener(signal, abort);
+
+      this.throwIfAborted(signal);
+      element.addEventListener(eventName, handler);
+    });
+  }
+
+  private async typeIntoElement(
+    element: HTMLInputElement | HTMLTextAreaElement,
+    text: string,
+    delay: number,
+    signal: AbortSignal = this.abortController.signal,
+  ) {
+    await this.delay(delay * 2 + Math.random() * delay, signal); // Initial hesitation before starting to type
+
+    let currentText = element.value; // Cache value to avoid React state sync issues during pauses
+
+    await this.forEachAbortable(text, async (char) => {
+      currentText += char;
+      EventDispatcher.triggerInputEvent(element, currentText);
+      await this.delay(delay / 2 + Math.random() * delay, signal); // Human-like typing delay
+    });
+  }
+
+  private async moveAlongPoints(
+    points: Iterable<CursorPoint>,
+    speedMultiplier: number,
+    signal: AbortSignal = this.abortController.signal,
+  ) {
+    await this.forEachAbortable(points, async (point) => {
+      this.cursor.moveTo(point.x, point.y);
+      this.plugins.forEach((p) => p.onMove?.(point.x, point.y));
+      await this.delay(16 / speedMultiplier, signal); // Speed-adjusted delay internally
+    });
+  }
+
+  private clearHoveredElement() {
+    if (!this.currentHoveredElement) {
+      return;
+    }
+
+    EventDispatcher.toggleMimicHover(this.currentHoveredElement, false);
+    EventDispatcher.triggerMouseEvent(this.currentHoveredElement, 'mouseleave');
+    this.currentHoveredElement = null;
   }
 
   then<TResult1 = void, TResult2 = never>(
@@ -327,14 +410,7 @@ export class Cursor {
       // Typing simulation
       if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
         const delay = options?.delay || 100;
-        await this.delay(delay * 2 + Math.random() * delay); // Initial hesitation before starting to type
-        let currentText = element.value; // Cache value to avoid React state sync issues during pauses
-        for (let i = 0; i < text.length; i++) {
-          this.throwIfAborted();
-          currentText += text[i];
-          EventDispatcher.triggerInputEvent(element, currentText);
-          await this.delay(delay / 2 + Math.random() * delay); // Human-like typing delay
-        }
+        await this.typeIntoElement(element, text, delay);
       }
 
       this.plugins.forEach((p) => p.onTypeEnd?.());
@@ -344,6 +420,33 @@ export class Cursor {
   // Utilities
   wait(ms: number): this {
     return this.enqueue(() => this.delay(ms));
+  }
+
+  /**
+   * Plugin-facing helper for inline waits that should respect pause/abort semantics.
+   */
+  public async sleep(ms: number): Promise<void> {
+    await this.delay(ms);
+  }
+
+  /**
+   * Plugin-facing helper for inline animated movement that preserves humanized motion.
+   */
+  public async glideTo(targetX: number, targetY: number): Promise<void> {
+    await this.moveGhostCursorTo(targetX, targetY);
+  }
+
+  /**
+   * Plugin-facing helper for immediate cursor movement with normal move hooks.
+   */
+  public teleportTo(targetX: number, targetY: number): void {
+    this.cursor.moveTo(targetX, targetY);
+    this.plugins.forEach((p) => p.onMove?.(targetX, targetY));
+    this.clearHoveredElement();
+  }
+
+  public getSpeed(): number {
+    return this.options.speed ?? 0.5;
   }
 
   // Flow Control Methods
@@ -379,35 +482,14 @@ export class Cursor {
 
   waitForEvent(selector: string | Element, eventName: string): this {
     return this.enqueue(() => {
-      return new Promise<void>((resolve, reject) => {
-        const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
+      const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
 
-        if (!element) {
-          console.warn(`Element not found for waitForEvent: ${selector}`);
-          resolve();
-          return;
-        }
+      if (!element) {
+        console.warn(`Element not found for waitForEvent: ${selector}`);
+        return Promise.resolve();
+      }
 
-        const cleanup = () => {
-          element.removeEventListener(eventName, handler);
-          removeAbortListener();
-        };
-
-        const handler = () => {
-          cleanup();
-          resolve();
-        };
-
-        const abort = () => {
-          cleanup();
-          reject(new CursorAbortError());
-        };
-
-        const removeAbortListener = this.addAbortListener(this.abortController.signal, abort);
-
-        this.throwIfAborted();
-        element.addEventListener(eventName, handler);
-      });
+      return this.waitForDomEvent(element, eventName);
     });
   }
 
@@ -504,16 +586,7 @@ export class Cursor {
         targetY = rect.top + window.scrollY + rect.height / 2;
       }
 
-      this.cursor.moveTo(targetX, targetY);
-      this.plugins.forEach((p) => p.onMove?.(targetX, targetY));
-
-      // Remove hover state logically from the previous element if any
-      // Since move is explicit coordinates and not a physical element, we can force a generic move reset
-      if (this.currentHoveredElement) {
-        EventDispatcher.toggleMimicHover(this.currentHoveredElement, false);
-        EventDispatcher.triggerMouseEvent(this.currentHoveredElement, 'mouseleave');
-        this.currentHoveredElement = null;
-      }
+      this.teleportTo(targetX, targetY);
     });
   }
 
@@ -524,12 +597,7 @@ export class Cursor {
 
     if (this.options.humanize) {
       const points = generateHumanPath(this.cursor.x, this.cursor.y, targetX, targetY);
-      for (const point of points) {
-        this.throwIfAborted();
-        this.cursor.moveTo(point.x, point.y);
-        this.plugins.forEach((p) => p.onMove?.(point.x, point.y));
-        await this.delay(16 / speedMultiplier); // Speed-adjusted delay internally
-      }
+      await this.moveAlongPoints(points, speedMultiplier);
     } else {
       this.cursor.moveTo(targetX, targetY);
       this.plugins.forEach((p) => p.onMove?.(targetX, targetY));
@@ -544,11 +612,7 @@ export class Cursor {
     this.isDestroyed = true;
     this.abortActiveWork();
 
-    if (this.currentHoveredElement) {
-      EventDispatcher.toggleMimicHover(this.currentHoveredElement, false);
-      EventDispatcher.triggerMouseEvent(this.currentHoveredElement, 'mouseleave');
-      this.currentHoveredElement = null;
-    }
+    this.clearHoveredElement();
 
     this.emit('destroy');
     this.plugins.forEach((p) => p.onDestroy?.());

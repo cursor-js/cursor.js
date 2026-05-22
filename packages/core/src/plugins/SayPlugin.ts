@@ -158,11 +158,11 @@ export class SayPlugin implements CursorPlugin {
     const waitUntilFinished = options?.waitUntilFinished ?? false;
 
     const finalizeBubble = async () => {
-      await (cursor as any).delay(duration);
+      await cursor.sleep(duration);
 
       if (this.bubbleElement) {
         this.bubbleElement.style.opacity = '0';
-        await (cursor as any).delay(200); // wait for fade out
+        await cursor.sleep(200); // wait for fade out
         this.bubbleElement.remove();
         this.bubbleElement = null;
       }

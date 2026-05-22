@@ -69,7 +69,7 @@ export class SpeechPlugin implements CursorPlugin {
 
     cursor.on('speech_requested', this.speechRequestedHandler);
 
-    const sayPlugin = (cursor as any).plugins?.find((p: any) => p.name === 'say');
+    const sayPlugin = cursor.getPlugin('say');
     if (!(sayPlugin instanceof SayPluginClass)) {
       console.warn(
         '[SpeechPlugin] SayPlugin not found, but Event Emitter will still process speech_requested events.',
