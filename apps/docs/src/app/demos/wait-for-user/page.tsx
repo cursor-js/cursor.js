@@ -3,7 +3,7 @@ import { WaitForUserDemo } from '@/components/app/PluginDemos';
 
 export default function WaitForUserPage() {
   return (
-    <div className="p-4 w-full h-full bg-white dark:bg-zinc-950">
+    <div className="box-border h-full w-full overflow-hidden bg-white p-4 dark:bg-zinc-950">
       <WaitForUserDemo />
     </div>
   );

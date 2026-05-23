@@ -3,7 +3,7 @@ import { Geist, Geist_Mono, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Analytics } from '@vercel/analytics/next';
-import { SiteFooter } from '@/components/SiteFooter';
+import { ConditionalSiteFooter } from '@/components/ConditionalSiteFooter';
 
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
@@ -43,7 +43,7 @@ export default function RootLayout({
         <RootProvider>
           <div className="flex-1 flex flex-col min-h-screen">
             <main className="flex-1">{children}</main>
-            <SiteFooter />
+            <ConditionalSiteFooter />
           </div>
         </RootProvider>
         <Analytics />
