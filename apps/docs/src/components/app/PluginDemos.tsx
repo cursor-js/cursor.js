@@ -59,7 +59,7 @@ export function ThemeDemo() {
   }, []);
 
   return (
-    <div className="space-y-4 w-full h-full p-4 flex flex-col justify-center max-w-sm mx-auto text-left">
+    <div className="box-border flex h-full w-full max-w-sm flex-col justify-center space-y-4 overflow-hidden p-4 mx-auto text-left">
       <h4 className="text-sm font-semibold mb-2">Theme Plugin</h4>
       <p className="text-xs text-muted-foreground mb-3">
         Core plugin for high-quality SVG themes, dynamic "I-beam" text cursors on inputs, and
@@ -122,7 +122,7 @@ export function RippleDemo() {
   }, []);
 
   return (
-    <div className="space-y-4 w-full h-full p-4 flex flex-col justify-center max-w-sm mx-auto text-left">
+    <div className="box-border flex h-full w-full max-w-sm flex-col justify-center space-y-4 overflow-hidden p-4 mx-auto text-left">
       <h4 className="text-sm font-semibold mb-2">Ripple Plugin</h4>
       <p className="text-xs text-muted-foreground mb-4">
         A visually appealing material design ripple effect that appears on every click.
@@ -176,7 +176,7 @@ export function ParticleDemo() {
   }, []);
 
   return (
-    <div className="space-y-4 w-full h-full p-4 flex flex-col justify-center max-w-sm mx-auto text-left">
+    <div className="box-border flex h-full w-full max-w-sm flex-col justify-center space-y-4 overflow-hidden p-4 mx-auto text-left">
       <h4 className="text-sm font-semibold mb-2">Particle Plugin</h4>
       <p className="text-xs text-muted-foreground mb-4">
         A subtle, visually pleasing particle explosion effect around your cursor whenever you click.
@@ -219,7 +219,7 @@ export function IndicatorDemo() {
 
   return (
     <div className="w-full flex justify-center text-left">
-      <div className="w-full max-w-sm space-y-4 p-4 relative min-h-[400px]">
+      <div className="box-border relative h-full w-full max-w-sm space-y-4 overflow-hidden p-4">
         <h4 className="text-sm font-semibold mb-2">Indicator Plugin</h4>
         <p className="text-xs text-muted-foreground mb-4">
           Watch the arrow pointing to the cursor's location when it goes completely out of the
@@ -296,7 +296,7 @@ export function SoundDemo() {
   }, [soundEnabled]);
 
   return (
-    <div className="space-y-4 w-full h-full p-4 flex flex-col justify-center max-w-sm mx-auto text-left">
+    <div className="box-border flex h-full w-full max-w-sm flex-col justify-center space-y-4 overflow-hidden p-4 mx-auto text-left">
       <h4 className="text-sm font-semibold mb-2">Sound Plugin</h4>
       <p className="text-xs text-muted-foreground mb-4">
         Immersive keyboard and mouse sound effects.
@@ -371,7 +371,7 @@ export function LoggingDemo() {
   }, [enabled]);
 
   return (
-    <div className="space-y-4 w-full h-full p-4 flex flex-col justify-center max-w-sm mx-auto text-left">
+    <div className="box-border flex h-full w-full max-w-sm flex-col justify-center space-y-4 overflow-hidden p-4 mx-auto text-left">
       <h4 className="text-sm font-semibold mb-2">Logging Plugin</h4>
       <p className="text-xs text-muted-foreground mb-3">
         Open Developer Tools (F12) to see verbose logging of the cursor's coordinates, steps, and
@@ -431,7 +431,7 @@ export function TrailDemo() {
   }, []);
 
   return (
-    <div className="space-y-4 w-full h-full p-4 flex flex-col justify-center max-w-sm mx-auto text-left">
+    <div className="box-border flex h-full w-full max-w-sm flex-col justify-center space-y-4 overflow-hidden p-4 mx-auto text-left">
       <h4 className="text-sm font-semibold mb-2">Trail Plugin</h4>
       <p className="text-xs text-muted-foreground mb-4">
         Leaves a custom trail behind the cursor movement, resembling an airplane contrail.
@@ -758,7 +758,7 @@ export function WaitForUserDemo() {
   }, []);
 
   return (
-    <div className="space-y-4 w-full h-full p-4 flex flex-col justify-center max-w-sm mx-auto text-left">
+    <div className="box-border flex h-full w-full max-w-sm flex-col justify-center space-y-4 overflow-hidden p-4 mx-auto text-left">
       <h4 className="text-sm font-semibold mb-2">Wait For User Plugin</h4>
       <p className="text-xs text-muted-foreground mb-4">
         Pause the scripted flow, spotlight the target, and let a real person complete the next
@@ -863,7 +863,7 @@ export function FloatingWaitForUserDemo() {
   }, []);
 
   return (
-    <div className="space-y-4 w-full h-full p-4 flex flex-col justify-center max-w-sm mx-auto text-left">
+    <div className="box-border flex h-full w-full max-w-sm flex-col justify-center space-y-4 overflow-hidden p-4 mx-auto text-left">
       <h4 className="text-sm font-semibold mb-2">Floating Plugin + Wait For User</h4>
       <p className="text-xs text-muted-foreground mb-4">
         Uses Floating UI to keep the handoff panel near the cursor while still supporting
@@ -939,7 +939,7 @@ export function SpotlightDemo() {
   }, []);
 
   return (
-    <div className="space-y-4 w-full h-full p-4 flex flex-col justify-center max-w-sm mx-auto text-left">
+    <div className="box-border flex h-full w-full max-w-sm flex-col justify-center space-y-4 overflow-hidden p-4 mx-auto text-left">
       <h4 className="text-sm font-semibold mb-2">Spotlight Plugin</h4>
       <p className="text-xs text-muted-foreground mb-4">
         Highlight the exact element that matters and optionally dim the rest of the interface for

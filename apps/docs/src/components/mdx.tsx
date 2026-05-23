@@ -14,6 +14,7 @@ import {
   CursorPlayerShowcase,
 } from '@/components/app/CursorPlayerShowcase';
 import { CursorPlayerSourceFiles } from '@/components/app/CursorPlayerSourceFiles';
+import { DemoIframe } from '@/content/components/DemoIframe';
 
 export function getMDXComponents(components?: MDXComponents) {
   return {
@@ -28,6 +29,7 @@ export function getMDXComponents(components?: MDXComponents) {
     CursorPlayerShowcase,
     CursorPlayerOverlayShowcase,
     CursorPlayerSourceFiles,
+    iframe: DemoIframe,
     ...components,
   } satisfies MDXComponents;
 }

@@ -3,7 +3,7 @@ import { LoggingDemo } from '@/components/app/PluginDemos';
 
 export default function LoggingPage() {
   return (
-    <div className="p-4 w-full h-full">
+    <div className="box-border h-full w-full overflow-hidden p-4">
       <LoggingDemo />
     </div>
   );
