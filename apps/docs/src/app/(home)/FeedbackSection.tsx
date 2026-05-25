@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { addFeedback, getFeedbacks } from '@/lib/actions';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,7 +14,13 @@ type Feedback = {
   createdAt: Date | null;
 };
 
-export function FeedbackSection({ initialFeedbacks, hasSubmittedInitial }: { initialFeedbacks: Feedback[], hasSubmittedInitial?: boolean }) {
+export function FeedbackSection({
+  initialFeedbacks,
+  hasSubmittedInitial,
+}: {
+  initialFeedbacks: Feedback[];
+  hasSubmittedInitial?: boolean;
+}) {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>(initialFeedbacks);
   const [message, setMessage] = useState('');
   const [type, setType] = useState<'love' | 'hate' | null>(null);
@@ -24,7 +30,7 @@ export function FeedbackSection({ initialFeedbacks, hasSubmittedInitial }: { ini
 
   const handleSubmit = async () => {
     if (!message.trim() || !type) return;
-    
+
     setLoading(true);
     setErrorMsg('');
     try {
@@ -34,9 +40,10 @@ export function FeedbackSection({ initialFeedbacks, hasSubmittedInitial }: { ini
       setMessage('');
       setType(null);
       setHasSubmitted(true);
-    } catch (error: any) {
-      setErrorMsg(error?.message || 'Something went wrong.');
-      if (error?.message?.includes('already submitted')) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Something went wrong.';
+      setErrorMsg(message);
+      if (message.includes('already submitted')) {
         setHasSubmitted(true);
       }
     } finally {
@@ -45,7 +52,7 @@ export function FeedbackSection({ initialFeedbacks, hasSubmittedInitial }: { ini
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto py-24 px-4 sm:px-6 lg:px-8">
+    <div id="feedback-section" className="w-full max-w-4xl mx-auto py-24 px-4 sm:px-6 lg:px-8">
       <div className="text-center mb-12">
         <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           Love it or Hate it?
@@ -58,44 +65,46 @@ export function FeedbackSection({ initialFeedbacks, hasSubmittedInitial }: { ini
       {!hasSubmitted ? (
         <div className="bg-card text-card-foreground rounded-xl border shadow-sm p-6 mb-12">
           {errorMsg && (
-            <div className="mb-4 text-sm font-medium text-red-500 text-center">
-              {errorMsg}
-            </div>
+            <div className="mb-4 text-sm font-medium text-red-500 text-center">{errorMsg}</div>
           )}
           <div className="flex gap-4 mb-6">
-          <Button
-            variant={type === 'love' ? 'default' : 'outline'}
-            className={`flex-1 ${type === 'love' ? 'bg-green-600 hover:bg-green-700' : 'border-green-200 hover:bg-green-50 hover:text-green-600 dark:border-green-900/50 dark:hover:bg-green-900/20'}`}
-            onClick={() => setType('love')}
-          >
-            <ThumbsUp className="mr-2 h-4 w-4" />
-            Love it
-          </Button>
-          <Button
-            variant={type === 'hate' ? 'default' : 'outline'}
-            className={`flex-1 ${type === 'hate' ? 'bg-red-600 hover:bg-red-700' : 'border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-red-900/50 dark:hover:bg-red-900/20'}`}
-            onClick={() => setType('hate')}
-          >
-            <ThumbsDown className="mr-2 h-4 w-4" />
-            Hate it
-          </Button>
+            <Button
+              id="feedback-love"
+              variant={type === 'love' ? 'default' : 'outline'}
+              className={`flex-1 ${type === 'love' ? 'bg-green-600 hover:bg-green-700' : 'border-green-200 hover:bg-green-50 hover:text-green-600 dark:border-green-900/50 dark:hover:bg-green-900/20'}`}
+              onClick={() => setType('love')}
+            >
+              <ThumbsUp className="mr-2 h-4 w-4" />
+              Love it
+            </Button>
+            <Button
+              id="feedback-hate"
+              variant={type === 'hate' ? 'default' : 'outline'}
+              className={`flex-1 ${type === 'hate' ? 'bg-red-600 hover:bg-red-700' : 'border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-red-900/50 dark:hover:bg-red-900/20'}`}
+              onClick={() => setType('hate')}
+            >
+              <ThumbsDown className="mr-2 h-4 w-4" />
+              Hate it
+            </Button>
+          </div>
+          <Textarea
+            id="feedback-message"
+            placeholder="Share your thoughts..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            className="min-h-[120px] mb-6 resize-none"
+          />
+          <div className="flex justify-end">
+            <Button
+              id="feedback-submit"
+              className="w-full sm:w-auto"
+              onClick={handleSubmit}
+              disabled={!message.trim() || !type || loading}
+            >
+              {loading ? 'Submitting...' : 'Submit Feedback'}
+            </Button>
+          </div>
         </div>
-        <Textarea
-          placeholder="Share your thoughts..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          className="min-h-[120px] mb-6 resize-none"
-        />
-        <div className="flex justify-end">
-          <Button
-            className="w-full sm:w-auto"
-            onClick={handleSubmit}
-            disabled={!message.trim() || !type || loading}
-          >
-            {loading ? 'Submitting...' : 'Submit Feedback'}
-          </Button>
-        </div>
-      </div>
       ) : (
         <div className="bg-card text-card-foreground rounded-xl border shadow-sm p-8 mb-12 text-center">
           <h3 className="text-xl font-semibold mb-2">Thank you for your feedback!</h3>

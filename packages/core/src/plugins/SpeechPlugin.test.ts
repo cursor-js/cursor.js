@@ -32,6 +32,7 @@ describe('SpeechPlugin', () => {
   it('should configure with options', () => {
     const plugin = new SpeechPlugin({
       enabled: false,
+      mode: 'interrupt',
       lang: 'tr-TR',
       rate: 0.8,
       pitch: 1.2,
@@ -39,6 +40,64 @@ describe('SpeechPlugin', () => {
     });
 
     expect(plugin.name).toBe('speech');
+  });
+
+  it('queues speech by default without waiting for the current line to finish once it starts', async () => {
+    cursor.destroy();
+    cursor = new Cursor();
+    speechPlugin = new SpeechPlugin();
+    cursor.use(speechPlugin);
+
+    let finishFirstSpeech: (() => void) | undefined;
+    const speakSpy = vi
+      .spyOn(speechPlugin as any, 'speak')
+      .mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            finishFirstSpeech = resolve;
+          }),
+      )
+      .mockResolvedValueOnce(undefined);
+
+    await cursor.emitAsync('speech_requested', 'first line');
+    expect(speakSpy).toHaveBeenCalledWith('first line');
+
+    let secondStarted = false;
+    const secondEmit = cursor.emitAsync('speech_requested', 'second line').then(() => {
+      secondStarted = true;
+    });
+
+    await Promise.resolve();
+
+    expect(secondStarted).toBe(false);
+    expect(speakSpy).toHaveBeenCalledTimes(1);
+
+    finishFirstSpeech?.();
+    await secondEmit;
+
+    expect(secondStarted).toBe(true);
+    expect(speakSpy).toHaveBeenCalledWith('second line');
+  });
+
+  it('can interrupt active speech when configured', async () => {
+    cursor.destroy();
+    cursor = new Cursor();
+    speechPlugin = new SpeechPlugin({ mode: 'interrupt' });
+    cursor.use(speechPlugin);
+
+    const cancel = vi.fn();
+    Object.defineProperty(window, 'speechSynthesis', {
+      configurable: true,
+      value: { cancel },
+    });
+
+    const speakSpy = vi.spyOn(speechPlugin as any, 'speak').mockResolvedValue(undefined);
+
+    await cursor.emitAsync('speech_requested', 'first line');
+    await cursor.emitAsync('speech_requested', 'second line');
+
+    expect(cancel).toHaveBeenCalledTimes(2);
+    expect(speakSpy).toHaveBeenCalledTimes(2);
   });
 
   it('should work with Speak option in say', () => {

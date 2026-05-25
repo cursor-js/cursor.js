@@ -74,15 +74,16 @@ export class SayPlugin implements CursorPlugin {
     const position = options?.position || this.options.defaultPosition || 'cursor';
     const positioner = this.resolvePositioner(cursor);
 
-    this.cleanupPosition();
+    this.cleanupActiveBubble();
 
-    this.bubbleElement = document.createElement('div');
-    this.bubbleElement.className = `cursor-js-speech-bubble cursor-js-speech-bubble-${position}`;
-    this.bubbleElement.textContent = text;
+    const bubbleElement = document.createElement('div');
+    bubbleElement.className = `cursor-js-speech-bubble cursor-js-speech-bubble-${position}`;
+    bubbleElement.textContent = text;
+    this.bubbleElement = bubbleElement;
 
     // Common styling
-    // this.bubbleElement.style.setProperty('corner-shape', 'squircle');
-    Object.assign(this.bubbleElement.style, {
+    // bubbleElement.style.setProperty('corner-shape', 'squircle');
+    Object.assign(bubbleElement.style, {
       position: 'absolute',
       zIndex: '10000',
       padding: '10px 16px',
@@ -100,12 +101,12 @@ export class SayPlugin implements CursorPlugin {
 
     // Position-specific styling
     if (position === 'cursor') {
-      Object.assign(this.bubbleElement.style, {
+      Object.assign(bubbleElement.style, {
         background: 'rgba(0, 0, 0, 0.85)',
         color: 'white',
       });
     } else if (position === 'subtitle') {
-      Object.assign(this.bubbleElement.style, {
+      Object.assign(bubbleElement.style, {
         position: 'fixed',
         background: 'rgba(0, 0, 0, 0.85)',
         color: 'white',
@@ -116,25 +117,26 @@ export class SayPlugin implements CursorPlugin {
         textAlign: 'center',
       });
     } else {
-      Object.assign(this.bubbleElement.style, {
+      Object.assign(bubbleElement.style, {
         background: 'rgba(0, 0, 0, 0.85)',
         color: 'white',
       });
     }
 
-    document.body.appendChild(this.bubbleElement);
+    document.body.appendChild(bubbleElement);
 
-    this.positionCleanup = await this.positionBubble(
+    const positionCleanup = await this.positionBubble(
       cursor,
-      this.bubbleElement,
+      bubbleElement,
       position,
       options,
       positioner,
     );
+    this.positionCleanup = positionCleanup;
 
     // Fade in
     requestAnimationFrame(() => {
-      if (this.bubbleElement) this.bubbleElement.style.opacity = '1';
+      if (bubbleElement.isConnected) bubbleElement.style.opacity = '1';
     });
 
     // Trigger onBeforeSay hook (for backward compatibility if needed)
@@ -146,8 +148,8 @@ export class SayPlugin implements CursorPlugin {
     // Track ghost cursor position if in cursor mode
     if (position === 'cursor' && !positioner) {
       this.moveIntervalId = setInterval(() => {
-        if (this.bubbleElement && cursor.cursor && cursor.cursor.el) {
-          this.positionCursorBubble(cursor, this.bubbleElement);
+        if (bubbleElement.isConnected && cursor.cursor && cursor.cursor.el) {
+          this.positionCursorBubble(cursor, bubbleElement);
         }
       }, 16); // ~60fps
     }
@@ -160,14 +162,19 @@ export class SayPlugin implements CursorPlugin {
     const finalizeBubble = async () => {
       await cursor.sleep(duration);
 
-      if (this.bubbleElement) {
-        this.bubbleElement.style.opacity = '0';
+      if (bubbleElement.isConnected) {
+        bubbleElement.style.opacity = '0';
         await cursor.sleep(200); // wait for fade out
-        this.bubbleElement.remove();
+        bubbleElement.remove();
+      }
+
+      if (this.bubbleElement === bubbleElement) {
         this.bubbleElement = null;
       }
 
-      this.cleanupPosition();
+      if (this.positionCleanup === positionCleanup) {
+        this.cleanupPosition();
+      }
 
       // Trigger onAfterSay hook
       this.onAfterSay?.(text);
@@ -182,9 +189,7 @@ export class SayPlugin implements CursorPlugin {
   }
 
   onDestroy() {
-    this.cleanupPosition();
-    this.bubbleElement?.remove();
-    this.bubbleElement = null;
+    this.cleanupActiveBubble();
   }
 
   private async positionBubble(
@@ -255,15 +260,19 @@ export class SayPlugin implements CursorPlugin {
     this.positionCleanup = null;
   }
 
+  private cleanupActiveBubble() {
+    this.cleanupPosition();
+    this.bubbleElement?.remove();
+    this.bubbleElement = null;
+  }
+
   private resolvePositioner(cursor: Cursor): SayPositioner | undefined {
     if (this.options.positioner) {
       return this.options.positioner;
     }
 
     const floatingPlugin = cursor.getPlugin('floating');
-    return isFloatingSayProvider(floatingPlugin)
-      ? floatingPlugin.getSayPositioner()
-      : undefined;
+    return isFloatingSayProvider(floatingPlugin) ? floatingPlugin.getSayPositioner() : undefined;
   }
 }
 

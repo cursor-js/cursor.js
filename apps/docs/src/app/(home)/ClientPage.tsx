@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useReducer, useState } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 
 const CodeEditor = dynamic(
@@ -29,13 +29,6 @@ import {
   WaitForUserPlugin,
 } from '@cursor.js/pro';
 
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/components/ui/carousel';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -48,28 +41,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+import { Accordion, AccordionItem } from '@/components/ui/accordion';
 import {
   SettingsAccordionTrigger,
   SettingsAccordionContent,
 } from '@/components/app/settings-accordion';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
-import {
-  RippleDemo,
-  ThemeDemo,
-  IndicatorDemo,
-  SoundDemo,
-  LoggingDemo,
-} from '@/components/app/PluginDemos';
 
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Comet } from '@/components/app/comet';
 import { BackgroundStars } from '@/components/app/background-stars';
 import { CursorPlayer } from '../../../registry/default/cursor-player/cursor-player';
@@ -189,7 +169,7 @@ const initialSettings: SettingsState = {
     trail: true,
     particle: true,
     say: true,
-    prompt: false,
+    prompt: true,
     speech: false,
     geminiTts: true,
     outline: true,
@@ -288,30 +268,80 @@ const initialTodos = [
   { id: 2, text: 'Star on GitHub', completed: false },
 ];
 
-export function ClientPage() {
-  // Form states
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [submitted, setSubmitted] = useState(false);
+type FeedbackIntent = 'yes' | 'no';
+type FeedbackSentiment = 'love' | 'hate';
 
+export function ClientPage({ hasSubmittedFeedback = false }: { hasSubmittedFeedback?: boolean }) {
   // Todo state
   const [todos, setTodos] = useState(initialTodos);
   const [todoInput, setTodoInput] = useState('');
-  const [todoToDelete, setTodoToDelete] = useState<number | null>(null);
+  const [recentlyAddedTodoId, setRecentlyAddedTodoId] = useState<number | null>(null);
+  const [deletingTodoId, setDeletingTodoId] = useState<number | null>(null);
+  const feedbackIntentRef = useRef<FeedbackIntent | null>(null);
+  const feedbackSentimentRef = useRef<FeedbackSentiment | null>(null);
+  const feedbackSubmittedRef = useRef(false);
 
   const addTodo = () => {
-    if (todoInput.trim()) {
-      setTodos([...todos, { id: Date.now(), text: todoInput.trim(), completed: false }]);
+    const text = todoInput.trim();
+
+    if (text) {
+      setTodos((currentTodos) => {
+        const nextId = currentTodos.reduce((maxId, todo) => Math.max(maxId, todo.id), 0) + 1;
+        setRecentlyAddedTodoId(nextId);
+        window.setTimeout(() => {
+          setRecentlyAddedTodoId((currentId) => (currentId === nextId ? null : currentId));
+        }, 900);
+        return [...currentTodos, { id: nextId, text, completed: false }];
+      });
       setTodoInput('');
     }
   };
 
   const toggleTodo = (id: number) => {
-    setTodos(todos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
+    setTodos((currentTodos) =>
+      currentTodos.map((todo) => (todo.id === id ? { ...todo, completed: !todo.completed } : todo)),
+    );
   };
 
   const deleteTodo = (id: number) => {
-    setTodos(todos.filter((t) => t.id !== id));
+    setDeletingTodoId(id);
+    window.setTimeout(() => {
+      setTodos((currentTodos) => currentTodos.filter((todo) => todo.id !== id));
+      setDeletingTodoId((currentId) => (currentId === id ? null : currentId));
+    }, 260);
+  };
+
+  const launchDemoConfetti = () => {
+    const colors = ['#f97316', '#22c55e', '#3b82f6', '#facc15', '#ec4899'];
+
+    for (let index = 0; index < 48; index += 1) {
+      const piece = document.createElement('span');
+      const size = 6 + Math.random() * 8;
+      const x = 35 + Math.random() * 30;
+      const fall = 42 + Math.random() * 34;
+      const drift = -140 + Math.random() * 280;
+      const rotate = Math.random() * 720 - 360;
+
+      piece.style.setProperty('--confetti-x', `${x}vw`);
+      piece.style.setProperty('--confetti-fall', `${fall}vh`);
+      piece.style.setProperty('--confetti-drift', `${drift}px`);
+      piece.style.setProperty('--confetti-rotate', `${rotate}deg`);
+      Object.assign(piece.style, {
+        position: 'fixed',
+        left: 'var(--confetti-x)',
+        top: '18vh',
+        width: `${size}px`,
+        height: `${size * 1.5}px`,
+        background: colors[index % colors.length],
+        borderRadius: '2px',
+        pointerEvents: 'none',
+        zIndex: '100002',
+        animation: `cursor-demo-confetti ${900 + Math.random() * 700}ms ease-out forwards`,
+      });
+
+      document.body.appendChild(piece);
+      window.setTimeout(() => piece.remove(), 1800);
+    }
   };
 
   // Sandbox state
@@ -340,7 +370,7 @@ c.move('#btn1')
   const [activeTab, setActiveTab] = useState<'html' | 'js'>('html');
   const [sandboxSrcDoc, setSandboxSrcDoc] = useState('');
 
-  const runSandbox = () => {
+  const runSandbox = useCallback(() => {
     let bodyContent = htmlCode;
     const bodyMatch = htmlCode.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
     if (bodyMatch) {
@@ -365,22 +395,25 @@ c.move('#btn1')
 </body>
 </html>`;
     setSandboxSrcDoc(srcDocString);
-  };
+  }, [htmlCode, jsCode]);
 
   useEffect(() => {
-    runSandbox();
-  }, []);
+    const timerId = window.setTimeout(runSandbox, 0);
+
+    return () => window.clearTimeout(timerId);
+  }, [runSandbox]);
 
   // Consolidated settings state via useReducer
   const [settings, dispatch] = useReducer(settingsReducer, initialSettings);
 
   const resetDemoUi = () => {
-    setEmail('');
-    setPassword('');
-    setSubmitted(false);
     setTodos(initialTodos);
     setTodoInput('');
-    setTodoToDelete(null);
+    setRecentlyAddedTodoId(null);
+    setDeletingTodoId(null);
+    feedbackIntentRef.current = null;
+    feedbackSentimentRef.current = null;
+    feedbackSubmittedRef.current = false;
   };
 
   const createHomeDemoCursor = (anchorElement: HTMLElement) => {
@@ -510,12 +543,15 @@ c.move('#btn1')
     const hasSpotlight = settings.plugins.spotlight;
     const hasWaitForUser = settings.plugins.waitForUser;
 
-    let sequence = cursor.wait(500).setState({ size: settings.coreConfig.size });
+    let sequence = cursor.wait(500).setState({ size: settings.coreConfig.size }).do(resetDemoUi);
 
     if (hasSay) {
-      sequence = sequence.say('Let me introduce you to Cursor.js, which is who I am.', {
-        waitUntilFinished: false,
-      });
+      sequence = sequence.say(
+        "Let's take a tour together. In this tour, I will introduce you to cursor.js, which is me.",
+        {
+          position: 'subtitle',
+        },
+      );
     }
 
     sequence
@@ -533,93 +569,21 @@ c.move('#btn1')
         }),
       )
       .wait(1000)
-      .until(
-        () => {
-          const prevBtn = document.querySelector('.carousel-prev');
-          return prevBtn?.hasAttribute('disabled') || false;
-        },
-        (ctx) => ctx.click('.carousel-prev').wait(500),
-      )
-      .if(
-        () =>
-          hasSay &&
-          document.querySelector<HTMLInputElement>('#demo-email')?.value !== 'hello@cursor.js',
-        (ctx) =>
-          ctx
-            .hover('#demo-email')
-            .say('Let me fill this out for you!', {
-              duration: 2000,
-              position: 'subtitle',
-            })
-            .do(() => setEmail(''))
-            .type('#demo-email', 'hello@cursor.js'),
-      )
-      .if(
-        () =>
-          !hasSay &&
-          document.querySelector<HTMLInputElement>('#demo-email')?.value !== 'hello@cursor.js',
-        (ctx) =>
-          ctx
-            .hover('#demo-email')
-            .do(() => setEmail(''))
-            .type('#demo-email', 'hello@cursor.js'),
-      )
-      .if(
-        () => document.querySelector<HTMLInputElement>('#demo-password')?.value !== 'secret',
-        (ctx) =>
-          ctx
-            .hover('#demo-password')
-            .wait(300)
-            .do(() => setPassword(''))
-            .type('#demo-password', 'secret', { delay: 60 })
-            .wait(600),
-      )
-      .hover('#demo-submit')
       .if(
         () => hasSay,
-        (ctx) => ctx.say('And click submit!', { duration: 1500 }),
+        (ctx) =>
+          ctx.say('I can move like a human and present product demos for visitors on your site.', {
+            position: 'subtitle',
+          }),
       )
-      .wait(300)
-      .click('#demo-submit')
-      .wait(1000)
-      .do(() => setSubmitted(true))
-      .hover('.carousel-next')
-      .wait(400)
-      .click('.carousel-next')
-      .wait(1000)
-      .hover('#demo-accordion-1')
-      .setState({ ripple: { color: '#10b98180' }, size: settings.coreConfig.size * 1.5 })
-      .wait(400)
-      .click('#demo-accordion-1')
-      .setState({
-        ripple: { color: `${settings.rippleConfig.color}80` },
-        size: settings.coreConfig.size,
-      })
-      .wait(1200)
-      .hover('#demo-accordion-2')
-      .wait(400)
-      .click('#demo-accordion-2')
-      .wait(1000)
-      .hover('.carousel-next')
-      .wait(400)
-      .click('.carousel-next')
-      .wait(1000)
-      .hover('#todo-input')
-      .do(() => setTodoInput(''))
-      .type('#todo-input', 'Build an AI agent')
-      .wait(200)
-      .hover('#todo-add')
-      .click('#todo-add')
-      .wait(1000)
-      .hover('#todo-check-1')
-      .click('#todo-check-1')
-      .wait(1000)
-      .hover('.todo-item-2')
+      .hover('#example-app-title')
       .if(
         () => hasSay,
-        (ctx) => ctx.say("Let's delete this one.", { duration: 1500, position: 'subtitle' }),
+        (ctx) =>
+          ctx.say('Now I will show how a TODO app works as an example.', {
+            position: 'subtitle',
+          }),
       )
-      .wait(1000)
       .if(hasOutline, (ctx) =>
         (
           ctx as Cursor & {
@@ -629,20 +593,57 @@ c.move('#btn1')
             ) => Cursor;
           }
         )
-          .outlineUnderline('.todo-item-2', { duration: 1000, loopCount: 2 })
+          .outlineUnderline('#example-app-title', { duration: 1200, loopCount: 1 })
+          .wait(300),
+      )
+      .hover('#todo-input')
+      .if(
+        () => hasSay,
+        (ctx) =>
+          ctx.say("Now let's add a task to our TODO list.", {
+            position: 'subtitle',
+          }),
+      )
+      .do(() => setTodoInput(''))
+      .type('#todo-input', 'Prepare launch checklist')
+      .wait(200)
+      .hover('#todo-add')
+      .click('#todo-add')
+      .wait(1000)
+      .if(
+        () => hasSay,
+        (ctx) =>
+          ctx.say("Now let's mark a task we added earlier as completed.", {
+            position: 'subtitle',
+          }),
+      )
+      .hover('#todo-check-1')
+      .click('#todo-check-1')
+      .wait(1000)
+      .if(
+        () => hasSay,
+        (ctx) =>
+          ctx.say("Now let's delete a task from our TODO list.", {
+            position: 'subtitle',
+          }),
+      )
+      .hover('.todo-item-2')
+      .if(hasOutline, (ctx) =>
+        (
+          ctx as Cursor & {
+            outlineUnderline: (
+              target: string,
+              options: { duration: number; loopCount: number },
+            ) => Cursor;
+          }
+        )
+          .outlineUnderline('.todo-item-2', { duration: 1000 })
           .wait(300),
       )
       .hover('#todo-delete-2')
       .wait(300)
       .click('#todo-delete-2')
       .wait(1000)
-      .if(
-        () => hasPrompt && !hasWaitForUser,
-        (ctx) =>
-          ctx.prompt('Would you really like to delete this item?', {
-            buttons: [{ label: 'Yes, click delete!', onClick: 'continue', type: 'danger' }],
-          }),
-      )
       .if(
         () => hasWaitForUser,
         (ctx) =>
@@ -660,22 +661,221 @@ c.move('#btn1')
               }) => Cursor;
             }
           ).waitForUser({
-            target: '#todo-confirm-delete',
-            event: 'click',
-            message: 'Your turn: confirm the deletion to continue.',
+            target: '#todo-check-3',
+            event: 'change',
+            message: 'Now it is your turn. Mark a task as completed.',
             spotlight: hasSpotlight,
             backdrop: hasSpotlight,
             pauseEffects: true,
             speak: true,
-            resumeLabel: 'Skip manually',
+            resumeLabel: 'Skip',
           }),
       )
       .if(
         () => !hasWaitForUser,
-        (ctx) => ctx.hover('#todo-confirm-delete').wait(300).click('#todo-confirm-delete'),
+        (ctx) => ctx.hover('#todo-check-3').wait(300).click('#todo-check-3'),
       )
-      .wait(1800)
-      .do(resetDemoUi);
+      .wait(800)
+      .if(
+        () => hasSay,
+        (ctx) =>
+          ctx.say('Great. Everything is exactly as it should be.', {
+            position: 'subtitle',
+          }),
+      )
+      .hover('#example-app-title')
+      .if(
+        () => hasPrompt && !hasSubmittedFeedback,
+        (ctx) =>
+          ctx.prompt(
+            'Would you like to go to Love it or Hate it and leave a comment about cursor.js?',
+            {
+              position: 'center',
+              buttons: [
+                {
+                  label: 'Yes',
+                  onClick: () => {
+                    feedbackIntentRef.current = 'yes';
+                  },
+                  type: 'primary',
+                },
+                {
+                  label: 'No',
+                  onClick: () => {
+                    feedbackIntentRef.current = 'no';
+                  },
+                  type: 'secondary',
+                },
+              ],
+            },
+          ),
+      )
+      .if(
+        () => hasPrompt && !hasSubmittedFeedback && feedbackIntentRef.current === 'yes',
+        (ctx) =>
+          ctx
+            .do(() =>
+              document.querySelector('#feedback-section')?.scrollIntoView({ behavior: 'smooth' }),
+            )
+            .wait(900)
+            .hover('#feedback-section'),
+      )
+      .if(
+        () =>
+          hasPrompt && !hasSubmittedFeedback && feedbackIntentRef.current === 'yes' && hasSpotlight,
+        (ctx) =>
+          ctx
+            .do(() => {
+              const plugin = cursor.getPlugin('spotlight');
+              if (plugin instanceof SpotlightPlugin) {
+                plugin.show('#feedback-love', {
+                  backdrop: true,
+                  padding: 10,
+                  borderRadius: 12,
+                });
+              }
+            })
+            .wait(1500)
+            .do(() => {
+              const plugin = cursor.getPlugin('spotlight');
+              if (plugin instanceof SpotlightPlugin) {
+                plugin.show('#feedback-hate', {
+                  backdrop: true,
+                  padding: 10,
+                  borderRadius: 12,
+                });
+              }
+            })
+            .wait(1500)
+            .do(() => {
+              const plugin = cursor.getPlugin('spotlight');
+              if (plugin instanceof SpotlightPlugin) {
+                plugin.hide();
+              }
+            }),
+      )
+      .if(
+        () =>
+          hasPrompt &&
+          !hasSubmittedFeedback &&
+          feedbackIntentRef.current === 'yes' &&
+          hasWaitForUser,
+        (ctx) =>
+          (
+            ctx as Cursor & {
+              waitForUser: (options: {
+                target: string;
+                event: string;
+                message: string;
+                spotlight: boolean;
+                backdrop: boolean;
+                pauseEffects: boolean;
+                speak: boolean;
+                resumeLabel: string;
+                onResume: (result: { event?: Event }) => void;
+              }) => Cursor;
+            }
+          ).waitForUser({
+            target: '#feedback-love, #feedback-hate',
+            event: 'click',
+            message: 'Choose Love it or Hate it to continue.',
+            spotlight: false,
+            backdrop: false,
+            pauseEffects: true,
+            speak: true,
+            resumeLabel: 'Skip',
+            onResume: (result) => {
+              const target = result.event?.target;
+              if (!(target instanceof Element)) return;
+
+              const button = target.closest('#feedback-love, #feedback-hate');
+              if (!(button instanceof HTMLElement)) return;
+
+              feedbackSentimentRef.current = button.id === 'feedback-love' ? 'love' : 'hate';
+            },
+          }),
+      )
+      .if(
+        () =>
+          hasPrompt &&
+          !hasSubmittedFeedback &&
+          feedbackIntentRef.current === 'yes' &&
+          hasWaitForUser,
+        (ctx) =>
+          (
+            ctx as Cursor & {
+              waitForUser: (options: {
+                target: string;
+                event: string;
+                message: string;
+                spotlight: boolean;
+                backdrop: boolean;
+                pauseEffects: boolean;
+                speak: boolean;
+                resumeLabel: string;
+                onResume: () => void;
+              }) => Cursor;
+            }
+          ).waitForUser({
+            target: '#feedback-submit',
+            event: 'click',
+            message: 'Submit your feedback to finish the demo.',
+            spotlight: hasSpotlight,
+            backdrop: hasSpotlight,
+            pauseEffects: true,
+            speak: true,
+            resumeLabel: 'Skip',
+            onResume: () => {
+              feedbackSubmittedRef.current = true;
+              launchDemoConfetti();
+            },
+          }),
+      )
+      .if(
+        () =>
+          hasPrompt &&
+          !hasSubmittedFeedback &&
+          feedbackIntentRef.current === 'yes' &&
+          !hasWaitForUser,
+        (ctx) =>
+          ctx
+            .hover('#feedback-love')
+            .wait(500)
+            .click('#feedback-love')
+            .type('#feedback-message', 'This demo feels polished.')
+            .hover('#feedback-submit')
+            .click('#feedback-submit')
+            .do(() => {
+              feedbackSentimentRef.current = 'love';
+              feedbackSubmittedRef.current = true;
+              launchDemoConfetti();
+            }),
+      )
+      .if(
+        () => hasSay && feedbackSubmittedRef.current && feedbackSentimentRef.current === 'love',
+        (ctx) =>
+          ctx.say('We are so glad you liked it. Yayyy!', {
+            position: 'subtitle',
+          }),
+      )
+      .if(
+        () => hasSay && feedbackSubmittedRef.current && feedbackSentimentRef.current === 'hate',
+        (ctx) =>
+          ctx.say(
+            'We are sorry you did not like it. You can be sure we will take your feedback seriously.',
+            {
+              position: 'subtitle',
+            },
+          ),
+      )
+      .wait(800)
+      .if(
+        () => hasSay,
+        (ctx) =>
+          ctx.say('The demo has ended here. You can explore the rest of the site to learn more.', {
+            position: 'subtitle',
+          }),
+      );
   };
 
   const homePlayerKey = JSON.stringify(settings);
@@ -691,6 +891,54 @@ c.move('#btn1')
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground relative overflow-hidden">
+      <style>{`
+        @keyframes cursor-demo-confetti {
+          0% {
+            opacity: 1;
+            transform: translate3d(0, 0, 0) rotate(0deg);
+          }
+          100% {
+            opacity: 0;
+            transform: translate3d(var(--confetti-drift), var(--confetti-fall), 0)
+              rotate(var(--confetti-rotate));
+          }
+        }
+
+        @keyframes todo-item-enter {
+          0% {
+            opacity: 0;
+            transform: translateY(-8px) scale(0.98);
+            background: rgba(34, 197, 94, 0.14);
+          }
+          60% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            background: rgba(34, 197, 94, 0.14);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            background: transparent;
+          }
+        }
+
+        @keyframes todo-item-delete {
+          0% {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+            max-height: 48px;
+          }
+          100% {
+            opacity: 0;
+            transform: translateX(18px) scale(0.98);
+            max-height: 0;
+            margin-top: 0;
+            margin-bottom: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+          }
+        }
+      `}</style>
       <div className="absolute inset-0 pointer-events-none z-0">
         <BackgroundStars count={50} />
       </div>
@@ -905,8 +1153,8 @@ c.move('#btn1')
                                         Generates high-quality human voice using Google Gemini TTS.
                                       </p>
                                       <p className="mt-2 font-medium">
-                                        Notice the 'cursor-js-tts-loading' class is applied while
-                                        the audio is generating!
+                                        Notice the &apos;cursor-js-tts-loading&apos; class is
+                                        applied while the audio is generating!
                                       </p>
                                     </HoverCardContent>
                                   </HoverCard>
@@ -1898,164 +2146,92 @@ c.move('#btn1')
           </div>
         </section>
 
-        <section className="container mx-auto flex flex-col md:flex-row items-stretch justify-center gap-6 py-12 px-6">
-          {/* Left Side: Carousel */}
-          <div className="flex-1 w-full max-w-3xl rounded-xl border bg-card text-card-foreground shadow p-8">
-            <Carousel className="w-full">
-              <CarouselContent>
-                <CarouselItem>
-                  <div className="p-4">
-                    <h2 className="text-2xl font-bold mb-4">Step 1: Fill Forms</h2>
-                    <p className="text-muted-foreground mb-6">
-                      Cursor.js precisely moves, focuses, and mimics human typing delays.
-                    </p>
+        <section className="container mx-auto flex items-stretch justify-center py-12 px-6">
+          <div className="w-full max-w-4xl overflow-hidden rounded-lg border bg-card text-card-foreground shadow-lg">
+            <div className="flex h-11 items-center gap-3 border-b bg-muted/60 px-4">
+              <div className="flex gap-1.5" aria-hidden="true">
+                <span className="h-3 w-3 rounded-full bg-red-400" />
+                <span className="h-3 w-3 rounded-full bg-yellow-400" />
+                <span className="h-3 w-3 rounded-full bg-green-400" />
+              </div>
+              <h2 id="example-app-title" className="text-sm font-semibold">
+                Example app
+              </h2>
+            </div>
 
-                    <div className="space-y-4 max-w-sm border p-6 rounded-lg bg-background">
-                      <div className="space-y-2">
-                        <Label htmlFor="demo-email">Email</Label>
-                        <Input
-                          id="demo-email"
-                          type="email"
-                          placeholder="m@example.com"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="demo-password">Password</Label>
-                        <Input
-                          id="demo-password"
-                          type="password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                        />
-                      </div>
-                      <Button
-                        id="demo-submit"
-                        className="w-full"
-                        onClick={() => setSubmitted(true)}
-                      >
-                        {submitted ? 'Signed In!' : 'Sign In'}
-                      </Button>
-                    </div>
+            <div className="p-6 md:p-8">
+              <div className="mx-auto w-full max-w-2xl">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-xl font-bold">Todo list</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Add, complete, and delete work items.
+                    </p>
                   </div>
-                </CarouselItem>
+                  <span className="rounded-full border px-3 py-1 text-xs text-muted-foreground">
+                    Live
+                  </span>
+                </div>
 
-                <CarouselItem>
-                  <div className="p-4">
-                    <h2 className="text-2xl font-bold mb-4">Step 2: Interact with Details</h2>
-                    <p className="text-muted-foreground mb-6">
-                      Effortlessly click on targets, wait for animations, and trigger complex Shadcn
-                      elements.
-                    </p>
+                <div className="flex gap-2 mb-4">
+                  <Input
+                    id="todo-input"
+                    placeholder="What needs to be done?"
+                    value={todoInput}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setTodoInput(e.target.value)
+                    }
+                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                      e.key === 'Enter' && addTodo()
+                    }
+                  />
+                  <Button id="todo-add" onClick={addTodo}>
+                    Add
+                  </Button>
+                </div>
 
-                    <Accordion
-                      type="single"
-                      collapsible
-                      className="w-full max-w-lg border px-4 rounded-lg bg-background"
+                <ul className="space-y-2">
+                  {todos.map((todo) => (
+                    <li
+                      key={todo.id}
+                      className={`todo-item-${todo.id} flex min-h-12 items-center justify-between gap-3 overflow-hidden rounded-md border bg-background p-3 transition-[opacity,background-color,transform] duration-200 ${todo.completed ? 'opacity-55' : ''}`}
+                      style={{
+                        animation:
+                          deletingTodoId === todo.id
+                            ? 'todo-item-delete 260ms ease-in forwards'
+                            : recentlyAddedTodoId === todo.id
+                              ? 'todo-item-enter 620ms ease-out both'
+                              : undefined,
+                      }}
                     >
-                      <AccordionItem value="item-1">
-                        <AccordionTrigger id="demo-accordion-1">Is it accessible?</AccordionTrigger>
-                        <AccordionContent>
-                          Yes. Cursor.js strictly interacts with normal DOM nodes.
-                        </AccordionContent>
-                      </AccordionItem>
-                      <AccordionItem value="item-2">
-                        <AccordionTrigger id="demo-accordion-2">Can it be styled?</AccordionTrigger>
-                        <AccordionContent>
-                          Yes. It comes with default styles that you can override with CSS.
-                        </AccordionContent>
-                      </AccordionItem>
-                      <AccordionItem value="item-3">
-                        <AccordionTrigger id="demo-accordion-3">Is it animated?</AccordionTrigger>
-                        <AccordionContent>
-                          Yes. Using simulated spring algorithms for maximum realism.
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  </div>
-                </CarouselItem>
-                <CarouselItem>
-                  <div className="p-4 flex flex-col items-center">
-                    <h2 className="text-2xl font-bold mb-4">Step 3: Build a Todo App!</h2>
-                    <p className="text-muted-foreground mb-6">
-                      Add, complete, and delete items from your list.
-                    </p>
-
-                    <div className="w-full max-w-sm border p-6 rounded-lg bg-background">
-                      <div className="flex gap-2 mb-4">
-                        <Input
-                          id="todo-input"
-                          placeholder="What needs to be done?"
-                          value={todoInput}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setTodoInput(e.target.value)
-                          }
-                          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                            e.key === 'Enter' && addTodo()
-                          }
+                      <span className="flex min-w-0 items-center gap-3">
+                        <input
+                          type="checkbox"
+                          id={`todo-check-${todo.id}`}
+                          className="h-4 w-4 shrink-0"
+                          checked={todo.completed}
+                          onChange={() => toggleTodo(todo.id)}
                         />
-                        <Button id="todo-add" onClick={addTodo}>
-                          Add
-                        </Button>
-                      </div>
-
-                      <ul className="space-y-2">
-                        {todos.map((todo) => (
-                          <li
-                            key={todo.id}
-                            className={`todo-item-${todo.id} p-3 border rounded-md flex justify-between items-center group ${todo.completed ? 'opacity-50 line-through' : ''}`}
-                          >
-                            <span className="flex items-center gap-3">
-                              <input
-                                type="checkbox"
-                                id={`todo-check-${todo.id}`}
-                                className="h-4 w-4"
-                                checked={todo.completed}
-                                onChange={() => toggleTodo(todo.id)}
-                              />
-                              <span id={`todo-text-${todo.id}`}>{todo.text}</span>
-                            </span>
-                            {todoToDelete === todo.id ? (
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-muted-foreground mr-1">Sure?</span>
-                                <button
-                                  id={`todo-confirm-delete`}
-                                  onClick={() => {
-                                    deleteTodo(todo.id);
-                                    setTodoToDelete(null);
-                                  }}
-                                  className="text-xs px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                                >
-                                  Yes
-                                </button>
-                                <button
-                                  id={`todo-cancel-delete`}
-                                  onClick={() => setTodoToDelete(null)}
-                                  className="text-xs px-2 py-1 bg-slate-200 text-slate-800 rounded hover:bg-slate-300 transition-colors dark:bg-slate-700 dark:text-slate-200"
-                                >
-                                  No
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                id={`todo-delete-${todo.id}`}
-                                onClick={() => setTodoToDelete(todo.id)}
-                                className="text-red-500 opacity-50 hover:opacity-100 transition-opacity"
-                              >
-                                Delete
-                              </button>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </CarouselItem>
-              </CarouselContent>
-              <CarouselPrevious className="carousel-prev" />
-              <CarouselNext className="carousel-next" />
-            </Carousel>
+                        <span
+                          id={`todo-text-${todo.id}`}
+                          className={`truncate ${todo.completed ? 'line-through' : ''}`}
+                        >
+                          {todo.text}
+                        </span>
+                      </span>
+                      <button
+                        id={`todo-delete-${todo.id}`}
+                        type="button"
+                        onClick={() => deleteTodo(todo.id)}
+                        className="shrink-0 text-sm font-medium text-red-500 opacity-70 transition-opacity hover:opacity-100"
+                      >
+                        Delete
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
         </section>
 

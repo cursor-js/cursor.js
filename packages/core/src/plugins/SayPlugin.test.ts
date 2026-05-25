@@ -49,6 +49,18 @@ describe('SayPlugin', () => {
     await new Promise((resolve) => setTimeout(resolve, 300));
   });
 
+  it('removes the previous bubble when a new say call starts', async () => {
+    cursor.use(new SayPlugin());
+
+    cursor.say('First line', { duration: 10_000 }).say('Second line', { duration: 50 });
+    await cursor;
+
+    const bubbles = Array.from(document.querySelectorAll('.cursor-js-speech-bubble'));
+
+    expect(bubbles).toHaveLength(1);
+    expect(bubbles[0].textContent).toBe('Second line');
+  });
+
   it('keeps cursor speech bubbles inside the viewport', async () => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 320 });
     Object.defineProperty(window, 'innerHeight', { configurable: true, value: 240 });

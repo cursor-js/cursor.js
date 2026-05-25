@@ -21,6 +21,14 @@ The `GeminiTTSPlugin` utilizes Gemini's Text-to-Speech APIs to read text aloud w
   name="GeminiTTSOptions"
 />
 
+### TTS Modes
+
+Gemini TTS requests are queued by default. This keeps narrated demos clear: the cursor can continue moving while one line is being spoken, but the next generated voice line will not start until the current line finishes.
+
+- `queue` is best for product demos, tutorials, and narrated onboarding flows.
+- `interrupt` is best for interactive assistants where the newest user context should replace the previous narration.
+- `overlap` is best for deliberate audio layering or short effects, and is not recommended for normal narration.
+
 ### Usage
 
 ```ts
@@ -30,10 +38,13 @@ import { GeminiTTSPlugin } from '@cursor.js/pro';
 const cursor = new Cursor();
 
 // Configure the TTS plugin with speaker options
-cursor.use(new GeminiTTSPlugin({
-  speaker: 'Aoede',
-  style: 'conversational'
-}));
+cursor.use(
+  new GeminiTTSPlugin({
+    mode: 'queue',
+    speaker: 'Aoede',
+    style: 'conversational',
+  }),
+);
 
 // Use the say() action to generate TTS natively
 cursor.hover('.btn').say('I have a realistic voice now.').click();
