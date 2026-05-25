@@ -91,9 +91,11 @@ waitForUser.resume();
 
 `WaitForUserPlugin` owns the waiting logic only. If you set `spotlight: true` or `backdrop: true`, install `SpotlightPlugin` as well so the highlighted frame and dimmed backdrop can be rendered by a dedicated visual plugin.
 
+When a `target` is provided, the wait panel is positioned below the target so it can work with `spotlight` without covering the highlighted element.
+
 ## Floating Variant
 
-If you want the handoff panel to stay near the cursor with Floating UI collision handling, install `FloatingPlugin` or pass `createFloatingWaitForUserPositioner()` manually.
+If you want the handoff panel to use Floating UI collision handling, install `FloatingPlugin` or pass `createFloatingWaitForUserPositioner()` manually. When `target` is provided, the floating positioner uses the target element as its reference point; otherwise it falls back to the cursor element.
 
 ## Options
 

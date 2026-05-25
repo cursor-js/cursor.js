@@ -5,7 +5,7 @@ description: A plugin that enables the cursor to speak text aloud using the Spee
 
 ## SpeechPlugin
 
-The `SpeechPlugin` uses the web's native Speech Synthesis API to read text aloud synchronously with your cursor flows, enhancing presentations and automated demos.
+The `SpeechPlugin` uses the web's native Speech Synthesis API to read text aloud with your cursor flows, enhancing presentations and automated demos.
 
 ### Demo
 
@@ -21,16 +21,28 @@ The `SpeechPlugin` uses the web's native Speech Synthesis API to read text aloud
   name="SpeechPluginOptions"
 />
 
+### Speech Modes
+
+Speech requests are queued by default. This keeps narrated tours clear: the cursor can keep moving while one line is being spoken, but the next line will not start until the current line finishes.
+
+- `queue` is best for product demos, tutorials, and narrated onboarding flows.
+- `interrupt` is best for interactive assistants where the newest user context should replace the previous narration.
+- `overlap` is best for deliberate audio layering or short effects, and is not recommended for normal narration.
+
 ### Usage
 
 ```ts
-import { Cursor, SpeechPlugin } from '@cursor.js/core';
+import { Cursor, SayPlugin, SpeechPlugin } from '@cursor.js/core';
 
 const cursor = new Cursor();
 
-cursor.use(new SpeechPlugin({
-  voice: 'Google US English' // optional options
-}));
+cursor.use(new SayPlugin());
+cursor.use(
+  new SpeechPlugin({
+    mode: 'queue',
+    voiceName: 'Google US English',
+  }),
+);
 
-cursor.hover('.btn').speak('I am about to click this button').click();
+cursor.hover('.btn').say('I am about to click this button.').click();
 ```

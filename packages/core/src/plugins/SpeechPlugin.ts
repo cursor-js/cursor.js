@@ -2,6 +2,13 @@ import type { Cursor } from '../core/Cursor';
 import type { CursorPlugin } from './CursorPlugin';
 import { SayPlugin as SayPluginClass } from './SayPlugin';
 
+export type SpeechMode = 'queue' | 'interrupt' | 'overlap';
+
+interface SpeechPlayback {
+  started: Promise<void>;
+  finished: Promise<void>;
+}
+
 declare module './SayPlugin' {
   interface SayOptions {
     speech?: {
@@ -13,6 +20,16 @@ declare module './SayPlugin' {
 
 export interface SpeechPluginOptions {
   enabled?: boolean;
+  /**
+   * Controls how new speech requests interact with active narration.
+   *
+   * - `queue`: wait for the current narration to finish before starting the next one.
+   * - `interrupt`: stop the current narration and play the newest request immediately.
+   * - `overlap`: allow narration requests to play without waiting for each other.
+   *
+   * @default 'queue'
+   */
+  mode?: SpeechMode;
   lang?: string;
   rate?: number;
   pitch?: number;
@@ -32,10 +49,12 @@ export class SpeechPlugin implements CursorPlugin {
   };
   private cursor: Cursor | null = null;
   private speechRequestedHandler: ((text: string, options?: any) => Promise<void>) | null = null;
+  private playbackQueue: Promise<void> = Promise.resolve();
 
   constructor(options: SpeechPluginOptions = {}) {
     this.options = {
       enabled: options.enabled ?? true,
+      mode: options.mode ?? 'queue',
       lang: options.lang ?? 'en-US',
       rate: options.rate ?? 1,
       pitch: options.pitch ?? 1,
@@ -58,11 +77,11 @@ export class SpeechPlugin implements CursorPlugin {
         this.options.waitUntilFinished;
 
       if (shouldSpeak) {
-        const playPromise = this.speak(text);
+        const playback = this.play(text);
+        await playback.started;
+
         if (waitUntilFinished) {
-          await playPromise;
-        } else {
-          playPromise.catch((e) => console.error('[SpeechPlugin]', e));
+          await playback.finished;
         }
       }
     };
@@ -93,6 +112,53 @@ export class SpeechPlugin implements CursorPlugin {
     this.cursor = null;
   }
 
+  private play(text: string): SpeechPlayback {
+    if (this.options.mode === 'queue') {
+      return this.enqueueSpeech(text);
+    }
+
+    if (this.options.mode === 'interrupt') {
+      this.interruptActiveSpeech();
+    }
+
+    const finished = this.speak(text);
+    finished.catch((e) => console.error('[SpeechPlugin]', e));
+
+    return {
+      started: Promise.resolve(),
+      finished,
+    };
+  }
+
+  private enqueueSpeech(text: string): SpeechPlayback {
+    const previousPlayback = this.playbackQueue.catch(() => {});
+    let resolveStarted: () => void = () => {};
+    const started = new Promise<void>((resolve) => {
+      resolveStarted = resolve;
+    });
+
+    const currentPlayback = previousPlayback.then(() => {
+      resolveStarted();
+      return this.speak(text);
+    });
+
+    this.playbackQueue = currentPlayback.catch(() => {});
+    currentPlayback.catch((e) => console.error('[SpeechPlugin]', e));
+
+    return {
+      started,
+      finished: currentPlayback,
+    };
+  }
+
+  private interruptActiveSpeech() {
+    this.playbackQueue = Promise.resolve();
+
+    if ('speechSynthesis' in window) {
+      speechSynthesis.cancel();
+    }
+  }
+
   private speak(text: string): Promise<void> {
     return new Promise((resolve) => {
       if (!('speechSynthesis' in window)) {
@@ -100,10 +166,6 @@ export class SpeechPlugin implements CursorPlugin {
         resolve();
         return;
       }
-
-      // Cancel any ongoing speech
-      speechSynthesis.cancel();
-
       const utterance = new SpeechSynthesisUtterance(text);
       const lang = this.options.lang;
 
