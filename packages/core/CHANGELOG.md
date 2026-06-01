@@ -1,5 +1,17 @@
 # @cursor.js/core
 
+## 0.9.0
+
+### Minor Changes
+
+- 538c76a: Add `startPoint` support to `Cursor` so new cursor instances can spawn from an element, selector, or explicit coordinates instead of flashing from the top-left corner. New cursors now also fade in from their initial position, and UI examples such as `CursorPlayer` can pass the clicked trigger element directly into the core API.
+- 4b35922: Add speech playback modes to `SpeechPlugin`, defaulting narration to queued playback so consecutive speech requests do not overlap.
+
+### Patch Changes
+
+- 8dda5e8: Stop destroying cursors from letting in-flight typing and queued interactions continue after the player is stopped.
+- 422640e: Allow `SpeechPlugin` to provide browser narration fallback for Gemini TTS requests without causing duplicate speech when both plugins are installed.
+
 ## 0.8.0
 
 ### Minor Changes
