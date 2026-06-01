@@ -513,6 +513,7 @@ c.move('#btn1')
     if (plugins.geminiTts) {
       cursor.use(
         new GeminiTTSPlugin({
+          licenseKey: process.env.NEXT_PUBLIC_CURSORJS_INTERNAL_DEMO_LICENSE_KEY,
           speaker: geminiTtsConfig.speaker,
           language: geminiTtsConfig.language,
           model: 'gemini-3.1-flash-tts-preview',

@@ -70,20 +70,11 @@ export class SpeechPlugin implements CursorPlugin {
     // but SpeechPlugin now also listens to 'speech_requested' via event emitter.
 
     this.speechRequestedHandler = async (text: string, options?: any) => {
-      const shouldSpeak = this.options.enabled && options?.speak !== false;
-      const waitUntilFinished =
-        options?.speech?.waitUntilFinished ??
-        options?.waitUntilFinished ??
-        this.options.waitUntilFinished;
-
-      if (shouldSpeak) {
-        const playback = this.play(text);
-        await playback.started;
-
-        if (waitUntilFinished) {
-          await playback.finished;
-        }
+      if (cursor.getPlugin('gemini-tts')) {
+        return;
       }
+
+      await this.speakFallback(text, options);
     };
 
     cursor.on('speech_requested', this.speechRequestedHandler);
@@ -101,6 +92,23 @@ export class SpeechPlugin implements CursorPlugin {
     // Actually, sayPlugin now emits `speech_requested`. So we DO NOT need to override `onBeforeSay`.
     // We will just leave it. Or remove the override.
     // Let's remove the SayPlugin override to prevent double-speaking.
+  }
+
+  async speakFallback(text: string, options?: any): Promise<void> {
+    const shouldSpeak = this.options.enabled && options?.speak !== false;
+    const waitUntilFinished =
+      options?.speech?.waitUntilFinished ??
+      options?.waitUntilFinished ??
+      this.options.waitUntilFinished;
+
+    if (shouldSpeak) {
+      const playback = this.play(text);
+      await playback.started;
+
+      if (waitUntilFinished) {
+        await playback.finished;
+      }
+    }
   }
 
   onDestroy(): void {

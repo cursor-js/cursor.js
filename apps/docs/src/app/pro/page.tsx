@@ -1,20 +1,16 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import Script from 'next/script';
 import { ArrowRight, Check, Gem, X } from 'lucide-react';
-import {
-  getProPurchaseHref,
-  lemonJsScriptSrc,
-  lemonSqueezyButtonClassName,
-} from '@/lib/pro-purchase';
+import { getProPurchaseHref } from '@/lib/pro-purchase';
 import { ProHeroCursor } from '@/components/app/pro-hero-cursor';
 import { ProPluginShowcase } from '@/components/app/pro-plugin-showcase';
+import { ProPurchaseButton } from '@/components/app/pro-purchase-button';
 
 const proPlugins = [
   {
     title: 'Gemini TTS',
     description:
-      'Generate premium voiceovers with license-aware credits and a production-friendly TTS flow.',
+      'Generate premium voiceovers with license-aware approval and a production-friendly TTS flow.',
     demoPath: '/demos/geminitts',
     docsPath: '/docs/plugins/geminitts',
   },
@@ -67,15 +63,42 @@ export const metadata: Metadata = {
   description: 'Advanced features for Cursor.js',
 };
 
-export default function ProLandingPage() {
+interface ProLandingPageProps {
+  searchParams?: Promise<{
+    checkout?: string;
+    reason?: string;
+  }>;
+}
+
+export default async function ProLandingPage({ searchParams }: ProLandingPageProps) {
+  const params = await searchParams;
+  const checkoutSucceeded = params?.checkout === 'success';
+  const checkoutMessage =
+    params?.reason === 'base-license-already-owned'
+      ? 'This account already owns a Cursor.js Pro license. Use a different account for another Pro purchase.'
+      : params?.reason === 'gemini-tts-license-already-owned'
+        ? 'This account already has a Gemini TTS subscription. Use a different account for another subscription.'
+        : null;
   const soloHref = getProPurchaseHref('solo');
   const teamHref = getProPurchaseHref('team');
+  const geminiTtsSoloHref = getProPurchaseHref('geminiTtsSolo');
+  const geminiTtsTeamHref = getProPurchaseHref('geminiTtsTeam');
 
   return (
     <>
-      <Script src={lemonJsScriptSrc} strategy="afterInteractive" />
-
       <div className="mx-auto max-w-6xl px-4 py-16">
+        {checkoutSucceeded && (
+          <div className="mb-8 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-900/60 dark:bg-green-950/30 dark:text-green-100">
+            Purchase received. Your license will be connected after Lemon Squeezy confirms the
+            webhook.
+          </div>
+        )}
+        {checkoutMessage && (
+          <div className="mb-8 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+            {checkoutMessage}
+          </div>
+        )}
+
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center">
           <div className="text-center lg:text-left">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-sm font-medium text-orange-700 dark:border-orange-900/60 dark:bg-orange-950/20 dark:text-orange-200">
@@ -108,6 +131,10 @@ export default function ProLandingPage() {
                 className="font-medium text-foreground hover:underline"
               >
                 Read the Pro installation guide
+              </Link>{' '}
+              or{' '}
+              <Link href="/dashboard" className="font-medium text-foreground hover:underline">
+                open the Gemini TTS dashboard
               </Link>
               .
             </p>
@@ -163,12 +190,7 @@ export default function ProLandingPage() {
                       <div className="mb-4 mt-2 text-sm font-normal leading-tight text-indigo-700/80 dark:text-indigo-300/80">
                         Perfect for indie hackers, freelancers, and solo devs.
                       </div>
-                      <a
-                        href={soloHref}
-                        className={`${lemonSqueezyButtonClassName} inline-flex h-9 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring`}
-                      >
-                        Buy Pro Solo
-                      </a>
+                      <ProPurchaseButton href={soloHref}>Buy Pro Solo</ProPurchaseButton>
                     </div>
                   </th>
                   <th className="min-w-[250px] border-b p-4 pt-10 align-top font-medium">
@@ -186,12 +208,9 @@ export default function ProLandingPage() {
                       <div className="mb-4 mt-2 text-sm font-normal leading-tight text-muted-foreground">
                         For agencies, startups, and companies.
                       </div>
-                      <a
-                        href={teamHref}
-                        className={`${lemonSqueezyButtonClassName} inline-flex h-9 w-full items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring`}
-                      >
+                      <ProPurchaseButton href={teamHref} variant="secondary">
                         Buy Pro Team
-                      </a>
+                      </ProPurchaseButton>
                     </div>
                   </th>
                 </tr>
@@ -367,6 +386,64 @@ export default function ProLandingPage() {
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <div id="gemini-tts-add-on" className="mt-8 scroll-mt-24">
+            <div className="mb-4">
+              <h3 className="text-2xl font-bold tracking-tight">Gemini TTS add-on</h3>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+                Hosted voice generation for Pro licenses. Requests are reviewed in the dashboard
+                before uncached voice lines are generated.
+              </p>
+            </div>
+
+            <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="min-w-[240px] border-b p-4 align-top font-medium">Add-on</th>
+                    <th className="min-w-[250px] border-b bg-indigo-50/50 p-4 align-top font-medium dark:bg-indigo-950/20">
+                      Pro Solo
+                    </th>
+                    <th className="min-w-[250px] border-b p-4 align-top font-medium">Pro Team</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y text-muted-foreground">
+                  <tr className="transition-colors hover:bg-muted/30">
+                    <td className="p-4">
+                      <div className="font-medium text-foreground">
+                        Gemini TTS hosted generation
+                      </div>
+                      <div className="mt-1 text-xs">
+                        CDN cache, license-key requests, dashboard approval, and abuse cleanup.
+                      </div>
+                    </td>
+                    <td className="bg-indigo-50/50 p-4 dark:bg-indigo-950/20">
+                      <div className="flex flex-col gap-3">
+                        <div>
+                          <strong className="font-semibold text-foreground">$5/month</strong>
+                          <span className="ml-1 text-xs">for Solo voice approvals</span>
+                        </div>
+                        <ProPurchaseButton href={geminiTtsSoloHref}>
+                          Buy Gemini TTS Solo
+                        </ProPurchaseButton>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex flex-col gap-3">
+                        <div>
+                          <strong className="font-semibold text-foreground">$15/month</strong>
+                          <span className="ml-1 text-xs">for Team voice approvals</span>
+                        </div>
+                        <ProPurchaseButton href={geminiTtsTeamHref} variant="secondary">
+                          Buy Gemini TTS Team
+                        </ProPurchaseButton>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
