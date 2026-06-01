@@ -29,18 +29,38 @@ Gemini TTS requests are queued by default. This keeps narrated demos clear: the 
 - `interrupt` is best for interactive assistants where the newest user context should replace the previous narration.
 - `overlap` is best for deliberate audio layering or short effects, and is not recommended for normal narration.
 
+### License and Approval Flow
+
+Hosted Gemini TTS generation is a paid add-on for Pro licenses. Customers purchase the Gemini TTS add-on through Lemon Squeezy, receive a license key, and pass that key to `GeminiTTSPlugin`.
+
+When the plugin asks for a voice line, it first checks the Cursor.js CDN. If the exact voice line was already generated, playback can use the cached file immediately. If there is no cached voice, the request is sent to the Gemini TTS API with the license key and appears in the customer panel.
+
+Sign in with Google to review pending voice requests in the [/dashboard/gemini-tts](/dashboard/gemini-tts) panel. Requests are sorted by date, can be selected in bulk, and are generated only after approval. If a request is abusive or incorrect, delete it from the panel instead of approving it.
+
+> New voice lines require account-panel approval before hosted generation. Open the panel and approve the pending Gemini TTS requests when a demo asks for uncached narration.
+
+### License Key
+
+Add your Gemini TTS subscription key to the plugin configuration. Cached CDN voices can still play without a key. For uncached voices, `GeminiTTSPlugin` requires the key before sending a generation request to the hosted API.
+
+When `SpeechPlugin` is also installed, uncached narration falls back to the browser Web Speech API if the Gemini TTS license key is missing. The warning icon in the bottom-right corner links back to this setup section.
+
 ### Usage
 
 ```ts
-import { Cursor } from '@cursor.js/core';
+import { Cursor, SpeechPlugin } from '@cursor.js/core';
 import { GeminiTTSPlugin } from '@cursor.js/pro';
 
 const cursor = new Cursor();
+
+// Optional browser fallback when a hosted voice is not cached and no key is configured
+cursor.use(new SpeechPlugin());
 
 // Configure the TTS plugin with speaker options
 cursor.use(
   new GeminiTTSPlugin({
     mode: 'queue',
+    licenseKey: 'your-gemini-tts-license-key',
     speaker: 'Aoede',
     style: 'conversational',
   }),

@@ -1,4 +1,5 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
+import { UserMenu } from '@/components/app/user-menu';
 
 export function baseOptions(): BaseLayoutProps {
   return {
@@ -26,6 +27,11 @@ export function baseOptions(): BaseLayoutProps {
         text: 'Create',
         url: '/create',
         active: 'nested-url',
+      },
+      {
+        type: 'custom',
+        secondary: true,
+        children: <UserMenu />,
       },
     ],
   };

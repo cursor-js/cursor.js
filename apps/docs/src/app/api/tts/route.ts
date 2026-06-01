@@ -1,12 +1,8 @@
 import { NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
 import crypto from 'crypto';
 import { db } from '@/lib/db';
-import { ttsCache, licenses } from '@/lib/db/schema';
-import { eq, sql } from 'drizzle-orm';
-import { generateGeminiTTS } from '@/lib/gemini';
-
-const CDN_AUDIO_BASE_URL = 'https://cdn.cursorjs.com/voices';
+import { ttsCache, ttsRequests, licenses } from '@/lib/db/schema';
+import { and, eq, inArray } from 'drizzle-orm';
 
 interface TTSRequestBody {
   prompt?: unknown;
@@ -35,6 +31,18 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0;
 }
 
+function getRequiredBasePlans(plan: string): string[] | null {
+  if (plan === 'gemini_tts_team') {
+    return ['pro_team'];
+  }
+
+  if (plan === 'gemini_tts_solo') {
+    return ['pro_solo', 'pro_team'];
+  }
+
+  return null;
+}
+
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as TTSRequestBody;
@@ -53,10 +61,23 @@ export async function POST(req: Request) {
       );
     }
 
-    let isAuthorized = false;
     const licenseKeyValue = isNonEmptyString(licenseKey) ? licenseKey : undefined;
 
-    if (licenseKeyValue) {
+    if (!licenseKeyValue) {
+      return NextResponse.json({ error: 'License key is required' }, { status: 401 });
+    }
+
+    const internalDemoLicenseKey =
+      process.env.NEXT_PUBLIC_CURSORJS_INTERNAL_DEMO_LICENSE_KEY?.trim();
+    const internalDemoUserId = process.env.CURSORJS_INTERNAL_DEMO_USER_ID?.trim();
+    const isInternalDemoRequest =
+      Boolean(internalDemoLicenseKey) &&
+      Boolean(internalDemoUserId) &&
+      licenseKeyValue === internalDemoLicenseKey;
+    let requestUserId = internalDemoUserId;
+    let requestLicenseId = 'internal-demo';
+
+    if (!isInternalDemoRequest) {
       const [license] = await db
         .select()
         .from(licenses)
@@ -71,17 +92,47 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Your license is not active' }, { status: 403 });
       }
 
-      if (license.credits <= 0) {
-        return NextResponse.json({ error: 'Your TTS credit limit has been reached' }, { status: 402 });
+      const requiredBasePlans = getRequiredBasePlans(license.plan);
+
+      if (!requiredBasePlans) {
+        return NextResponse.json(
+          { error: 'A Gemini TTS add-on license is required' },
+          { status: 403 },
+        );
       }
 
-      isAuthorized = true;
-    } else {
-      isAuthorized = true;
+      if (!license.userId) {
+        return NextResponse.json(
+          { error: 'This Gemini TTS license is not assigned to a user' },
+          { status: 403 },
+        );
+      }
+
+      const [baseLicense] = await db
+        .select({ id: licenses.id })
+        .from(licenses)
+        .where(
+          and(
+            eq(licenses.userId, license.userId),
+            eq(licenses.status, 'active'),
+            inArray(licenses.plan, requiredBasePlans),
+          ),
+        )
+        .limit(1);
+
+      if (!baseLicense) {
+        return NextResponse.json(
+          { error: 'Gemini TTS requires an active Cursor.js Pro license' },
+          { status: 403 },
+        );
+      }
+
+      requestUserId = license.userId;
+      requestLicenseId = license.id;
     }
 
-    if (!isAuthorized) {
-      return NextResponse.json({ error: 'License key is required' }, { status: 401 });
+    if (!requestUserId) {
+      return NextResponse.json({ error: 'Internal demo owner is not configured' }, { status: 500 });
     }
 
     const prompt = isNonEmptyString(body.prompt) ? body.prompt : style;
@@ -94,49 +145,38 @@ export async function POST(req: Request) {
       model,
     };
     const hash = generateHash(hashPayload);
-    const audioPath = `tts/${hash}.wav`;
-    const audioUrl = `${CDN_AUDIO_BASE_URL}/${hash}.wav`;
-
-    console.log(`[TTS] Generating audio for ${hash}: ${text.substring(0, 30)}...`);
-    const audioBuffer = await generateGeminiTTS(text, speaker, prompt, model);
-
-    await put(audioPath, audioBuffer, {
-      access: 'public',
-      contentType: 'audio/wav',
-      addRandomSuffix: false,
-      allowOverwrite: true,
-    });
 
     const [cachedEntry] = await db.select().from(ttsCache).where(eq(ttsCache.hash, hash)).limit(1);
-    const cacheValues = {
-      hash,
+
+    if (cachedEntry) {
+      return NextResponse.json({
+        url: cachedEntry.audioUrl,
+        hash,
+        cached: true,
+      });
+    }
+
+    const requestValues = {
+      id: hash,
       prompt,
       text,
       speaker,
       style,
       model,
       language,
-      audioUrl,
+      userId: requestUserId,
+      licenseId: requestLicenseId,
+      status: 'pending',
+      requestedAt: new Date(),
+      updatedAt: new Date(),
     };
 
-    if (cachedEntry) {
-      await db.update(ttsCache).set(cacheValues).where(eq(ttsCache.hash, hash));
-    } else {
-      await db.insert(ttsCache).values(cacheValues);
-    }
-
-    if (licenseKeyValue) {
-      await db
-        .update(licenses)
-        .set({ credits: sql`${licenses.credits} - 1` })
-        .where(eq(licenses.key, licenseKeyValue));
-    }
-
-    return NextResponse.json({
-      url: audioUrl,
-      hash,
-      cached: false,
+    await db.insert(ttsRequests).values(requestValues).onConflictDoUpdate({
+      target: ttsRequests.id,
+      set: requestValues,
     });
+
+    return NextResponse.json({ hash, status: 'pending' }, { status: 202 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('API /tts error:', error);

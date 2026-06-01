@@ -100,6 +100,19 @@ describe('SpeechPlugin', () => {
     expect(speakSpy).toHaveBeenCalledTimes(2);
   });
 
+  it('lets Gemini TTS own speech requests when both plugins are installed', async () => {
+    const fallbackSpy = vi.spyOn(speechPlugin, 'speakFallback').mockResolvedValue(undefined);
+
+    cursor.use({
+      name: 'gemini-tts',
+      install: () => {},
+    });
+
+    await cursor.emitAsync('speech_requested', 'handled by Gemini TTS');
+
+    expect(fallbackSpy).not.toHaveBeenCalled();
+  });
+
   it('should work with Speak option in say', () => {
     // Just verify the hook is called - actual speech synthesis
     // requires browser APIs that are hard to mock

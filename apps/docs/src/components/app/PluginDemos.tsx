@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Volume2, VolumeX } from 'lucide-react';
+import { AlertCircle, Volume2, VolumeX } from 'lucide-react';
 
 export function ThemeDemo() {
   useEffect(() => {
@@ -552,6 +552,7 @@ export function GeminiTTSDemo() {
       cursor.use(new SayPlugin({}));
       cursor.use(
         new GeminiTTSPlugin({
+          licenseKey: process.env.NEXT_PUBLIC_CURSORJS_INTERNAL_DEMO_LICENSE_KEY,
           speaker: 'Aoede',
           style: 'conversational',
           model: 'gemini-3.1-flash-tts-preview',
@@ -585,7 +586,15 @@ export function GeminiTTSDemo() {
       {!started ? (
         <Button onClick={() => setStarted(true)}>Play Demo</Button>
       ) : (
-        <Button id="gemini-tts-btn">Gemini TTS Action</Button>
+        <>
+          <Button id="gemini-tts-btn">Gemini TTS Action</Button>
+          <div className="absolute bottom-4 right-4 max-w-[240px] rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 shadow-sm dark:border-amber-900/60 dark:bg-amber-950/80 dark:text-amber-100">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>panele gidip lütfen onaylayınız.</span>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
@@ -723,13 +732,13 @@ export function WaitForUserDemo() {
         .wait(400)
         .do((c) =>
           (c as any).waitForUser({
-          target: '#wait-for-user-confirm',
-          event: 'click',
-          message: 'Your turn: accept the handoff and confirm this step.',
-          spotlight: true,
-          backdrop: true,
-          pauseEffects: true,
-          resumeLabel: 'Skip manually',
+            target: '#wait-for-user-confirm',
+            event: 'click',
+            message: 'Your turn: accept the handoff and confirm this step.',
+            spotlight: true,
+            backdrop: true,
+            pauseEffects: true,
+            resumeLabel: 'Skip manually',
           }),
         );
 
@@ -761,8 +770,8 @@ export function WaitForUserDemo() {
     <div className="box-border flex h-full w-full max-w-sm flex-col justify-center space-y-4 overflow-hidden p-4 mx-auto text-left">
       <h4 className="text-sm font-semibold mb-2">Wait For User Plugin</h4>
       <p className="text-xs text-muted-foreground mb-4">
-        Pause the scripted flow, spotlight the target, and let a real person complete the next
-        step before the cursor continues.
+        Pause the scripted flow, spotlight the target, and let a real person complete the next step
+        before the cursor continues.
       </p>
 
       <div className="space-y-3 rounded-xl border bg-slate-50 p-4 dark:bg-slate-900/40">
@@ -771,8 +780,8 @@ export function WaitForUserDemo() {
         </Button>
 
         <label className="flex items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-xs">
-          <input id="wait-for-user-consent" type="checkbox" className="size-4" />
-          I reviewed this step and I am ready to continue.
+          <input id="wait-for-user-consent" type="checkbox" className="size-4" />I reviewed this
+          step and I am ready to continue.
         </label>
 
         <Button
@@ -866,8 +875,8 @@ export function FloatingWaitForUserDemo() {
     <div className="box-border flex h-full w-full max-w-sm flex-col justify-center space-y-4 overflow-hidden p-4 mx-auto text-left">
       <h4 className="text-sm font-semibold mb-2">Floating Plugin + Wait For User</h4>
       <p className="text-xs text-muted-foreground mb-4">
-        Uses Floating UI to keep the handoff panel near the cursor while still supporting
-        spotlight focus and speech/TTS narration.
+        Uses Floating UI to keep the handoff panel near the cursor while still supporting spotlight
+        focus and speech/TTS narration.
       </p>
 
       <div className="space-y-3 rounded-xl border bg-slate-50 p-4 dark:bg-slate-900/40">
@@ -876,8 +885,8 @@ export function FloatingWaitForUserDemo() {
         </Button>
 
         <label className="flex items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-xs">
-          <input id="floating-wait-consent" type="checkbox" className="size-4" />
-          I checked the step and I want the cursor flow to continue.
+          <input id="floating-wait-consent" type="checkbox" className="size-4" />I checked the step
+          and I want the cursor flow to continue.
         </label>
 
         <Button
@@ -893,7 +902,8 @@ export function FloatingWaitForUserDemo() {
           className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground"
         >
           {status === 'idle' && 'The cursor will trigger a floating handoff.'}
-          {status === 'waiting' && 'Waiting for a real user click with the floating panel anchored near the cursor.'}
+          {status === 'waiting' &&
+            'Waiting for a real user click with the floating panel anchored near the cursor.'}
           {status === 'confirmed' && 'Confirmed. The floating handoff resumed successfully.'}
         </div>
       </div>
@@ -946,13 +956,19 @@ export function SpotlightDemo() {
         guided attention.
       </p>
       <div className="grid gap-3">
-        <div id="spotlight-card-a" className="rounded-xl border bg-slate-50 p-4 dark:bg-slate-900/40">
+        <div
+          id="spotlight-card-a"
+          className="rounded-xl border bg-slate-50 p-4 dark:bg-slate-900/40"
+        >
           <div className="text-sm font-medium">Primary callout</div>
           <div className="mt-1 text-xs text-muted-foreground">
             Uses the dimmed backdrop to isolate the next target.
           </div>
         </div>
-        <div id="spotlight-card-b" className="rounded-xl border bg-slate-50 p-4 dark:bg-slate-900/40">
+        <div
+          id="spotlight-card-b"
+          className="rounded-xl border bg-slate-50 p-4 dark:bg-slate-900/40"
+        >
           <div className="text-sm font-medium">Inline highlight</div>
           <div className="mt-1 text-xs text-muted-foreground">
             Keeps the frame without dimming the rest of the screen.
