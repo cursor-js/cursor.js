@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { db } from '@/lib/db';
 import { ttsCache, ttsRequests, licenses } from '@/lib/db/schema';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, lt } from 'drizzle-orm';
 
 interface TTSRequestBody {
   prompt?: unknown;
@@ -22,6 +22,14 @@ interface TTSHashPayload {
   style: string;
   model: string;
 }
+
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Max-Age': '86400',
+};
+const PENDING_REQUEST_TTL_DAYS = 7;
 
 function generateHash(payload: TTSHashPayload): string {
   return crypto.createHash('sha1').update(JSON.stringify(payload)).digest('hex');
@@ -43,8 +51,29 @@ function getRequiredBasePlans(plan: string): string[] | null {
   return null;
 }
 
+function withCors(response: NextResponse): NextResponse {
+  for (const [header, value] of Object.entries(CORS_HEADERS)) {
+    response.headers.set(header, value);
+  }
+
+  return response;
+}
+
+export async function OPTIONS() {
+  return withCors(new NextResponse(null, { status: 204 }));
+}
+
 export async function POST(req: Request) {
   try {
+    const stalePendingCutoff = new Date(
+      Date.now() - PENDING_REQUEST_TTL_DAYS * 24 * 60 * 60 * 1000,
+    );
+
+    await db
+      .update(ttsRequests)
+      .set({ status: 'deleted', updatedAt: new Date() })
+      .where(and(eq(ttsRequests.status, 'pending'), lt(ttsRequests.requestedAt, stalePendingCutoff)));
+
     const body = (await req.json()) as TTSRequestBody;
     const { text, speaker, style, language, model, licenseKey } = body;
 
@@ -55,16 +84,18 @@ export async function POST(req: Request) {
       !isNonEmptyString(language) ||
       !isNonEmptyString(model)
     ) {
-      return NextResponse.json(
-        { error: 'text, speaker, style, language and model are required properties' },
-        { status: 400 },
+      return withCors(
+        NextResponse.json(
+          { error: 'text, speaker, style, language and model are required properties' },
+          { status: 400 },
+        ),
       );
     }
 
     const licenseKeyValue = isNonEmptyString(licenseKey) ? licenseKey : undefined;
 
     if (!licenseKeyValue) {
-      return NextResponse.json({ error: 'License key is required' }, { status: 401 });
+      return withCors(NextResponse.json({ error: 'License key is required' }, { status: 401 }));
     }
 
     const internalDemoLicenseKey =
@@ -85,26 +116,29 @@ export async function POST(req: Request) {
         .limit(1);
 
       if (!license) {
-        return NextResponse.json({ error: 'Invalid license key' }, { status: 401 });
+        return withCors(NextResponse.json({ error: 'Invalid license key' }, { status: 401 }));
       }
 
       if (license.status !== 'active') {
-        return NextResponse.json({ error: 'Your license is not active' }, { status: 403 });
+        return withCors(
+          NextResponse.json({ error: 'Your license is not active' }, { status: 403 }),
+        );
       }
 
       const requiredBasePlans = getRequiredBasePlans(license.plan);
 
       if (!requiredBasePlans) {
-        return NextResponse.json(
-          { error: 'A Gemini TTS add-on license is required' },
-          { status: 403 },
+        return withCors(
+          NextResponse.json({ error: 'A Gemini TTS add-on license is required' }, { status: 403 }),
         );
       }
 
       if (!license.userId) {
-        return NextResponse.json(
-          { error: 'This Gemini TTS license is not assigned to a user' },
-          { status: 403 },
+        return withCors(
+          NextResponse.json(
+            { error: 'This Gemini TTS license is not assigned to a user' },
+            { status: 403 },
+          ),
         );
       }
 
@@ -121,9 +155,11 @@ export async function POST(req: Request) {
         .limit(1);
 
       if (!baseLicense) {
-        return NextResponse.json(
-          { error: 'Gemini TTS requires an active Cursor.js Pro license' },
-          { status: 403 },
+        return withCors(
+          NextResponse.json(
+            { error: 'Gemini TTS requires an active Cursor.js Pro license' },
+            { status: 403 },
+          ),
         );
       }
 
@@ -132,7 +168,9 @@ export async function POST(req: Request) {
     }
 
     if (!requestUserId) {
-      return NextResponse.json({ error: 'Internal demo owner is not configured' }, { status: 500 });
+      return withCors(
+        NextResponse.json({ error: 'Internal demo owner is not configured' }, { status: 500 }),
+      );
     }
 
     const prompt = isNonEmptyString(body.prompt) ? body.prompt : style;
@@ -149,11 +187,13 @@ export async function POST(req: Request) {
     const [cachedEntry] = await db.select().from(ttsCache).where(eq(ttsCache.hash, hash)).limit(1);
 
     if (cachedEntry) {
-      return NextResponse.json({
-        url: cachedEntry.audioUrl,
-        hash,
-        cached: true,
-      });
+      return withCors(
+        NextResponse.json({
+          url: cachedEntry.audioUrl,
+          hash,
+          cached: true,
+        }),
+      );
     }
 
     const requestValues = {
@@ -176,10 +216,12 @@ export async function POST(req: Request) {
       set: requestValues,
     });
 
-    return NextResponse.json({ hash, status: 'pending' }, { status: 202 });
+    return withCors(NextResponse.json({ hash, status: 'pending' }, { status: 202 }));
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('API /tts error:', error);
-    return NextResponse.json({ error: 'Internal Server Error', details: message }, { status: 500 });
+    return withCors(
+      NextResponse.json({ error: 'Internal Server Error', details: message }, { status: 500 }),
+    );
   }
 }
