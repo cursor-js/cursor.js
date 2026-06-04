@@ -274,6 +274,7 @@ type FeedbackSentiment = 'love' | 'hate';
 
 export function ClientPage({ hasSubmittedFeedback = false }: { hasSubmittedFeedback?: boolean }) {
   const { resolvedTheme } = useTheme();
+  const [isMounted, setIsMounted] = useState(false);
   // Todo state
   const [todos, setTodos] = useState(initialTodos);
   const [todoInput, setTodoInput] = useState('');
@@ -370,8 +371,22 @@ c.move('#btn1')
  .click('#btn2');
 `);
   const [activeTab, setActiveTab] = useState<'html' | 'js'>('html');
-  const editorColorMode = resolvedTheme === 'dark' ? 'dark' : 'light';
+  const isThemeReady = isMounted && (resolvedTheme === 'dark' || resolvedTheme === 'light');
+  const editorColorMode = isThemeReady && resolvedTheme === 'dark' ? 'dark' : 'light';
   const [sandboxSrcDoc, setSandboxSrcDoc] = useState('');
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isThemeReady) {
+      return;
+    }
+
+    document.documentElement.setAttribute('data-color-mode', editorColorMode);
+    document.body.setAttribute('data-color-mode', editorColorMode);
+  }, [editorColorMode, isThemeReady]);
 
   const runSandbox = useCallback(() => {
     let bodyContent = htmlCode;
@@ -2284,13 +2299,20 @@ c.move('#btn1')
                 </Button>
               </div>
               <div
-                data-color-mode={editorColorMode}
+                data-color-mode={isThemeReady ? editorColorMode : undefined}
                 className={`w-tc-editor-var relative flex-1 overflow-auto text-left ${
-                  editorColorMode === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-white text-slate-900'
+                  isThemeReady
+                    ? editorColorMode === 'dark'
+                      ? 'bg-slate-950 text-slate-100'
+                      : 'bg-white text-slate-900'
+                    : 'bg-background text-foreground'
                 }`}
               >
-                {activeTab === 'html' ? (
+                {!isThemeReady ? (
+                  <div className="h-full min-h-[352px]" />
+                ) : activeTab === 'html' ? (
                   <CodeEditor
+                    key={`html-${editorColorMode}`}
                     value={htmlCode}
                     language="html"
                     placeholder="Please enter HTML code."
@@ -2307,6 +2329,7 @@ c.move('#btn1')
                   />
                 ) : (
                   <CodeEditor
+                    key={`js-${editorColorMode}`}
                     value={jsCode}
                     language="js"
                     placeholder="Please enter JS code."
