@@ -2245,20 +2245,28 @@ c.move('#btn1')
             <p className="text-muted-foreground">Experiment right here using esm.sh</p>
           </div>
 
-          <div className="flex flex-col lg:flex-row w-full max-w-6xl mt-8 rounded-xl overflow-hidden border bg-white shadow-sm h-[400px]">
+          <div className="flex h-[400px] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-border/70 bg-background/95 shadow-sm dark:bg-card lg:flex-row">
             {/* Left - Code Editor */}
-            <div className="w-full lg:w-1/2 border-r flex flex-col bg-slate-50">
-              <div className="flex items-center justify-between px-4 h-12 border-b bg-slate-100 border-slate-200 shrink-0">
+            <div className="flex w-full flex-col border-b border-border/70 bg-muted/30 lg:w-1/2 lg:border-r lg:border-b-0">
+              <div className="flex h-12 shrink-0 items-center justify-between border-b border-border/70 bg-muted/70 px-4">
                 <div className="flex gap-2">
                   <button
                     onClick={() => setActiveTab('html')}
-                    className={`px-3 py-1.5 text-sm rounded-md transition-colors ${activeTab === 'html' ? 'bg-white shadow-sm text-slate-900 font-medium' : 'text-slate-500 hover:text-slate-900'}`}
+                    className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+                      activeTab === 'html'
+                        ? 'bg-background font-medium text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
                   >
                     index.html
                   </button>
                   <button
                     onClick={() => setActiveTab('js')}
-                    className={`px-3 py-1.5 text-sm rounded-md transition-colors ${activeTab === 'js' ? 'bg-white shadow-sm text-slate-900 font-medium' : 'text-slate-500 hover:text-slate-900'}`}
+                    className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+                      activeTab === 'js'
+                        ? 'bg-background font-medium text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
                   >
                     script.js
                   </button>
@@ -2267,13 +2275,13 @@ c.move('#btn1')
                   size="sm"
                   variant="secondary"
                   onClick={runSandbox}
-                  className="h-8 text-xs bg-slate-200 text-slate-900 hover:bg-slate-300 border shadow-none"
+                  className="h-8 border border-border/70 bg-background text-xs text-foreground shadow-none hover:bg-accent hover:text-accent-foreground"
                 >
                   <Play className="w-3 h-3 mr-1" /> Run
                 </Button>
               </div>
               <div
-                className="flex-1 overflow-auto bg-white relative text-left"
+                className="relative flex-1 overflow-auto bg-white text-left text-slate-900"
                 data-color-mode="light"
               >
                 {activeTab === 'html' ? (
@@ -2315,11 +2323,11 @@ c.move('#btn1')
             </div>
 
             {/* Right - Preview */}
-            <div className="w-full lg:w-1/2 bg-white flex flex-col relative h-[400px] lg:h-auto">
-              <div className="absolute top-0 left-0 right-0 h-12 flex items-center justify-center bg-slate-100 border-b border-slate-200 text-xs font-mono text-slate-500 rounded-t-xl lg:rounded-tl-none lg:rounded-tr-xl pointer-events-none shrink-0">
+            <div className="relative flex h-[400px] w-full flex-col bg-white text-slate-900 lg:h-auto lg:w-1/2">
+              <div className="pointer-events-none absolute top-0 left-0 right-0 flex h-12 shrink-0 items-center justify-center rounded-t-xl border-b border-border/70 bg-muted/70 font-mono text-xs text-muted-foreground lg:rounded-tl-none lg:rounded-tr-xl">
                 Preview
               </div>
-              <div className="w-full h-full pt-12 text-black">
+              <div className="h-full w-full pt-12 text-black">
                 <iframe
                   srcDoc={sandboxSrcDoc}
                   className="w-full h-full border-none"
