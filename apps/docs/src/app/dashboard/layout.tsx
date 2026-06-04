@@ -1,14 +1,18 @@
 import { DashboardNav } from '@/components/app/dashboard-nav';
-import { UserMenu } from '@/components/app/user-menu';
+import { baseOptions } from '@/lib/layout.shared';
+import { HomeLayout } from 'fumadocs-ui/layouts/home';
 
 export default function DashboardLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <div className="flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
-        <DashboardNav />
-        <UserMenu />
-      </div>
-      {children}
-    </div>
+    <HomeLayout {...baseOptions()}>
+      <main className="flex-1">
+        <div className="mx-auto max-w-6xl px-4 py-8">
+          <div className="border-b pb-4">
+            <DashboardNav />
+          </div>
+          {children}
+        </div>
+      </main>
+    </HomeLayout>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { useTheme } from 'next-themes';
 
 const CodeEditor = dynamic(
   () => import('@uiw/react-textarea-code-editor').then((mod) => mod.default),
@@ -272,6 +273,8 @@ type FeedbackIntent = 'yes' | 'no';
 type FeedbackSentiment = 'love' | 'hate';
 
 export function ClientPage({ hasSubmittedFeedback = false }: { hasSubmittedFeedback?: boolean }) {
+  const { resolvedTheme } = useTheme();
+  const [isMounted, setIsMounted] = useState(false);
   // Todo state
   const [todos, setTodos] = useState(initialTodos);
   const [todoInput, setTodoInput] = useState('');
@@ -368,7 +371,22 @@ c.move('#btn1')
  .click('#btn2');
 `);
   const [activeTab, setActiveTab] = useState<'html' | 'js'>('html');
+  const isThemeReady = isMounted && (resolvedTheme === 'dark' || resolvedTheme === 'light');
+  const editorColorMode = isThemeReady && resolvedTheme === 'dark' ? 'dark' : 'light';
   const [sandboxSrcDoc, setSandboxSrcDoc] = useState('');
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isThemeReady) {
+      return;
+    }
+
+    document.documentElement.setAttribute('data-color-mode', editorColorMode);
+    document.body.setAttribute('data-color-mode', editorColorMode);
+  }, [editorColorMode, isThemeReady]);
 
   const runSandbox = useCallback(() => {
     let bodyContent = htmlCode;
@@ -2245,20 +2263,28 @@ c.move('#btn1')
             <p className="text-muted-foreground">Experiment right here using esm.sh</p>
           </div>
 
-          <div className="flex flex-col lg:flex-row w-full max-w-6xl mt-8 rounded-xl overflow-hidden border bg-white shadow-sm h-[400px]">
+          <div className="flex h-[400px] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-border/70 bg-background/95 shadow-sm dark:bg-card lg:flex-row">
             {/* Left - Code Editor */}
-            <div className="w-full lg:w-1/2 border-r flex flex-col bg-slate-50">
-              <div className="flex items-center justify-between px-4 h-12 border-b bg-slate-100 border-slate-200 shrink-0">
+            <div className="flex w-full flex-col border-b border-border/70 bg-muted/30 lg:w-1/2 lg:border-r lg:border-b-0">
+              <div className="flex h-12 shrink-0 items-center justify-between border-b border-border/70 bg-muted/70 px-4">
                 <div className="flex gap-2">
                   <button
                     onClick={() => setActiveTab('html')}
-                    className={`px-3 py-1.5 text-sm rounded-md transition-colors ${activeTab === 'html' ? 'bg-white shadow-sm text-slate-900 font-medium' : 'text-slate-500 hover:text-slate-900'}`}
+                    className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+                      activeTab === 'html'
+                        ? 'bg-background font-medium text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
                   >
                     index.html
                   </button>
                   <button
                     onClick={() => setActiveTab('js')}
-                    className={`px-3 py-1.5 text-sm rounded-md transition-colors ${activeTab === 'js' ? 'bg-white shadow-sm text-slate-900 font-medium' : 'text-slate-500 hover:text-slate-900'}`}
+                    className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+                      activeTab === 'js'
+                        ? 'bg-background font-medium text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
                   >
                     script.js
                   </button>
@@ -2267,17 +2293,26 @@ c.move('#btn1')
                   size="sm"
                   variant="secondary"
                   onClick={runSandbox}
-                  className="h-8 text-xs bg-slate-200 text-slate-900 hover:bg-slate-300 border shadow-none"
+                  className="h-8 border border-border/70 bg-background text-xs text-foreground shadow-none hover:bg-accent hover:text-accent-foreground"
                 >
                   <Play className="w-3 h-3 mr-1" /> Run
                 </Button>
               </div>
               <div
-                className="flex-1 overflow-auto bg-white relative text-left"
-                data-color-mode="light"
+                data-color-mode={isThemeReady ? editorColorMode : undefined}
+                className={`w-tc-editor-var relative flex-1 overflow-auto text-left ${
+                  isThemeReady
+                    ? editorColorMode === 'dark'
+                      ? 'bg-slate-950 text-slate-100'
+                      : 'bg-white text-slate-900'
+                    : 'bg-background text-foreground'
+                }`}
               >
-                {activeTab === 'html' ? (
+                {!isThemeReady ? (
+                  <div className="h-full min-h-[352px]" />
+                ) : activeTab === 'html' ? (
                   <CodeEditor
+                    key={`html-${editorColorMode}`}
                     value={htmlCode}
                     language="html"
                     placeholder="Please enter HTML code."
@@ -2289,12 +2324,12 @@ c.move('#btn1')
                       fontFamily:
                         'ui-monospace,SFMono-Regular,SF Mono,Consolas,Liberation Mono,Menlo,monospace',
                       minHeight: '100%',
-                      color: '#333',
+                      color: editorColorMode === 'dark' ? '#e5e7eb' : '#333',
                     }}
-                    className="light-theme"
                   />
                 ) : (
                   <CodeEditor
+                    key={`js-${editorColorMode}`}
                     value={jsCode}
                     language="js"
                     placeholder="Please enter JS code."
@@ -2306,20 +2341,21 @@ c.move('#btn1')
                       fontFamily:
                         'ui-monospace,SFMono-Regular,SF Mono,Consolas,Liberation Mono,Menlo,monospace',
                       minHeight: '100%',
-                      color: '#333',
+                      color: editorColorMode === 'dark' ? '#e5e7eb' : '#333',
                     }}
-                    className="light-theme"
                   />
                 )}
               </div>
             </div>
 
             {/* Right - Preview */}
-            <div className="w-full lg:w-1/2 bg-white flex flex-col relative h-[400px] lg:h-auto">
-              <div className="absolute top-0 left-0 right-0 h-12 flex items-center justify-center bg-slate-100 border-b border-slate-200 text-xs font-mono text-slate-500 rounded-t-xl lg:rounded-tl-none lg:rounded-tr-xl pointer-events-none shrink-0">
-                Preview
+            <div className="relative flex h-[400px] w-full flex-col bg-white text-slate-900 lg:h-auto lg:w-1/2">
+              <div className="pointer-events-none absolute top-0 left-0 right-0 flex h-12 shrink-0 items-center justify-center border-b border-border/70 bg-muted/70 px-4 font-mono text-xs lg:rounded-tl-none lg:rounded-tr-xl">
+                <span className="rounded-md bg-background px-3 py-1.5 font-medium text-foreground shadow-sm dark:border dark:border-border/70">
+                  Preview
+                </span>
               </div>
-              <div className="w-full h-full pt-12 text-black">
+              <div className="h-full w-full pt-12 text-black">
                 <iframe
                   srcDoc={sandboxSrcDoc}
                   className="w-full h-full border-none"

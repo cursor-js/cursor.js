@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
+import '@uiw/react-textarea-code-editor/dist.css';
 import { cn } from '@/lib/utils';
 import { Analytics } from '@vercel/analytics/next';
 import { ConditionalSiteFooter } from '@/components/ConditionalSiteFooter';
