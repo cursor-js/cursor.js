@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { useTheme } from 'next-themes';
 
 const CodeEditor = dynamic(
   () => import('@uiw/react-textarea-code-editor').then((mod) => mod.default),
@@ -272,6 +273,7 @@ type FeedbackIntent = 'yes' | 'no';
 type FeedbackSentiment = 'love' | 'hate';
 
 export function ClientPage({ hasSubmittedFeedback = false }: { hasSubmittedFeedback?: boolean }) {
+  const { resolvedTheme } = useTheme();
   // Todo state
   const [todos, setTodos] = useState(initialTodos);
   const [todoInput, setTodoInput] = useState('');
@@ -368,6 +370,7 @@ c.move('#btn1')
  .click('#btn2');
 `);
   const [activeTab, setActiveTab] = useState<'html' | 'js'>('html');
+  const editorColorMode = resolvedTheme === 'dark' ? 'dark' : 'light';
   const [sandboxSrcDoc, setSandboxSrcDoc] = useState('');
 
   const runSandbox = useCallback(() => {
@@ -2281,8 +2284,10 @@ c.move('#btn1')
                 </Button>
               </div>
               <div
-                className="relative flex-1 overflow-auto bg-white text-left text-slate-900"
-                data-color-mode="light"
+                data-color-mode={editorColorMode}
+                className={`w-tc-editor-var relative flex-1 overflow-auto text-left ${
+                  editorColorMode === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-white text-slate-900'
+                }`}
               >
                 {activeTab === 'html' ? (
                   <CodeEditor
@@ -2297,9 +2302,8 @@ c.move('#btn1')
                       fontFamily:
                         'ui-monospace,SFMono-Regular,SF Mono,Consolas,Liberation Mono,Menlo,monospace',
                       minHeight: '100%',
-                      color: '#333',
+                      color: editorColorMode === 'dark' ? '#e5e7eb' : '#333',
                     }}
-                    className="light-theme"
                   />
                 ) : (
                   <CodeEditor
@@ -2314,9 +2318,8 @@ c.move('#btn1')
                       fontFamily:
                         'ui-monospace,SFMono-Regular,SF Mono,Consolas,Liberation Mono,Menlo,monospace',
                       minHeight: '100%',
-                      color: '#333',
+                      color: editorColorMode === 'dark' ? '#e5e7eb' : '#333',
                     }}
-                    className="light-theme"
                   />
                 )}
               </div>
@@ -2324,8 +2327,10 @@ c.move('#btn1')
 
             {/* Right - Preview */}
             <div className="relative flex h-[400px] w-full flex-col bg-white text-slate-900 lg:h-auto lg:w-1/2">
-              <div className="pointer-events-none absolute top-0 left-0 right-0 flex h-12 shrink-0 items-center justify-center rounded-t-xl border-b border-border/70 bg-muted/70 font-mono text-xs text-muted-foreground lg:rounded-tl-none lg:rounded-tr-xl">
-                Preview
+              <div className="pointer-events-none absolute top-0 left-0 right-0 flex h-12 shrink-0 items-center justify-center border-b border-border/70 bg-muted/70 px-4 font-mono text-xs lg:rounded-tl-none lg:rounded-tr-xl">
+                <span className="rounded-md bg-background px-3 py-1.5 font-medium text-foreground shadow-sm dark:border dark:border-border/70">
+                  Preview
+                </span>
               </div>
               <div className="h-full w-full pt-12 text-black">
                 <iframe
