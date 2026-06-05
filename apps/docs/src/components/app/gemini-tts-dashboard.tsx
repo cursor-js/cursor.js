@@ -126,6 +126,22 @@ interface GeminiTTSDashboardProps {
   view: 'overview' | 'voices';
 }
 
+interface TTSRequestErrorResponse {
+  error?: unknown;
+}
+
+function getRequestErrorMessage(value: unknown): string | null {
+  if (typeof value === 'object' && value !== null && 'error' in value) {
+    const error = (value as TTSRequestErrorResponse).error;
+
+    if (typeof error === 'string') {
+      return error;
+    }
+  }
+
+  return null;
+}
+
 export function GeminiTTSDashboard({
   checkoutSucceeded = false,
   generatedVoices,
@@ -226,7 +242,15 @@ export function GeminiTTSDashboard({
     });
 
     if (!response.ok) {
-      setRequestError('The selected voice requests could not be updated. Please try again.');
+      let message = 'The selected voice requests could not be updated. Please try again.';
+
+      try {
+        message = getRequestErrorMessage(await response.json()) ?? message;
+      } catch {
+        // Keep the generic message when the server response is not JSON.
+      }
+
+      setRequestError(message);
       return;
     }
 
