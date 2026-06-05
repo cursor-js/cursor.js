@@ -1,5 +1,11 @@
 # docs
 
+## 0.5.4
+
+### Patch Changes
+
+- afad5ef: Add CORS preflight support to the Gemini TTS API and expire stale pending TTS requests after seven days.
+
 ## 0.5.3
 
 ### Patch Changes
