@@ -27,6 +27,23 @@ function canManageVoices(plans: string[]): boolean {
   return (hasGeminiTeam && hasProTeam) || (hasGeminiSolo && (hasProSolo || hasProTeam));
 }
 
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Unknown error';
+}
+
+function getGenerationErrorMessage(error: unknown): string {
+  const message = getErrorMessage(error);
+
+  if (
+    message.includes('Lightning dunning decision is deny') ||
+    message.includes('PERMISSION_DENIED')
+  ) {
+    return 'Gemini TTS generation was denied by Google for the configured project. Check billing, API access, and the GEMINI_API_KEY project settings.';
+  }
+
+  return `Gemini TTS generation failed: ${message}`;
+}
+
 export async function POST(req: Request) {
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -85,49 +102,56 @@ export async function POST(req: Request) {
   }
 
   for (const request of requests) {
-    const audioPath = `tts/${request.id}.wav`;
-    const audioUrl = `https://cdn.cursorjs.com/voices/${request.id}.wav`;
-    const audioBuffer = await generateGeminiTTS(
-      request.text,
-      request.speaker,
-      request.prompt,
-      request.model,
-    );
+    try {
+      const audioPath = `tts/${request.id}.wav`;
+      const audioUrl = `https://cdn.cursorjs.com/voices/${request.id}.wav`;
+      const audioBuffer = await generateGeminiTTS(
+        request.text,
+        request.speaker,
+        request.prompt,
+        request.model,
+      );
 
-    await put(audioPath, audioBuffer, {
-      access: 'public',
-      contentType: 'audio/wav',
-      addRandomSuffix: false,
-      allowOverwrite: true,
-    });
+      await put(audioPath, audioBuffer, {
+        access: 'public',
+        contentType: 'audio/wav',
+        addRandomSuffix: false,
+        allowOverwrite: true,
+      });
 
-    await db
-      .insert(ttsCache)
-      .values({
-        hash: request.id,
-        prompt: request.prompt,
-        text: request.text,
-        speaker: request.speaker,
-        style: request.style,
-        model: request.model,
-        language: request.language,
-        audioUrl,
-        userId: request.userId,
-        licenseId: request.licenseId,
-      })
-      .onConflictDoUpdate({
-        target: ttsCache.hash,
-        set: {
+      await db
+        .insert(ttsCache)
+        .values({
+          hash: request.id,
+          prompt: request.prompt,
+          text: request.text,
+          speaker: request.speaker,
+          style: request.style,
+          model: request.model,
+          language: request.language,
           audioUrl,
           userId: request.userId,
           licenseId: request.licenseId,
-        },
-      });
+        })
+        .onConflictDoUpdate({
+          target: ttsCache.hash,
+          set: {
+            audioUrl,
+            userId: request.userId,
+            licenseId: request.licenseId,
+          },
+        });
 
-    await db
-      .update(ttsRequests)
-      .set({ status: 'generated', updatedAt: new Date() })
-      .where(eq(ttsRequests.id, request.id));
+      await db
+        .update(ttsRequests)
+        .set({ status: 'generated', updatedAt: new Date() })
+        .where(eq(ttsRequests.id, request.id));
+    } catch (error) {
+      const message = getGenerationErrorMessage(error);
+      console.error('[Gemini TTS] Approval generation failed:', error);
+
+      return NextResponse.json({ error: message }, { status: 502 });
+    }
   }
 
   return NextResponse.json({ updated: requests.length });
