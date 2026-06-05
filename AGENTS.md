@@ -12,6 +12,15 @@
 - **Core Library**: We use Vite in library mode (`vite-plugin-dts`). Edits to core files must maintain export integrity in `packages/core/src/index.ts`.
 - **Pro Submodule**: The `packages/pro` directory is an independent Git submodule. When a user asks to add a feature or plugin to the `pro` package, **always** `cd packages/pro` first, and execute all `git branch`, `git commit`, and `changeset` commands exclusively inside that directory. Do not use the root monorepo changeset configuration for `packages/pro`.
 
+## Gemini TTS Approval Flow
+
+- **License-gated requests**: `GeminiTTSPlugin` uses a license key when it requests uncached voice narration from the hosted Cursor.js TTS API. Cached CDN audio can play without creating a new generation request.
+- **Public internal demo key**: The project has an internal demo Gemini TTS license key that may be embedded in public demos, snippets, Product Hunt launch demos, or other external sites. Treat this key as public by design, not as a secret.
+- **Approval queue**: Any uncached voice request made with a valid Gemini TTS license key is written to the user's `/dashboard/gemini-tts` approval queue. The request itself does not generate audio immediately.
+- **Manual generation**: Audio is generated with Gemini TTS only after the owning user signs in and explicitly approves the queued voice request from `/dashboard/gemini-tts`. Approved audio is then stored and served from the CDN for later playback.
+- **Abuse model**: A malicious person may use the public internal demo key to create pending voice requests, but they cannot force audio generation or spend Gemini TTS generation cost unless the dashboard owner approves those requests.
+- **MVP security scope**: There is currently no rate limiting, domain allowlist, origin restriction, or other domain-based abuse protection around the public internal demo key. These controls were intentionally skipped for the MVP because manual dashboard approval is the primary safety gate.
+
 ## Build and Test
 
 - **Package Manager & Monorepo**: Use `pnpm` and Turborepo. Run commands from the root:
